@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 7c4415d6b1baf690 | Updated: 2026-11-17T16:02:36.062Z
+-- Checksum: b2f6af12c4a9c660 | Updated: 2026-11-17T16:03:31.860Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -417,7 +417,7 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (199, 32, N'S', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-S-ขาวชมพู');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (200, 32, N'M', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-M-ขาวชมพู');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (201, 32, N'L', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-L-ขาวชมพู');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (202, 32, N'XL', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-XL-ขาวชมพู');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (202, 32, N'XL', N'ขาว ชมพู', N'#f7e2e7', 1299, 10, 10, N'SKU-32-XL-ขาวชมพู');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (203, 33, N'S', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#dedcd7', 2999, 25, 25, N'SKU-33-S-สีครีมอ่อน/สีเบจอ่อนอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (204, 33, N'M', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#dedcd7', 2999, 25, 25, N'SKU-33-M-สีครีมอ่อน/สีเบจอ่อนอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (205, 33, N'L', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#dedcd7', 2999, 25, 25, N'SKU-33-L-สีครีมอ่อน/สีเบจอ่อนอมเทา');

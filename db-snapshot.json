@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:02:36.062Z",
-  "checksum": "7c4415d6b1baf690",
+  "timestamp": "2026-11-17T16:03:31.860Z",
+  "checksum": "b2f6af12c4a9c660",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1016,7 +1016,7 @@
         "size": "XL",
         "color": "ขาว ชมพู",
         "color_hex": "#f7e2e7",
-        "price": 1190,
+        "price": 1299,
         "stock": 10,
         "stock_quantity": 10,
         "sku": "SKU-32-XL-ขาวชมพู"
