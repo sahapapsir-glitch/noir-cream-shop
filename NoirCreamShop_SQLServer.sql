@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 4e455ef7e1978db4 | Updated: 2026-11-17T16:12:23.060Z
+-- Checksum: 20e75b34d1614c22 | Updated: 2026-11-17T16:13:19.765Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -444,8 +444,8 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (223, 37, N'2XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-2XL-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (224, 38, N'S', N'ดำ', N'#000000', 19998, 20, 20, N'SKU-38-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (225, 38, N'M', N'ดำ', N'#000000', 19998, 20, 20, N'SKU-38-M-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', 19998, 20, 20, N'SKU-38-L-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (227, 38, N'XL', N'ดำ', N'#000000', 19998, 20, 20, N'SKU-38-XL-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', 19999, 20, 20, N'SKU-38-L-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (227, 38, N'XL', N'ดำ', N'#000000', 21000, 20, 20, N'SKU-38-XL-ดำ');
 SET IDENTITY_INSERT dbo.product_variant OFF;
 
 COMMIT TRANSACTION;

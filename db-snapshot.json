@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:12:23.060Z",
-  "checksum": "4e455ef7e1978db4",
+  "timestamp": "2026-11-17T16:13:19.765Z",
+  "checksum": "20e75b34d1614c22",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1325,7 +1325,7 @@
         "size": "L",
         "color": "ดำ",
         "color_hex": "#000000",
-        "price": 19998,
+        "price": 19999,
         "stock": 20,
         "stock_quantity": 20,
         "sku": "SKU-38-L-ดำ"
@@ -1336,7 +1336,7 @@
         "size": "XL",
         "color": "ดำ",
         "color_hex": "#000000",
-        "price": 19998,
+        "price": 21000,
         "stock": 20,
         "stock_quantity": 20,
         "sku": "SKU-38-XL-ดำ"
