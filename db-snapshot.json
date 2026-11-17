@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:12:34.453Z",
-  "checksum": "2956d9ebca7eb2e8",
+  "timestamp": "2026-11-17T17:13:05.989Z",
+  "checksum": "46536a8eb172a9a2",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2268,7 +2268,7 @@
         "size": "36",
         "color": "สีขาวนวล / สีครีมอ่อน",
         "color_hex": "#e8e5dc",
-        "price": 8300,
+        "price": 8399,
         "stock": 40,
         "stock_quantity": 40,
         "sku": "SKU-56-36-สีขาวนวล/สีครีมอ่อน"
