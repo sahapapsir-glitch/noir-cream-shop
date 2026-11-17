@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: bfc334c802d64c2f | Updated: 2026-11-17T16:54:29.382Z
+-- Checksum: 602375ddb2b42025 | Updated: 2026-11-17T16:55:03.145Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -502,7 +502,7 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (270, 50, N'M', N'สีดำ / สีเทาตุ่น', N'#252424', 4300, 25, 25, N'SKU-50-M-สีดำ/สีเทาตุ่น');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (271, 50, N'L', N'สีดำ / สีเทาตุ่น', N'#252424', 4300, 25, 25, N'SKU-50-L-สีดำ/สีเทาตุ่น');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (272, 50, N'XL', N'สีดำ / สีเทาตุ่น', N'#252424', 4300, 25, 25, N'SKU-50-XL-สีดำ/สีเทาตุ่น');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (273, 50, N'2XL', N'สีดำ / สีเทาตุ่น', N'#252424', 4300, 25, 25, N'SKU-50-2XL-สีดำ/สีเทาตุ่น');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (273, 50, N'2XL', N'สีดำ / สีเทาตุ่น', N'#252424', 4399, 25, 25, N'SKU-50-2XL-สีดำ/สีเทาตุ่น');
 SET IDENTITY_INSERT dbo.product_variant OFF;
 
 -- ตาราง dbo.[order] (1 รายการ)

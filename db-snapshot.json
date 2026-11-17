@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:54:29.382Z",
-  "checksum": "bfc334c802d64c2f",
+  "timestamp": "2026-11-17T16:55:03.145Z",
+  "checksum": "602375ddb2b42025",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1999,7 +1999,7 @@
         "size": "2XL",
         "color": "สีดำ / สีเทาตุ่น",
         "color_hex": "#252424",
-        "price": 4300,
+        "price": 4399,
         "stock": 25,
         "stock_quantity": 25,
         "sku": "SKU-50-2XL-สีดำ/สีเทาตุ่น"
