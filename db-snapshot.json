@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:15:46.968Z",
-  "checksum": "b3cf2787e9694390",
+  "timestamp": "2026-11-17T17:16:25.868Z",
+  "checksum": "7235e8291e81450b",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2397,7 +2397,7 @@
         "size": "36",
         "color": "ครีม",
         "color_hex": "#65798a",
-        "price": 15000,
+        "price": 16000,
         "stock": 35,
         "stock_quantity": 35,
         "sku": "SKU-58-36-ครีม"
