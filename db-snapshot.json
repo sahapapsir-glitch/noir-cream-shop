@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:40:33.103Z",
-  "checksum": "9056b091ca65560c",
+  "timestamp": "2026-11-17T16:40:47.258Z",
+  "checksum": "241a2552102fa769",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1752,7 +1752,7 @@
         "size": "2XL",
         "color": "สีน้ำตาล / สีน้ำตาลอิฐ",
         "color_hex": "#8a6246",
-        "price": 4890,
+        "price": 4990,
         "stock": 25,
         "stock_quantity": 25,
         "sku": "SKU-46-2XL-สีน้ำตาล/สีน้ำตาลอิฐ"
