@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:16:55.165Z",
-  "checksum": "8decc0c909f9ccea",
+  "timestamp": "2026-11-17T16:17:50.146Z",
+  "checksum": "417454d3fb4cb07b",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -16,7 +16,7 @@
     "order": 1,
     "order_item": 1,
     "payment": 1,
-    "shipment": 0,
+    "shipment": 1,
     "review": 0,
     "wishlist": 0,
     "review_like": 0
@@ -1374,7 +1374,7 @@
         "customer_id": 22,
         "product_id": 28,
         "order_date": "2026-11-17 16:16:50",
-        "status": "paid",
+        "status": "shipped",
         "subtotal": 1580,
         "discount": 0,
         "shipping_fee": 0,
@@ -1406,7 +1406,19 @@
         "paid_at": "2026-11-17 16:16:54"
       }
     ],
-    "shipment": [],
+    "shipment": [
+      {
+        "shipment_id": 5,
+        "tracking_no": "TH1212312121",
+        "payment_id": 8,
+        "order_id": 8,
+        "product_id": 28,
+        "carrier": "Flash",
+        "status": "shipped",
+        "shipping_address": "11 หมู่บ้านสัมกร กรุงเทพกรีฑรา ทับช้าง สะพานสูง กรุงเทพมหานคร 10250",
+        "shipped_at": "2026-11-17 16:17:50"
+      }
+    ],
     "review": [],
     "wishlist": [],
     "review_like": []
@@ -1418,7 +1430,7 @@
         "customer_id": 22,
         "order_date": "2026-11-17 16:16:50",
         "total_amount": 1580,
-        "order_status": "paid"
+        "order_status": "shipped"
       }
     ],
     "Order_Detail": [
