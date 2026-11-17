@@ -295,36 +295,45 @@ if (!db.prepare('SELECT 1 FROM coupon WHERE code=?').get('SAVE100')) {
   db.prepare('INSERT INTO coupon (code,type,value,min_total) VALUES (?,?,?,?)').run('SAVE100', 'fixed', 100, 1000);
 }
 
-// ตรวจสอบพารามิเตอร์ --samples เพื่อใส่สินค้าตัวอย่างเฉพาะ 4 หมวดหมู่ (เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว, กางเกง)
-const withSamples = process.argv.includes('--samples');
+// สินค้าและสต็อกครบทั้ง 4 หมวดหมู่หลัก (เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว, กางเกง)
+const COLORS = {
+  'ขาว': '#FAFAF7', 'ดำ': '#1A1A1A', 'ครีม': '#EADFC8', 'เบจ': '#C8B79C', 'น้ำเงินเข้ม': '#2B3447', 'เทา': '#8A8A86',
+};
+const SAMPLE_PRODUCTS = [
+  ['เสื้อยืด Essential Tee', 'เสื้อยืด', 'เสื้อยืดคอตตอน 100% ผ้าหนานุ่ม ทรงเรกูลาร์ ใส่สบายทุกวัน', 1, 1, 1, 'tee', 390, ['S', 'M', 'L', 'XL'], ['ขาว', 'ดำ', 'ครีม']],
+  ['เสื้อโปโล Pique Classic', 'เสื้อโปโล', 'เสื้อโปโลผ้าปิเก้ คอปกทอแน่น ทรงสมาร์ทแคชชวล', 2, 2, 1, 'polo', 590, ['S', 'M', 'L', 'XL'], ['ครีม', 'ขาว', 'ดำ']],
+  ['เสื้อแขนยาว Heavy Cotton', 'เสื้อแขนยาว', 'เสื้อแขนยาวคอกลมผ้าหนา ทรงโอเวอร์ไซส์ จั๊มปลายแขน', 1, 1, 1, 'longsleeve', 690, ['M', 'L', 'XL'], ['ดำ', 'ครีม', 'เทา']],
+  ['กางเกงขายาว Minimal Chino', 'กางเกง', 'ชิโนผ้าทวิล ทรงกระบอกตรง ใส่สบาย แมตช์ได้กับเสื้อทุกแบบ', 3, 2, 1, 'pants', 1090, ['28', '30', '32', '34'], ['เบจ', 'ดำ', 'ครีม']],
+];
 
-if (withSamples) {
-  const COLORS = {
-    'ขาว': '#FAFAF7', 'ดำ': '#1A1A1A', 'ครีม': '#EADFC8', 'เบจ': '#C8B79C', 'น้ำเงินเข้ม': '#2B3447', 'เทา': '#8A8A86',
-  };
-  const products = [
-    ['เสื้อยืด Essential Tee', 'เสื้อยืด', 'เสื้อยืดคอตตอน 100% ผ้าหนานุ่ม ทรงเรกูลาร์ ใส่สบายทุกวัน', 1, 1, 1, 'tee', 390, ['S', 'M', 'L', 'XL'], ['ขาว', 'ดำ', 'ครีม']],
-    ['เสื้อโปโล Pique Classic', 'เสื้อโปโล', 'เสื้อโปโลผ้าปิเก้ คอปกทอแน่น ทรงสมาร์ทแคชชวล', 2, 2, 1, 'polo', 590, ['S', 'M', 'L', 'XL'], ['ครีม', 'ขาว', 'ดำ']],
-    ['เสื้อแขนยาว Heavy Cotton', 'เสื้อแขนยาว', 'เสื้อแขนยาวคอกลมผ้าหนา ทรงโอเวอร์ไซส์ จั๊มปลายแขน', 1, 1, 1, 'longsleeve', 690, ['M', 'L', 'XL'], ['ดำ', 'ครีม', 'เทา']],
-    ['กางเกงขายาว Minimal Chino', 'กางเกง', 'ชิโนผ้าทวิล ทรงกระบอกตรง ใส่สบาย แมตช์ได้กับเสื้อทุกแบบ', 3, 2, 1, 'pants', 1090, ['28', '30', '32', '34'], ['เบจ', 'ดำ', 'ครีม']],
-  ];
+const insP = db.prepare('INSERT INTO product (name,category,description,supplier_id,employee_id,is_featured,image_url,stock,quantity,price) VALUES (?,?,?,?,?,?,?,0,0,?)');
+const insV = db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?)');
 
-  const insP = db.prepare('INSERT INTO product (name,category,description,supplier_id,employee_id,is_featured,image_url,stock,quantity,price) VALUES (?,?,?,?,?,?,?,0,0,?)');
-  const insV = db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?)');
-  for (const [name, cat, desc, supplier, employee, featured, shape, price, sizes, colors] of products) {
-    const pid = insP.run(name, cat, desc, supplier, employee, featured, 'shape:' + shape, price).lastInsertRowid;
+for (const [name, cat, desc, supplier, employee, featured, shape, price, sizes, colors] of SAMPLE_PRODUCTS) {
+  let p = db.prepare('SELECT product_id FROM product WHERE name=?').get(name);
+  let pid;
+  if (!p) {
+    pid = insP.run(name, cat, desc, supplier, employee, featured, 'shape:' + shape, price).lastInsertRowid;
+  } else {
+    pid = p.product_id;
+    db.prepare("UPDATE product SET status='active', price=? WHERE product_id=?").run(price, pid);
+  }
+
+  const existingVariants = db.prepare('SELECT COUNT(*) c FROM product_variant WHERE product_id=?').get(pid).c;
+  if (existingVariants === 0) {
     let total = 0;
-    for (const color of colors) for (const size of sizes) {
-      const stock = 5;
-      total += stock;
-      insV.run(pid, size, color, COLORS[color] || '#EADFC8', price, stock, stock, `SKU-${pid}-${size}-${color}`.replace(/\s/g, ''));
+    for (const color of colors) {
+      for (const size of sizes) {
+        const stock = 10;
+        total += stock;
+        insV.run(pid, size, color, COLORS[color] || '#EADFC8', price, stock, stock, `SKU-${pid}-${size}-${color}`.replace(/\s/g, ''));
+      }
     }
     db.prepare('UPDATE product SET stock=?, quantity=? WHERE product_id=?').run(total, total, pid);
   }
-  console.log('ใส่สินค้าตัวอย่าง 4 หมวดหมู่เรียบร้อยแล้ว');
-} else {
-  console.log('สต็อกเริ่มต้นว่าง พร้อมให้คุณเพิ่มสินค้าเองผ่านหน้าจัดการร้าน');
 }
+console.log('สต็อกสินค้าครบทั้ง 4 หมวดหมู่ พร้อมจำหน่ายเรียบร้อยแล้ว');
+
 
 const { createRealtimeSqlManager } = require('./mssql-sync');
 createRealtimeSqlManager(db).notifyChange('seed', 'seed');
