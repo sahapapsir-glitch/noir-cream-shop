@@ -783,14 +783,30 @@ function pushToGitHubViaLocalGit(reason) {
 
     (async () => {
       try {
-        await runGit(['add', 'shop.db', 'NoirCreamShop_SQLServer.sql', 'db-snapshot.json']);
+    await runGit(['add', 'shop.db', 'NoirCreamShop_SQLServer.sql', 'db-snapshot.json']);
         const statusOut = await runGit(['status', '--porcelain', 'shop.db', 'NoirCreamShop_SQLServer.sql', 'db-snapshot.json']);
         if (!statusOut) {
           const sha = await runGit(['rev-parse', '--short', 'HEAD']);
           return resolve({ ok: true, mode: 'local-git', commitSha: sha, skipped: true });
         }
-        await runGit(['commit', '-m', commitMsg]);
-        await runGit(['push', 'origin', GITHUB_BRANCH]);
+        await runGit([
+          '-c', 'user.name=Noir & Cream Bot',
+          '-c', 'user.email=bot@noircreamshop.local',
+          'commit', '-m', commitMsg
+        ]);
+        try {
+          await runGit(['push', 'origin', GITHUB_BRANCH]);
+        } catch (pushErr) {
+          const msg = String(pushErr.message || '');
+          if (/fetch first|non-fast-forward|rejected/i.test(msg)) {
+            await runGit(['pull', '--rebase', '--autostash', 'origin', GITHUB_BRANCH]);
+            await runGit(['push', 'origin', GITHUB_BRANCH]);
+          } else if (/could not read Username|Authentication failed|Permission|403|Repository not found/i.test(msg)) {
+            throw new Error('กรุณาตั้งค่า GITHUB_TOKEN ในหน้าจัดการร้าน (ปุ่ม 🔑 ตั้งค่า GitHub Token) เพื่ออนุญาตให้ Render อัปเดต GitHub');
+          } else {
+            throw pushErr;
+          }
+        }
         const sha = await runGit(['rev-parse', '--short', 'HEAD']);
         resolve({ ok: true, mode: 'local-git', commitSha: sha });
       } catch (e) {
@@ -798,6 +814,10 @@ function pushToGitHubViaLocalGit(reason) {
       }
     })();
   });
+}
+
+function isRenderEnvironment() {
+  return Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_ID);
 }
 
 function createRealtimeSqlManager(db) {
@@ -815,12 +835,13 @@ function createRealtimeSqlManager(db) {
   };
 
   let githubStatus = {
-    connected: Boolean(getGitHubToken() || hasLocalGitRepo()),
+    connected: Boolean(getGitHubToken() || (hasLocalGitRepo() && !isRenderEnvironment())),
     repo: GITHUB_REPO,
     branch: GITHUB_BRANCH,
-    mode: getGitHubToken() ? 'github-api' : (hasLocalGitRepo() ? 'local-git' : 'token-needed'),
+    mode: getGitHubToken() ? 'github-api' : (hasLocalGitRepo() && !isRenderEnvironment() ? 'local-git' : 'token-needed'),
     hasToken: Boolean(getGitHubToken()),
     hasLocalGit: hasLocalGitRepo(),
+    isRender: isRenderEnvironment(),
     syncing: false,
     lastSyncAt: null,
     lastCommitSha: null,
@@ -831,10 +852,12 @@ function createRealtimeSqlManager(db) {
   function refreshGitHubCapability() {
     const hasTok = Boolean(getGitHubToken());
     const hasGit = hasLocalGitRepo();
+    const onRender = isRenderEnvironment();
     githubStatus.hasToken = hasTok;
     githubStatus.hasLocalGit = hasGit;
-    githubStatus.connected = hasTok || hasGit;
-    githubStatus.mode = hasTok ? 'github-api' : (hasGit ? 'local-git' : 'token-needed');
+    githubStatus.isRender = onRender;
+    githubStatus.connected = hasTok || (hasGit && !onRender);
+    githubStatus.mode = hasTok ? 'github-api' : (hasGit && !onRender ? 'local-git' : 'token-needed');
   }
 
   function addLog(type, message, extra = {}) {
@@ -947,10 +970,10 @@ function createRealtimeSqlManager(db) {
             throw apiErr;
           }
         }
-      } else if (hasLocalGitRepo()) {
+      } else if (hasLocalGitRepo() && !isRenderEnvironment()) {
         result = await pushToGitHubViaLocalGit(reason);
       } else {
-        throw new Error('กรุณาตั้งค่า GITHUB_TOKEN ในหน้าจัดการร้าน (หรือรัน Connect_SSMS_Realtime.bat บนเครื่อง) เพื่อซิงค์ขึ้น GitHub');
+        throw new Error('กรุณาตั้งค่า GITHUB_TOKEN ในหน้าจัดการร้าน (ปุ่ม 🔑 ตั้งค่า GitHub Token) หรือรัน Connect_SSMS_Realtime.bat บนเครื่อง เพื่อซิงค์ขึ้น GitHub');
       }
 
       githubStatus.connected = true;
@@ -978,7 +1001,7 @@ function createRealtimeSqlManager(db) {
 
   function scheduleGitHubPush(reason = 'auto') {
     refreshGitHubCapability();
-    if (!githubStatus.hasToken && !githubStatus.hasLocalGit) return;
+    if (!githubStatus.connected) return;
     if (ghSyncTimer) clearTimeout(ghSyncTimer);
     ghSyncTimer = setTimeout(() => {
       ghSyncTimer = null;

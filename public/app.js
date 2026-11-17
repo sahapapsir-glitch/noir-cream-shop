@@ -1155,6 +1155,7 @@ pages.admin = async () => {
   `;
 
   await adminTabs[adminTab]();
+  A.refreshGitHubHeader?.();
 };
 
 const adminTabs = {};
@@ -2151,16 +2152,33 @@ const A = window.A = {
     toast('กำลังดาวน์โหลดไฟล์ NoirCreamShop_SQLServer.sql ข้อมูลล่าสุด');
   },
 
+  async refreshGitHubHeader(ghData) {
+    try {
+      const gh = ghData || (await api('GET', '/api/github/status')).github;
+      const txt = $('#githubHeaderText');
+      if (!txt || !gh) return;
+      if (gh.syncing) {
+        txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
+      } else if (gh.lastCommitSha) {
+        txt.innerHTML = `☁️ GitHub Synced (<code>${esc(gh.lastCommitSha)}</code>)`;
+      } else if (gh.connected) {
+        txt.innerHTML = '☁️ GitHub Auto-Sync (พร้อมใช้งาน)';
+      } else {
+        txt.innerHTML = '☁️ GitHub Sync (รอตั้งค่า Token)';
+      }
+    } catch {}
+  },
+
   async syncGitHubNow() {
     const txt = $('#githubHeaderText');
     if (txt) txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
     safe(async () => {
       try {
         const { github } = await api('POST', '/api/github/sync');
-        if (txt) txt.innerHTML = `☁️ GitHub Synced ${github.lastCommitSha ? `(<code>${esc(github.lastCommitSha)}</code>)` : '✓'}`;
+        A.refreshGitHubHeader(github);
         toast(`ซิงค์ข้อมูล (สินค้า/สต็อก/ลูกค้า) ขึ้น GitHub สำเร็จ!${github.lastCommitSha ? ` [${github.lastCommitSha}]` : ''}`);
       } catch (err) {
-        if (txt) txt.innerHTML = '☁️ GitHub Auto-Sync';
+        A.refreshGitHubHeader();
         if (String(err.message || '').includes('GITHUB_TOKEN')) {
           A.setupGitHubToken();
         } else {
@@ -2170,22 +2188,72 @@ const A = window.A = {
     });
   },
 
-  async setupGitHubToken() {
-    const token = prompt(
-      'ใส่ GitHub Personal Access Token (เช่น ghp_... หรือ github_pat_...) เพื่อให้เว็บบน Render อัปเดตข้อมูลสินค้า/สต็อก/ลูกค้าขึ้น GitHub อัตโนมัติทุกครั้งที่มีการแก้ไข:\n\n(สร้างได้ที่ GitHub -> Settings -> Developer settings -> Personal access tokens -> เปิดสิทธิ์ repo / contents:write)',
-      ''
-    );
-    if (token === null) return;
+  async pullGitHubNow() {
     safe(async () => {
-      const { github } = await api('POST', '/api/github/token', { token: token.trim() });
-      const txt = $('#githubHeaderText');
-      if (github.hasToken) {
-        if (txt) txt.innerHTML = `☁️ GitHub Synced ${github.lastCommitSha ? `(<code>${esc(github.lastCommitSha)}</code>)` : '✓'}`;
-        toast('ตั้งค่า GitHub Token และซิงค์ฐานข้อมูลขึ้น GitHub สำเร็จแล้ว!');
+      const { restored, github } = await api('POST', '/api/github/pull');
+      A.refreshGitHubHeader(github);
+      if (restored?.restored) {
+        toast(`ดึงข้อมูลล่าสุดจาก GitHub สำเร็จ! (${restored.checksum})`);
+        route();
       } else {
-        if (txt) txt.innerHTML = '☁️ GitHub Auto-Sync';
-        toast('ล้างค่า GitHub Token แล้ว');
+        toast('ข้อมูลบนเว็บตรงกับ GitHub ล่าสุดอยู่แล้ว');
       }
+    });
+  },
+
+  async setupGitHubToken() {
+    let gh = {};
+    try { gh = (await api('GET', '/api/github/status')).github || {}; } catch {}
+    $('#ghTokenModal')?.remove();
+    const createUrl = 'https://github.com/settings/tokens/new?scopes=repo&description=NoirCreamShop+AutoSync';
+    const modal = document.createElement('div');
+    modal.id = 'ghTokenModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(20,20,20,.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.innerHTML = `
+      <div class="box" style="max-width:540px;width:100%;padding:24px;position:relative;max-height:90vh;overflow:auto">
+        <button type="button" onclick="$('#ghTokenModal')?.remove()" style="position:absolute;top:12px;right:14px;border:none;background:none;font-size:20px;cursor:pointer">✕</button>
+        <h3 style="margin:0 0 8px">☁️ ตั้งค่า GitHub Auto-Sync</h3>
+        <p class="muted" style="margin:0 0 12px;font-size:13px">
+          สถานะปัจจุบัน: <b>${gh.connected ? '✅ เชื่อมต่อแล้ว (' + esc(gh.mode) + ')' : '⚠️ ยังไม่ได้ตั้งค่า Token บนเซิร์ฟเวอร์นี้'}</b>
+          ${gh.lastCommitSha ? ` · Commit ล่าสุด: <code>${esc(gh.lastCommitSha)}</code>` : ''}
+        </p>
+        ${gh.lastError ? `<div style="background:#fff5f5;border:1px solid #f5c2c7;color:#842029;padding:8px 10px;border-radius:8px;font-size:12px;margin-bottom:12px">ข้อผิดพลาดล่าสุด: ${esc(gh.lastError)}</div>` : ''}
+        <div style="background:var(--cream,#FAF7F2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px;line-height:1.6">
+          <b>วิธีทำ (30 วินาที):</b><br>
+          1. กดปุ่มด้านล่างเพื่อเปิดหน้า GitHub (ระบบติ๊กสิทธิ์ <code>repo</code> ไว้ให้แล้ว)<br>
+          2. กดปุ่มเขียว <b>Generate token</b> แล้วคัดลอกรหัส (<code>ghp_...</code>)<br>
+          3. นำมาวางในช่องด้านล่าง หรือเพิ่มใน Render → <b>Environment</b> ชื่อ <code>GITHUB_TOKEN</code> (แนะนำให้ใส่ใน Render ด้วยเพื่อใช้ได้ถาวรแม้เซิร์ฟเวอร์รีสตาร์ท)
+          <div style="margin-top:8px">
+            <a href="${createUrl}" target="_blank" rel="noopener" class="btn sm" style="display:inline-flex;align-items:center;gap:6px">🔗 เปิดหน้าสร้าง GitHub Token (ตั้งสิทธิ์ให้อัตโนมัติ)</a>
+          </div>
+        </div>
+        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px">GitHub Personal Access Token</label>
+        <input id="ghTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx หรือ github_pat_..." style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;font-family:monospace">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between">
+          <button type="button" class="btn ghost sm" onclick="A.pullGitHubNow()">⬇️ ดึงข้อมูลล่าสุดจาก GitHub</button>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn ghost sm" onclick="$('#ghTokenModal')?.remove()">ปิด</button>
+            <button type="button" class="btn sm" onclick="A.saveGitHubTokenFromModal()">💾 บันทึก &amp; ซิงค์ทันที</button>
+          </div>
+        </div>
+      </div>
+    `;
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+    $('#ghTokenInput')?.focus();
+  },
+
+  async saveGitHubTokenFromModal() {
+    const token = ($('#ghTokenInput')?.value || '').trim();
+    if (!token) {
+      toast('กรุณาวาง GitHub Token ก่อนกดบันทึก', true);
+      return;
+    }
+    safe(async () => {
+      const { github } = await api('POST', '/api/github/token', { token });
+      A.refreshGitHubHeader(github);
+      $('#ghTokenModal')?.remove();
+      toast(`ตั้งค่า GitHub Token และซิงค์ฐานข้อมูลสำเร็จ!${github.lastCommitSha ? ` [${github.lastCommitSha}]` : ''}`);
     });
   }
 };
@@ -2200,18 +2268,12 @@ function initRealtimeSqlStream() {
     sqlEventSource.addEventListener('github_status', (ev) => {
       try {
         const gh = JSON.parse(ev.data || '{}');
-        const txt = $('#githubHeaderText');
+        A.refreshGitHubHeader(gh);
         const pill = $('#githubHeaderPill');
-        if (!txt) return;
-        if (gh.syncing) {
-          txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
-        } else if (gh.lastCommitSha) {
-          txt.innerHTML = `☁️ GitHub Synced (<code>${esc(gh.lastCommitSha)}</code>)`;
-          if (pill) {
-            pill.classList.remove('flash');
-            void pill.offsetWidth;
-            pill.classList.add('flash');
-          }
+        if (gh.lastCommitSha && pill) {
+          pill.classList.remove('flash');
+          void pill.offsetWidth;
+          pill.classList.add('flash');
         }
       } catch {}
     });

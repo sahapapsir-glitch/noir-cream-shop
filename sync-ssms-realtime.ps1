@@ -3,43 +3,56 @@ param(
     [string]$DatabaseName = "NoirCreamShop",
     [string]$WebUrl = "http://localhost:3000",
     [int]$IntervalSeconds = 2,
-    [switch]$Once
+    [switch]$Once,
+    [switch]$GitHubOnly
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+$baseDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$localSqlFile = Join-Path $baseDir "NoirCreamShop_SQLServer.sql"
+$localSnapshotFile = Join-Path $baseDir "db-snapshot.json"
+$localTokenFile = Join-Path $baseDir ".github-token"
+$githubRepo = "sahapapsir-glitch/noir-cream-shop"
+$githubBranch = "main"
+$githubRawSqlUrl = "https://raw.githubusercontent.com/$githubRepo/$githubBranch/NoirCreamShop_SQLServer.sql"
+
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
-Write-Host "  NOIR & CREAM — REALTIME SQL SERVER (SSMS) 2-WAY SYNC CONNECTOR" -ForegroundColor Yellow
+Write-Host "  NOIR & CREAM — REALTIME SQL SERVER (SSMS) & GITHUB AUTO-SYNC" -ForegroundColor Yellow
 Write-Host "======================================================================" -ForegroundColor Cyan
 
 # 1. ค้นหาและเชื่อมต่อ SQL Server Instance บนเครื่อง (ค่าเริ่มต้น .\SQLEXPRESS01 ตาม SSMS)
 $candidates = @($ServerInstance, ".\SQLEXPRESS01", "localhost\SQLEXPRESS01", ".\SQLEXPRESS", "localhost", "(localdb)\MSSQLLocalDB") | Select-Object -Unique
 $activeInstance = $null
 
-foreach ($inst in $candidates) {
-    try {
-        $testConn = New-Object System.Data.SqlClient.SqlConnection("Server=$inst;Database=master;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=3")
-        $testConn.Open()
-        $testConn.Close()
-        $activeInstance = $inst
-        break
-    } catch {
-        continue
+function Find-SqlInstance {
+    if ($GitHubOnly) { return $null }
+    foreach ($inst in $candidates) {
+        try {
+            $testConn = New-Object System.Data.SqlClient.SqlConnection("Server=$inst;Database=master;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=3")
+            $testConn.Open()
+            $testConn.Close()
+            return $inst
+        } catch {
+            continue
+        }
     }
+    return $null
 }
 
-if (-not $activeInstance) {
-    Write-Host "❌ ไม่สามารถเชื่อมต่อ SQL Server Instance (.\SQLEXPRESS01) ได้" -ForegroundColor Red
-    Write-Host "   กรุณาตรวจสอบว่าเปิด SQL Server (SQLEXPRESS01) ในบริการ Windows แล้ว" -ForegroundColor Yellow
-    exit 1
+$activeInstance = Find-SqlInstance
+if ($activeInstance) {
+    Write-Host "✅ เชื่อมต่อ SQL Server สำเร็จ: $activeInstance (Database: [$DatabaseName])" -ForegroundColor Green
+} else {
+    Write-Host "⚠️ ยังไม่พบ SQL Server Instance (.\SQLEXPRESS01) — จะทำงานในโหมด Web -> GitHub Auto-Sync อัตโนมัติ" -ForegroundColor Yellow
+    Write-Host "   (หากเปิด SQL Server ทีหลัง ระบบจะเชื่อมต่อให้อัตโนมัติ)" -ForegroundColor DarkGray
 }
-
-Write-Host "✅ เชื่อมต่อ SQL Server สำเร็จ: $activeInstance (Database: [$DatabaseName])" -ForegroundColor Green
 
 function Invoke-SqlScriptBatches {
     param([string]$ScriptText)
+    if (-not $activeInstance) { return }
     $conn = New-Object System.Data.SqlClient.SqlConnection("Server=$activeInstance;Database=master;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=10")
     $conn.Open()
     try {
@@ -65,6 +78,7 @@ $tableNames = @(
 )
 
 function Get-SsmsTablesState {
+    if (-not $activeInstance) { return $null }
     $conn = New-Object System.Data.SqlClient.SqlConnection("Server=$activeInstance;Database=$DatabaseName;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=5")
     $conn.Open()
     $state = [ordered]@{}
@@ -109,146 +123,286 @@ function Get-SsmsTablesState {
     }
 }
 
-# 2. ค้นหาแหล่งข้อมูล Web Server (Localhost -> Render -> GitHub / Local File)
-$apiUrls = @($WebUrl, "http://localhost:3000", "https://noir-cream-shop.onrender.com") | Select-Object -Unique
-$activeWebUrl = $null
-
-foreach ($u in $apiUrls) {
+function Get-LocalSnapshotChecksum {
+    if (-not (Test-Path $localSnapshotFile)) { return "" }
     try {
-        $resp = Invoke-RestMethod -Uri "$u/api/sql/snapshot" -Method Get -TimeoutSec 3 -ErrorAction Stop
-        if ($resp -and $resp.checksum) {
-            $activeWebUrl = $u
-            break
-        }
-    } catch {}
+        $raw = [System.IO.File]::ReadAllText($localSnapshotFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        return [string]$raw.checksum
+    } catch {
+        return ""
+    }
 }
 
-$baseDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
-$localSqlFile = Join-Path $baseDir "NoirCreamShop_SQLServer.sql"
-$localSnapshotFile = Join-Path $baseDir "db-snapshot.json"
-$githubRawSqlUrl = "https://raw.githubusercontent.com/sahapapsir-glitch/noir-cream-shop/main/NoirCreamShop_SQLServer.sql"
+function Save-WebSnapshotFiles {
+    param([object]$WebSnap, [string]$ScriptText)
+    if (-not (Test-Path $baseDir)) { return }
+    if ($ScriptText) {
+        [System.IO.File]::WriteAllText($localSqlFile, $ScriptText, [System.Text.Encoding]::UTF8)
+    }
+    if ($WebSnap) {
+        $snapJson = ($WebSnap | Select-Object instance, database, timestamp, checksum, counts, tables, views | ConvertTo-Json -Depth 8)
+        [System.IO.File]::WriteAllText($localSnapshotFile, $snapJson, [System.Text.Encoding]::UTF8)
+    }
+}
+
+function Get-GitHubTokenLocal {
+    if ($env:GITHUB_TOKEN -and $env:GITHUB_TOKEN.Trim()) { return $env:GITHUB_TOKEN.Trim() }
+    if (Test-Path $localTokenFile) {
+        try { return ([System.IO.File]::ReadAllText($localTokenFile, [System.Text.Encoding]::UTF8)).Trim() } catch {}
+    }
+    return ""
+}
+
+function Push-DatabaseToGitHubApi {
+    param([string]$Reason, [string]$Token)
+    $apiBase = "https://api.github.com/repos/$githubRepo"
+    $headers = @{
+        "Authorization"        = "Bearer $Token"
+        "Accept"               = "application/vnd.github+json"
+        "User-Agent"           = "NoirCreamShop-PSSync/1.0"
+        "X-GitHub-Api-Version" = "2022-11-28"
+    }
+    $refData = Invoke-RestMethod -Uri "$apiBase/git/ref/heads/$githubBranch" -Headers $headers -Method Get -TimeoutSec 15
+    $latestCommitSha = $refData.object.sha
+    $commitData = Invoke-RestMethod -Uri "$apiBase/git/commits/$latestCommitSha" -Headers $headers -Method Get -TimeoutSec 15
+    $baseTreeSha = $commitData.tree.sha
+
+    $treeItems = @()
+    foreach ($relPath in @("db-snapshot.json", "NoirCreamShop_SQLServer.sql")) {
+        $fullPath = Join-Path $baseDir $relPath
+        if (Test-Path $fullPath) {
+            $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($fullPath))
+            $blobBody = (@{ content = $b64; encoding = "base64" } | ConvertTo-Json -Compress)
+            $blob = Invoke-RestMethod -Uri "$apiBase/git/blobs" -Headers $headers -Method Post -Body $blobBody -ContentType "application/json; charset=utf-8" -TimeoutSec 20
+            $treeItems += @{ path = $relPath; mode = "100644"; type = "blob"; sha = $blob.sha }
+        }
+    }
+    $dbPath = Join-Path $baseDir "shop.db"
+    if (Test-Path $dbPath) {
+        $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($dbPath))
+        $blobBody = (@{ content = $b64; encoding = "base64" } | ConvertTo-Json -Compress)
+        $blob = Invoke-RestMethod -Uri "$apiBase/git/blobs" -Headers $headers -Method Post -Body $blobBody -ContentType "application/json; charset=utf-8" -TimeoutSec 25
+        $treeItems += @{ path = "shop.db"; mode = "100644"; type = "blob"; sha = $blob.sha }
+    }
+
+    $treeBody = (@{ base_tree = $baseTreeSha; tree = $treeItems } | ConvertTo-Json -Depth 5 -Compress)
+    $newTree = Invoke-RestMethod -Uri "$apiBase/git/trees" -Headers $headers -Method Post -Body $treeBody -ContentType "application/json; charset=utf-8" -TimeoutSec 20
+    if ($newTree.sha -eq $baseTreeSha) {
+        return $latestCommitSha.Substring(0, 7)
+    }
+
+    $cleanReason = ($Reason -replace '[\r\n]+', ' ')
+    $commitBody = (@{
+        message = "Auto-sync database ($cleanReason) [skip render]"
+        tree    = $newTree.sha
+        parents = @($latestCommitSha)
+    } | ConvertTo-Json -Compress)
+    $newCommit = Invoke-RestMethod -Uri "$apiBase/git/commits" -Headers $headers -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($commitBody)) -ContentType "application/json; charset=utf-8" -TimeoutSec 15
+    $refBody = (@{ sha = $newCommit.sha; force = $false } | ConvertTo-Json -Compress)
+    [void](Invoke-RestMethod -Uri "$apiBase/git/refs/heads/$githubBranch" -Headers $headers -Method Patch -Body $refBody -ContentType "application/json; charset=utf-8" -TimeoutSec 15)
+    return $newCommit.sha.Substring(0, 7)
+}
 
 function Push-DatabaseToGitHub {
     param([string]$Reason = "Realtime Sync")
     $gitDir = Join-Path $baseDir ".git"
-    if (-not (Test-Path $gitDir)) { return }
-    try {
-        Push-Location $baseDir
-        git add "NoirCreamShop_SQLServer.sql" "db-snapshot.json" "shop.db" 2>$null
-        $porcelain = git status --porcelain "NoirCreamShop_SQLServer.sql" "db-snapshot.json" "shop.db" 2>$null
-        if ($porcelain) {
-            git commit -m "Auto-sync database ($Reason) [skip render]" 2>$null | Out-Null
-            git push origin main 2>$null | Out-Null
-            $sha = (git rev-parse --short HEAD 2>$null)
-            Write-Host "   ☁️ [GitHub Sync] อัปเดตข้อมูลขึ้น GitHub สำเร็จ! (Commit: $sha)" -ForegroundColor Cyan
+    if (Test-Path $gitDir) {
+        try {
+            Push-Location $baseDir
+            $filesToAdd = @("NoirCreamShop_SQLServer.sql", "db-snapshot.json")
+            if (Test-Path (Join-Path $baseDir "shop.db")) { $filesToAdd += "shop.db" }
+            & git add @filesToAdd 2>$null
+            $porcelain = (& git status --porcelain @filesToAdd 2>$null)
+            if (-not $porcelain) { return }
+            $cleanReason = ($Reason -replace '["`$\\\r\n]+', ' ')
+            $commitOut = (& git -c user.name="Noir & Cream Bot" -c user.email="bot@noircreamshop.local" commit -m "Auto-sync database ($cleanReason) [skip render]" 2>&1 | Out-String)
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "   ⚠️ [GitHub Sync] Commit ไม่สำเร็จ: $($commitOut.Trim())" -ForegroundColor Yellow
+                return
+            }
+            $pushOut = (& git push origin $githubBranch 2>&1 | Out-String)
+            if ($LASTEXITCODE -ne 0) {
+                if ($pushOut -match 'fetch first|non-fast-forward|rejected') {
+                    & git pull --rebase --autostash origin $githubBranch 2>&1 | Out-Null
+                    $pushOut = (& git push origin $githubBranch 2>&1 | Out-String)
+                }
+            }
+            if ($LASTEXITCODE -eq 0) {
+                $sha = (& git rev-parse --short HEAD 2>$null)
+                Write-Host "   ☁️ [GitHub Sync] อัปเดตข้อมูลขึ้น GitHub สำเร็จ! (Commit: $sha)" -ForegroundColor Cyan
+                return
+            } else {
+                Write-Host "   ⚠️ [GitHub Sync] Push ไม่สำเร็จ: $($pushOut.Trim())" -ForegroundColor Yellow
+            }
+        } catch {
+            Write-Host "   ⚠️ [GitHub Sync] เกิดข้อผิดพลาด: $($_.Exception.Message)" -ForegroundColor Yellow
+        } finally {
+            Pop-Location
         }
-    } catch {} finally {
-        Pop-Location
+    }
+
+    $tok = Get-GitHubTokenLocal
+    if ($tok) {
+        try {
+            $sha = Push-DatabaseToGitHubApi -Reason $Reason -Token $tok
+            Write-Host "   ☁️ [GitHub Sync via API] อัปเดตข้อมูลขึ้น GitHub สำเร็จ! (Commit: $sha)" -ForegroundColor Cyan
+        } catch {
+            Write-Host "   ⚠️ [GitHub Sync API] Push ไม่สำเร็จ: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    } elseif (-not (Test-Path $gitDir)) {
+        Write-Host "   ℹ️ ไม่พบ .git ในโฟลเดอร์นี้ — แนะนำ clone โปรเจกต์ผ่าน git clone หรือตั้งค่า .github-token เพื่อให้สคริปต์ Push ขึ้น GitHub ได้" -ForegroundColor DarkGray
     }
 }
 
+# 2. ค้นหาแหล่งข้อมูล Web Server (Localhost -> Render -> GitHub / Local File)
+$apiUrls = @($WebUrl, "http://localhost:3000", "https://noir-cream-shop.onrender.com") | Select-Object -Unique
+$activeWebUrl = $null
+
+function Find-ActiveWebServer {
+    foreach ($u in $apiUrls) {
+        try {
+            $timeout = if ($u -match '^https://') { 25 } else { 3 }
+            $resp = Invoke-RestMethod -Uri "$u/api/sql/snapshot" -Method Get -TimeoutSec $timeout -ErrorAction Stop
+            if ($resp -and $resp.checksum) {
+                return $u
+            }
+        } catch {}
+    }
+    return $null
+}
+
+Write-Host "🌐 กำลังค้นหา Web Server (Localhost / Render)..." -ForegroundColor Cyan
+$activeWebUrl = Find-ActiveWebServer
+
 # 3. ซิงค์เริ่มต้น (สร้างฐานข้อมูล NoirCreamShop + ตารางครบทั้ง 16 ตาราง + Views + ข้อมูลล่าสุด)
-Write-Host "⏳ กำลังสร้างและซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance ..." -ForegroundColor Cyan
 $initialScript = $null
+$initialWebSnap = $null
 
 if ($activeWebUrl) {
     Write-Host "🌐 เชื่อมต่อ Web Server แบบ Realtime ที่: $activeWebUrl" -ForegroundColor Green
-    $initialScript = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 10
+    $timeout = if ($activeWebUrl -match '^https://') { 20 } else { 8 }
+    $instQuery = if ($activeInstance) { "?instance=$([uri]::EscapeDataString($activeInstance))" } else { "" }
+    $initialWebSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -Method Get -TimeoutSec $timeout
+    $initialScript = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec $timeout
 } elseif (Test-Path $localSqlFile) {
     Write-Host "📂 ใช้ไฟล์ฐานข้อมูลในเครื่อง: $localSqlFile" -ForegroundColor Yellow
     $initialScript = [System.IO.File]::ReadAllText($localSqlFile, [System.Text.Encoding]::UTF8)
 } else {
     Write-Host "☁️ ดึงสคริปต์ฐานข้อมูลล่าสุดจาก GitHub..." -ForegroundColor Yellow
-    $initialScript = Invoke-RestMethod -Uri "$githubRawSqlUrl?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -Method Get -TimeoutSec 10
+    $initialScript = Invoke-RestMethod -Uri "$githubRawSqlUrl?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -Method Get -TimeoutSec 15
 }
 
-Invoke-SqlScriptBatches -ScriptText $initialScript
-$ssmsState = Get-SsmsTablesState
-$lastSsmsChecksum = $ssmsState.Checksum
-$lastWebChecksum = $null
+if ($activeInstance -and $initialScript) {
+    Write-Host "⏳ กำลังซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance ..." -ForegroundColor Cyan
+    Invoke-SqlScriptBatches -ScriptText $initialScript
+    $ssmsState = Get-SsmsTablesState
+    $lastSsmsChecksum = $ssmsState.Checksum
+    Write-Host "🎉 ซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance สำเร็จเรียบร้อย!" -ForegroundColor Green
+    Write-Host "👉 ในโปรแกรม SSMS: คลิกขวาที่โฟลเดอร์ 'Databases' -> กด 'Refresh' จะพบฐานข้อมูล '$DatabaseName' ทันที" -ForegroundColor Yellow
+} else {
+    $lastSsmsChecksum = ""
+}
 
-if ($activeWebUrl) {
-    try {
-        $snap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot?instance=$([uri]::EscapeDataString($activeInstance))" -Method Get -TimeoutSec 5
-        $lastWebChecksum = $snap.checksum
-    } catch {}
+$lastWebChecksum = if ($initialWebSnap) { $initialWebSnap.checksum } else { $null }
+
+# หากข้อมูลบน Web ใหม่กว่าไฟล์ในเครื่อง/GitHub ให้บันทึกและ Push ทันทีตั้งแต่เริ่ม
+if ($initialWebSnap -and $initialScript) {
+    $diskChecksum = Get-LocalSnapshotChecksum
+    if ($initialWebSnap.checksum -ne $diskChecksum) {
+        Save-WebSnapshotFiles -WebSnap $initialWebSnap -ScriptText $initialScript
+        Push-DatabaseToGitHub -Reason "Startup Sync $($initialWebSnap.checksum)"
+    }
 }
 
 Write-Host ""
-Write-Host "🎉 ซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance สำเร็จเรียบร้อย!" -ForegroundColor Green
-Write-Host "👉 ในโปรแกรม SSMS: คลิกขวาที่โฟลเดอร์ 'Databases' -> กด 'Refresh' จะพบฐานข้อมูล '$DatabaseName' ทันที" -ForegroundColor Yellow
-Write-Host ""
-
 if ($Once) {
     exit 0
 }
 
-Write-Host "🔄 เริ่มโหมดซิงค์ข้อมูล 2 ทางแบบ Realtime (Web <-> SSMS $activeInstance + GitHub Auto-Sync) ทุกๆ $IntervalSeconds วินาที (กด Ctrl+C เพื่อหยุด)..." -ForegroundColor Cyan
+$modeDesc = if ($activeInstance) { "Web <-> SSMS ($activeInstance) + GitHub Auto-Sync" } else { "Web <-> GitHub Auto-Sync" }
+Write-Host "🔄 เริ่มโหมดซิงค์แบบ Realtime ($modeDesc) ทุกๆ $IntervalSeconds วินาที (กด Ctrl+C เพื่อหยุด)..." -ForegroundColor Cyan
 Write-Host ""
 
 $lastFileHash = if (Test-Path $localSqlFile) { (Get-FileHash $localSqlFile -Algorithm SHA256).Hash } else { "" }
+$loopCount = 0
 
 while ($true) {
     Start-Sleep -Seconds $IntervalSeconds
+    $loopCount++
     $now = (Get-Date).ToString("HH:mm:ss")
 
-    # ตรวจสอบการเชื่อมต่อ Web Server หากเพิ่งเปิด npm start
+    # ลองค้นหา SQL Server เป็นระยะหากตอนแรกยังไม่ได้เปิด
+    if (-not $activeInstance -and -not $GitHubOnly -and ($loopCount % 5 -eq 0)) {
+        $foundInst = Find-SqlInstance
+        if ($foundInst) {
+            $activeInstance = $foundInst
+            Write-Host "[$now] ✅ พบ SQL Server แล้ว: $activeInstance — กำลังซิงค์ฐานข้อมูลเริ่มต้น..." -ForegroundColor Green
+            if ($activeWebUrl) {
+                try {
+                    $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 10 -ErrorAction Stop
+                    Invoke-SqlScriptBatches -ScriptText $scriptText
+                    $ssmsState = Get-SsmsTablesState
+                    $lastSsmsChecksum = $ssmsState.Checksum
+                } catch {}
+            }
+        }
+    }
+
+    # ตรวจสอบการเชื่อมต่อ Web Server หากตอนแรกยังไม่พบ
     if (-not $activeWebUrl) {
-        foreach ($u in $apiUrls) {
-            try {
-                $testSnap = Invoke-RestMethod -Uri "$u/api/sql/snapshot" -Method Get -TimeoutSec 2 -ErrorAction Stop
-                if ($testSnap -and $testSnap.checksum) {
-                    $activeWebUrl = $u
-                    $lastWebChecksum = $testSnap.checksum
-                    Write-Host "[$now] 🌐 เชื่อมต่อ Web Server สำเร็จที่ $activeWebUrl" -ForegroundColor Green
-                    break
-                }
-            } catch {}
+        $activeWebUrl = Find-ActiveWebServer
+        if ($activeWebUrl) {
+            Write-Host "[$now] 🌐 เชื่อมต่อ Web Server สำเร็จที่ $activeWebUrl" -ForegroundColor Green
         }
     }
 
     if ($activeWebUrl) {
         try {
+            $reqTimeout = if ($activeWebUrl -match '^https://') { 10 } else { 4 }
+            $instQuery = if ($activeInstance) { "?instance=$([uri]::EscapeDataString($activeInstance))" } else { "" }
             # 1) ตรวจว่าหน้าเว็บมีการเปลี่ยนแปลงข้อมูลหรือไม่ (Web -> SSMS -> GitHub)
-            $webSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot?instance=$([uri]::EscapeDataString($activeInstance))" -Method Get -TimeoutSec 4 -ErrorAction Stop
+            $webSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -Method Get -TimeoutSec $reqTimeout -ErrorAction Stop
             if ($webSnap.checksum -ne $lastWebChecksum) {
-                $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 8 -ErrorAction Stop
-                Invoke-SqlScriptBatches -ScriptText $scriptText
-                if (Test-Path $baseDir) {
-                    [System.IO.File]::WriteAllText($localSqlFile, $scriptText, [System.Text.Encoding]::UTF8)
-                    $snapJson = ($webSnap | Select-Object instance, database, timestamp, checksum, counts, tables, views | ConvertTo-Json -Depth 8)
-                    [System.IO.File]::WriteAllText($localSnapshotFile, $snapJson, [System.Text.Encoding]::UTF8)
+                $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec $reqTimeout -ErrorAction Stop
+                if ($activeInstance) {
+                    Invoke-SqlScriptBatches -ScriptText $scriptText
+                    $ssmsState = Get-SsmsTablesState
+                    $lastSsmsChecksum = $ssmsState.Checksum
+                    Write-Host "[$now] ⚡ [Web -> SSMS] อัปเดตข้อมูลเข้า $activeInstance/$DatabaseName สำเร็จ (Checksum: $($webSnap.checksum))" -ForegroundColor Green
+                } else {
+                    Write-Host "[$now] ⚡ [Web Change] ตรวจพบการแก้ไขข้อมูลบนเว็บ (Checksum: $($webSnap.checksum))" -ForegroundColor Green
                 }
+                Save-WebSnapshotFiles -WebSnap $webSnap -ScriptText $scriptText
                 $lastWebChecksum = $webSnap.checksum
-                $ssmsState = Get-SsmsTablesState
-                $lastSsmsChecksum = $ssmsState.Checksum
-                Write-Host "[$now] ⚡ [Web -> SSMS] อัปเดตข้อมูลเข้า $activeInstance/$DatabaseName สำเร็จ (Checksum: $($webSnap.checksum))" -ForegroundColor Green
+                if (Test-Path $localSqlFile) { $lastFileHash = (Get-FileHash $localSqlFile -Algorithm SHA256).Hash }
                 Push-DatabaseToGitHub -Reason "Web Update $($webSnap.checksum)"
                 continue
             }
 
             # 2) ตรวจว่ามีการแก้ไขข้อมูลโดยตรงใน SSMS หรือไม่ (SSMS -> Web -> GitHub)
-            $currentSsms = Get-SsmsTablesState
-            if ($currentSsms.Checksum -ne $lastSsmsChecksum) {
-                $bodyJson = (@{
-                    instance = $activeInstance
-                    database = $DatabaseName
-                    tables   = $currentSsms.Tables
-                } | ConvertTo-Json -Depth 6 -Compress)
-                $pushResp = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/push" -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($bodyJson)) -ContentType "application/json; charset=utf-8" -TimeoutSec 8 -ErrorAction Stop
-                $lastSsmsChecksum = $currentSsms.Checksum
-                $lastWebChecksum = $pushResp.checksum
-                Write-Host "[$now] 🔄 [SSMS -> Web] ซิงค์ข้อมูลที่แก้ไขใน SSMS ขึ้นหน้าเว็บสำเร็จ! (Checksum: $($pushResp.checksum))" -ForegroundColor Magenta
-                $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 8 -ErrorAction SilentlyContinue
-                if ($scriptText -and (Test-Path $baseDir)) {
-                    [System.IO.File]::WriteAllText($localSqlFile, $scriptText, [System.Text.Encoding]::UTF8)
+            if ($activeInstance) {
+                $currentSsms = Get-SsmsTablesState
+                if ($currentSsms -and ($currentSsms.Checksum -ne $lastSsmsChecksum)) {
+                    $bodyJson = (@{
+                        instance = $activeInstance
+                        database = $DatabaseName
+                        tables   = $currentSsms.Tables
+                    } | ConvertTo-Json -Depth 6 -Compress)
+                    $pushResp = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/push" -Method Post -Body ([System.Text.Encoding]::UTF8.GetBytes($bodyJson)) -ContentType "application/json; charset=utf-8" -TimeoutSec 12 -ErrorAction Stop
+                    $lastSsmsChecksum = $currentSsms.Checksum
+                    $lastWebChecksum = $pushResp.checksum
+                    Write-Host "[$now] 🔄 [SSMS -> Web] ซิงค์ข้อมูลที่แก้ไขใน SSMS ขึ้นหน้าเว็บสำเร็จ! (Checksum: $($pushResp.checksum))" -ForegroundColor Magenta
+                    $freshSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot?instance=$([uri]::EscapeDataString($activeInstance))" -Method Get -TimeoutSec 10 -ErrorAction SilentlyContinue
+                    $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 10 -ErrorAction SilentlyContinue
+                    Save-WebSnapshotFiles -WebSnap $freshSnap -ScriptText $scriptText
+                    if (Test-Path $localSqlFile) { $lastFileHash = (Get-FileHash $localSqlFile -Algorithm SHA256).Hash }
+                    Push-DatabaseToGitHub -Reason "SSMS Update $($pushResp.checksum)"
                 }
-                Push-DatabaseToGitHub -Reason "SSMS Update $($pushResp.checksum)"
             }
         } catch {
             # หากเซิร์ฟเวอร์รีสตาร์ทหรือหยุดชั่วคราว
         }
-    } elseif (Test-Path $localSqlFile) {
+    } elseif ($activeInstance -and (Test-Path $localSqlFile)) {
         # โหมดเฝ้าดูไฟล์ NoirCreamShop_SQLServer.sql ในโฟลเดอร์
         $curHash = (Get-FileHash $localSqlFile -Algorithm SHA256).Hash
         if ($curHash -ne $lastFileHash) {
