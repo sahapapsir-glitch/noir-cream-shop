@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:16:18.310Z",
-  "checksum": "5ccbca6ca1890b04",
+  "timestamp": "2026-11-17T16:16:51.202Z",
+  "checksum": "9c6337a1b845967c",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,10 +12,10 @@
     "address": 22,
     "product": 11,
     "product_variant": 47,
-    "cart_item": 1,
-    "order": 0,
-    "order_item": 0,
-    "payment": 0,
+    "cart_item": 0,
+    "order": 1,
+    "order_item": 1,
+    "payment": 1,
     "shipment": 0,
     "review": 0,
     "wishlist": 0,
@@ -703,8 +703,8 @@
         "category": "เสื้อยืด",
         "description": "เนื้อผ้าคอตตอน",
         "status": "active",
-        "stock": 60,
-        "quantity": 60,
+        "stock": 58,
+        "quantity": 58,
         "price": 790,
         "supplier_id": 2,
         "employee_id": 1,
@@ -922,8 +922,8 @@
         "color": "ขาว กรมท่า",
         "color_hex": "#eaeaef",
         "price": 790,
-        "stock": 15,
-        "stock_quantity": 15,
+        "stock": 13,
+        "stock_quantity": 13,
         "sku": "SKU-28-M-ขาวกรมท่า"
       },
       {
@@ -1367,26 +1367,68 @@
         "sku": "SKU-38-XL-ดำ"
       }
     ],
-    "cart_item": [
+    "cart_item": [],
+    "order": [
       {
-        "cart_id": 9,
+        "order_id": 8,
         "customer_id": 22,
+        "product_id": 28,
+        "order_date": "2026-11-17 16:16:50",
+        "status": "pending",
+        "subtotal": 1580,
+        "discount": 0,
+        "shipping_fee": 0,
+        "total_price": 1580,
+        "coupon_code": null,
+        "ship_name": "Jiraporn konsoi",
+        "ship_phone": "0819551245",
+        "ship_address": "11 หมู่บ้านสัมกร กรุงเทพกรีฑรา ทับช้าง สะพานสูง กรุงเทพมหานคร 10250"
+      }
+    ],
+    "order_item": [
+      {
+        "order_item_id": 9,
+        "order_id": 8,
         "variant_id": 183,
         "product_id": 28,
         "quantity": 2,
+        "unit_price": 790,
         "total_price": 1580
       }
     ],
-    "order": [],
-    "order_item": [],
-    "payment": [],
+    "payment": [
+      {
+        "payment_id": 8,
+        "order_id": 8,
+        "method": "โอนผ่านธนาคาร",
+        "status": "pending",
+        "amount": 1580,
+        "paid_at": null
+      }
+    ],
     "shipment": [],
     "review": [],
     "wishlist": [],
     "review_like": []
   },
   "views": {
-    "Orders": [],
-    "Order_Detail": []
+    "Orders": [
+      {
+        "order_id": 8,
+        "customer_id": 22,
+        "order_date": "2026-11-17 16:16:50",
+        "total_amount": 1580,
+        "order_status": "pending"
+      }
+    ],
+    "Order_Detail": [
+      {
+        "order_detail_id": 9,
+        "order_id": 8,
+        "product_id": 28,
+        "quantity": 2,
+        "unit_price": 790
+      }
+    ]
   }
 }
