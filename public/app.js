@@ -27,6 +27,7 @@ const SHIP_STATUS = { preparing: 'เตรียมจัดส่ง', shipped
 async function api(method, url, body) {
   const r = await fetch(url, {
     method,
+    cache: 'no-store',
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined
   });
@@ -1391,11 +1392,28 @@ adminTabs.orders = async () => {
 
 adminTabs.customers = async () => {
   const { customers } = await api('GET', '/api/admin/customers');
+  const q = ($('#custSearch')?.value || '').trim().toLowerCase();
+  const filtered = q
+    ? customers.filter((c) =>
+        `${c.customer_id} ${c.first_name} ${c.last_name} ${c.email} ${c.phone || ''} ${c.address || ''}`
+          .toLowerCase()
+          .includes(q)
+      )
+    : customers;
   $('#tab').innerHTML = `
     <div class="panel table-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <h3 style="margin:0">👥 รายชื่อลูกค้าทั้งหมด (${customers.length} บัญชี)</h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="custSearch" type="search" placeholder="ค้นหาชื่อ / อีเมล / เบอร์..." value="${esc(q)}" oninput="A.filterCustomers()" style="padding:7px 12px;border:1px solid #ddd;border-radius:8px;min-width:220px">
+          <button type="button" class="btn ghost sm" onclick="A.tab('customers')">🔄 รีเฟรชรายชื่อ</button>
+        </div>
+      </div>
       <table>
         <tr><th># (Customer_ID)</th><th>ชื่อ</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>แอดมินดูแล (FK)</th><th>สมัครเมื่อ</th><th>ออเดอร์</th><th>ยอดซื้อ</th></tr>
-        ${customers.map((c) => `<tr><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${esc(c.email)}</td><td>${esc(c.phone || '-')}</td><td>${esc(c.address || '-')}</td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td>${dt(c.created_at)}</td><td>${c.orders}</td><td>${money(c.spent)}</td></tr>`).join('')}
+        ${filtered.length
+          ? filtered.map((c) => `<tr data-cust-row="${esc((c.customer_id + ' ' + c.first_name + ' ' + c.last_name + ' ' + c.email + ' ' + (c.phone || '') + ' ' + (c.address || '')).toLowerCase())}"><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${esc(c.email)}</td><td>${esc(c.phone || '-')}</td><td>${esc(c.address || '-')}</td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td>${dt(c.created_at)}</td><td>${c.orders}</td><td>${money(c.spent)}</td></tr>`).join('')
+          : '<tr><td colspan="9" class="muted" style="text-align:center;padding:20px">ไม่พบข้อมูลลูกค้า</td></tr>'}
       </table>
     </div>
   `;
@@ -2277,6 +2295,13 @@ const A = window.A = {
       $('#ghTokenModal')?.remove();
       toast(`ตั้งค่า GitHub Token และซิงค์ฐานข้อมูลสำเร็จ!${github.lastCommitSha ? ` [${github.lastCommitSha}]` : ''}`);
     });
+  },
+
+  filterCustomers() {
+    const q = ($('#custSearch')?.value || '').trim().toLowerCase();
+    $$('[data-cust-row]').forEach((tr) => {
+      tr.style.display = !q || tr.dataset.custRow.includes(q) ? '' : 'none';
+    });
   }
 };
 
@@ -2312,6 +2337,11 @@ function initRealtimeSqlStream() {
         if (location.hash.startsWith('#/admin') && adminTab === 'sql') {
           const { snapshot } = await api('GET', '/api/sql/status');
           updateLiveSqlExplorerDom(snapshot);
+        } else if (location.hash.startsWith('#/admin') && ['customers', 'orders', 'dash'].includes(adminTab)) {
+          const activeTag = document.activeElement?.tagName;
+          if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+            await adminTabs[adminTab]?.();
+          }
         } else if (data.source === 'ssms') {
           // หากเป็นการแก้ไขมาจากโปรแกรม SSMS บนเครื่อง ให้รีเฟรชหน้าเว็บอัตโนมัติ
           await loadCart();

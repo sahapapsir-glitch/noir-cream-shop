@@ -37,7 +37,14 @@ const wrap = (fn) => async (req, res) => {
       !req.path.startsWith('/api/logout')
     ) {
       sqlSync.notifyChange(`${req.method} ${req.path}`, 'web');
-      if (req.path.startsWith('/api/admin/') && sqlSync.getGitHubStatus().connected) {
+      const shouldAwaitGitHub =
+        req.path.startsWith('/api/admin/') ||
+        req.path === '/api/register' ||
+        req.path === '/api/checkout' ||
+        req.path.startsWith('/api/addresses') ||
+        req.path.startsWith('/api/me') ||
+        req.path.startsWith('/api/orders/');
+      if (shouldAwaitGitHub && sqlSync.getGitHubStatus().connected) {
         await Promise.race([
           sqlSync.syncToGitHubNow(`${req.method} ${req.path}`).catch(() => null),
           new Promise((r) => setTimeout(r, 4500))
