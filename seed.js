@@ -1,15 +1,26 @@
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('./db');
 const { createRealtimeSqlManager, restoreFromGitHubIfNewer } = require('./mssql-sync');
 
+const SNAPSHOT_FILE_PATH = path.join(__dirname, 'db-snapshot.json');
 const hash = (p) => bcrypt.hashSync(p, 10);
 
 (async () => {
+  const hadSnapshotBeforeSeed = fs.existsSync(SNAPSHOT_FILE_PATH);
   // ดึงข้อมูลล่าสุดจาก GitHub อัตโนมัติ (กรณีเซิร์ฟเวอร์ตื่นจากโหมด Sleep บน Render)
   const restored = await restoreFromGitHubIfNewer(db, false);
   if (restored?.restored) {
     console.log(`☁️ กู้คืนข้อมูลล่าสุดจาก GitHub สำเร็จ (Checksum: ${restored.checksum}, เวลา: ${restored.timestamp})`);
   }
+
+  const alreadyInitialized = Boolean(
+    hadSnapshotBeforeSeed ||
+    restored?.restored ||
+    db.prepare('SELECT COUNT(*) c FROM product').get().c > 0 ||
+    db.prepare('SELECT COUNT(*) c FROM customer').get().c > 0
+  );
 
   // ผู้ดูแลระบบ 5 บัญชี (สร้างก่อนเพื่อให้มี admin_id อ้างอิงใน supplier และ customer ตาม ER)
   const ADMINS = [
@@ -36,7 +47,8 @@ const hash = (p) => bcrypt.hashSync(p, 10);
   const defaultAdminId = db.prepare('SELECT admin_id FROM admin ORDER BY admin_id LIMIT 1').get()?.admin_id || 1;
 
 
-// พนักงาน / ซัพพลายเออร์ (สร้างหากยังไม่มี)
+if (!alreadyInitialized) {
+// พนักงาน / ซัพพลายเออร์ (สร้างเฉพาะตอนเริ่มต้นร้านใหม่)
 if (db.prepare('SELECT COUNT(*) c FROM employee').get().c === 0) {
   const emp = db.prepare('INSERT INTO employee (first_name,last_name,email,phone,position,address) VALUES (?,?,?,?,?,?)');
   emp.run('สมศรี', 'ใจดี', 'somsri@shop.com', '081-111-1111', 'ผู้จัดการฝ่ายจัดซื้อ', '123 ถนนสุขุมวิท เขตวัฒนา กรุงเทพมหานคร');
@@ -327,6 +339,11 @@ for (const [name, cat, desc, supplier, employee, featured, shape, price, sizes, 
   }
 }
 console.log('สต็อกสินค้าครบทั้ง 4 หมวดหมู่ พร้อมจำหน่ายเรียบร้อยแล้ว');
+} else {
+  const pCount = db.prepare('SELECT COUNT(*) c FROM product').get().c;
+  const cCount = db.prepare('SELECT COUNT(*) c FROM customer').get().c;
+  console.log(`✅ ใช้ข้อมูลฐานข้อมูลล่าสุดที่มีอยู่แล้ว (สินค้า ${pCount} รายการ, ลูกค้า ${cCount} บัญชี) — ไม่สร้างข้อมูลที่ถูกลบซ้ำ`);
+}
 
 createRealtimeSqlManager(db).notifyChange('seed', 'seed');
 
@@ -337,5 +354,6 @@ for (const a of ADMINS) {
   console.log(`  #${a.id} ${a.name} — ${a.email}`);
 }
 console.log('ลูกค้า (เดโม่): demo@shop.com / demo1234');
-console.log(`ลูกค้าตัวอย่าง (${FAKE_CUSTOMERS.length} บัญชี): พร้อมใช้งาน (รหัสผ่านตามลำดับ Customer01# ถึง Customer20#)`);
+const totalCustomers = db.prepare('SELECT COUNT(*) c FROM customer').get().c;
+console.log(`ลูกค้าในระบบทั้งหมด (${totalCustomers} บัญชี): พร้อมใช้งาน`);
 })();
