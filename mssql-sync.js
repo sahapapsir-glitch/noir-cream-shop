@@ -12,16 +12,27 @@ const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const DEFAULT_INSTANCE = process.env.MSSQL_SERVER || '.\\SQLEXPRESS01';
 const DATABASE_NAME = process.env.MSSQL_DATABASE || 'NoirCreamShop';
 
-function getGitHubToken() {
-  if (process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN.trim()) {
-    return process.env.GITHUB_TOKEN.trim();
-  }
+function getGitHubTokenInfo() {
+  const envTok = (
+    process.env.GITHUB_TOKEN ||
+    process.env.github_token ||
+    process.env.GH_TOKEN ||
+    process.env.gh_token ||
+    ''
+  ).trim();
+  let fileTok = '';
   try {
     if (fs.existsSync(TOKEN_FILE_PATH)) {
-      return fs.readFileSync(TOKEN_FILE_PATH, 'utf8').trim();
+      fileTok = fs.readFileSync(TOKEN_FILE_PATH, 'utf8').trim();
     }
   } catch {}
-  return '';
+  if (fileTok) return { token: fileTok, source: 'file' };
+  if (envTok) return { token: envTok, source: 'env' };
+  return { token: '', source: 'none' };
+}
+
+function getGitHubToken() {
+  return getGitHubTokenInfo().token;
 }
 
 function setGitHubToken(token) {
@@ -29,6 +40,7 @@ function setGitHubToken(token) {
   if (!clean) {
     try { if (fs.existsSync(TOKEN_FILE_PATH)) fs.unlinkSync(TOKEN_FILE_PATH); } catch {}
     delete process.env.GITHUB_TOKEN;
+    delete process.env.github_token;
     return '';
   }
   process.env.GITHUB_TOKEN = clean;
@@ -834,12 +846,14 @@ function createRealtimeSqlManager(db) {
     syncCount: 0
   };
 
+  const initTok = getGitHubTokenInfo();
   let githubStatus = {
-    connected: Boolean(getGitHubToken() || (hasLocalGitRepo() && !isRenderEnvironment())),
+    connected: Boolean(initTok.token || (hasLocalGitRepo() && !isRenderEnvironment())),
     repo: GITHUB_REPO,
     branch: GITHUB_BRANCH,
-    mode: getGitHubToken() ? 'github-api' : (hasLocalGitRepo() && !isRenderEnvironment() ? 'local-git' : 'token-needed'),
-    hasToken: Boolean(getGitHubToken()),
+    mode: initTok.token ? 'github-api' : (hasLocalGitRepo() && !isRenderEnvironment() ? 'local-git' : 'token-needed'),
+    hasToken: Boolean(initTok.token),
+    tokenSource: initTok.source,
     hasLocalGit: hasLocalGitRepo(),
     isRender: isRenderEnvironment(),
     syncing: false,
@@ -850,10 +864,12 @@ function createRealtimeSqlManager(db) {
   };
 
   function refreshGitHubCapability() {
-    const hasTok = Boolean(getGitHubToken());
+    const tokInfo = getGitHubTokenInfo();
+    const hasTok = Boolean(tokInfo.token);
     const hasGit = hasLocalGitRepo();
     const onRender = isRenderEnvironment();
     githubStatus.hasToken = hasTok;
+    githubStatus.tokenSource = tokInfo.source;
     githubStatus.hasLocalGit = hasGit;
     githubStatus.isRender = onRender;
     githubStatus.connected = hasTok || (hasGit && !onRender);

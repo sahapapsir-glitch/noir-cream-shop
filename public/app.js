@@ -1146,7 +1146,7 @@ pages.admin = async () => {
           <span class="sql-pulse-dot"></span>
           <span id="githubHeaderText">☁️ GitHub Auto-Sync</span>
         </button>
-        <button type="button" class="btn ghost sm" onclick="A.setupGitHubToken()" title="ตั้งค่า GitHub Token เพื่อให้ Render Cloud ซิงค์ขึ้น GitHub อัตโนมัติ">🔑 ตั้งค่า GitHub Token</button>
+        <button type="button" class="btn ghost sm" id="githubTokenBtn" onclick="A.setupGitHubToken()" title="ตั้งค่า GitHub Token เพื่อให้ Render Cloud ซิงค์ขึ้น GitHub อัตโนมัติ">🔑 ตั้งค่า GitHub Token</button>
       </div>
       <button class="btn danger sm" onclick="A.clearAllStock()">⚠️ ล้างสต็อกสินค้าทั้งหมด</button>
     </div>
@@ -2156,6 +2156,18 @@ const A = window.A = {
     try {
       const gh = ghData || (await api('GET', '/api/github/status')).github;
       const txt = $('#githubHeaderText');
+      const tokBtn = $('#githubTokenBtn');
+      if (tokBtn && gh) {
+        if (gh.tokenSource === 'env') {
+          tokBtn.innerHTML = '✅ Token ถาวร (Render Env)';
+          tokBtn.title = 'เชื่อมต่อ Token จาก Render Environment ถาวรแล้ว ไม่ต้องกรอกซ้ำ';
+        } else if (gh.tokenSource === 'file') {
+          tokBtn.innerHTML = '⚠️ Token ชั่วคราว (ตั้งถาวร)';
+          tokBtn.title = 'ตอนนี้ใช้ Token ชั่วคราว (จะหายเมื่อรีสตาร์ท Render) คลิกเพื่อดูวิธีตั้งแบบถาวร';
+        } else {
+          tokBtn.innerHTML = '🔑 ตั้งค่า GitHub Token';
+        }
+      }
       if (!txt || !gh) return;
       if (gh.syncing) {
         txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
@@ -2209,25 +2221,31 @@ const A = window.A = {
     const modal = document.createElement('div');
     modal.id = 'ghTokenModal';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(20,20,20,.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    const statusText = gh.tokenSource === 'env'
+      ? '✅ เชื่อมต่อถาวรจาก Render Environment (<code>GITHUB_TOKEN</code>) แล้ว — ไม่ต้องกรอกซ้ำเมื่อรีเว็บ'
+      : gh.tokenSource === 'file'
+        ? '⚠️ ใช้ Token ชั่วคราวจากหน้าเว็บ (<b>จะหายเมื่อกด Deploy/รีสตาร์ท Render</b> — แนะนำให้นำไปใส่ใน Render → Environment → <code>GITHUB_TOKEN</code> เพื่อใช้ถาวร)'
+        : (gh.connected ? `✅ เชื่อมต่อแล้ว (${esc(gh.mode)})` : '⚠️ ยังไม่ได้ตั้งค่า Token บนเซิร์ฟเวอร์นี้');
     modal.innerHTML = `
       <div class="box" style="max-width:540px;width:100%;padding:24px;position:relative;max-height:90vh;overflow:auto">
         <button type="button" onclick="$('#ghTokenModal')?.remove()" style="position:absolute;top:12px;right:14px;border:none;background:none;font-size:20px;cursor:pointer">✕</button>
         <h3 style="margin:0 0 8px">☁️ ตั้งค่า GitHub Auto-Sync</h3>
         <p class="muted" style="margin:0 0 12px;font-size:13px">
-          สถานะปัจจุบัน: <b>${gh.connected ? '✅ เชื่อมต่อแล้ว (' + esc(gh.mode) + ')' : '⚠️ ยังไม่ได้ตั้งค่า Token บนเซิร์ฟเวอร์นี้'}</b>
+          สถานะปัจจุบัน: ${statusText}
           ${gh.lastCommitSha ? ` · Commit ล่าสุด: <code>${esc(gh.lastCommitSha)}</code>` : ''}
         </p>
         ${gh.lastError ? `<div style="background:#fff5f5;border:1px solid #f5c2c7;color:#842029;padding:8px 10px;border-radius:8px;font-size:12px;margin-bottom:12px">ข้อผิดพลาดล่าสุด: ${esc(gh.lastError)}</div>` : ''}
         <div style="background:var(--cream,#FAF7F2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px;line-height:1.6">
-          <b>วิธีทำ (30 วินาที):</b><br>
-          1. กดปุ่มด้านล่างเพื่อเปิดหน้า GitHub (ระบบติ๊กสิทธิ์ <code>repo</code> ไว้ให้แล้ว)<br>
-          2. กดปุ่มเขียว <b>Generate token</b> แล้วคัดลอกรหัส (<code>ghp_...</code>)<br>
-          3. นำมาวางในช่องด้านล่าง หรือเพิ่มใน Render → <b>Environment</b> ชื่อ <code>GITHUB_TOKEN</code> (แนะนำให้ใส่ใน Render ด้วยเพื่อใช้ได้ถาวรแม้เซิร์ฟเวอร์รีสตาร์ท)
+          <b>วิธีตั้งค่าแบบถาวร (ใส่ครั้งเดียว ไม่ต้องกรอกซ้ำหลังรีเว็บ):</b><br>
+          1. เปิด <b>Render Dashboard</b> → โปรเจกต์ <code>noir-cream-shop</code> → แท็บ <b>Environment</b><br>
+          2. กด <b>+ Add Environment Variable</b> ใส่ KEY: <code>GITHUB_TOKEN</code> และ VALUE เป็น Token ของคุณ<br>
+          3. กด <b>Save, rebuild, and deploy</b><br>
+          <span class="muted">(หากใส่ผ่านช่องด้านล่างจะเป็นแบบชั่วคราว ใช้ได้ทันทีแต่จะถูกล้างเมื่อรีสตาร์ท Render)</span>
           <div style="margin-top:8px">
             <a href="${createUrl}" target="_blank" rel="noopener" class="btn sm" style="display:inline-flex;align-items:center;gap:6px">🔗 เปิดหน้าสร้าง GitHub Token (ตั้งสิทธิ์ให้อัตโนมัติ)</a>
           </div>
         </div>
-        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px">GitHub Personal Access Token</label>
+        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px">GitHub Personal Access Token (สำหรับใช้งานทันทีรอบนี้)</label>
         <input id="ghTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx หรือ github_pat_..." style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;margin-bottom:14px;font-family:monospace">
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between">
           <button type="button" class="btn ghost sm" onclick="A.pullGitHubNow()">⬇️ ดึงข้อมูลล่าสุดจาก GitHub</button>
