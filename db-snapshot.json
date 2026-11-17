@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:07:41.140Z",
-  "checksum": "46722dfc6de41a31",
+  "timestamp": "2026-11-17T17:08:12.984Z",
+  "checksum": "1f6f786d4c3ef17c",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1039,7 +1039,7 @@
         "supplier_id": 1,
         "employee_id": 1,
         "image_url": "https://static.nike.com/a/images/c_limit,w_2880/f_auto,q_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/b41f11db-eef3-41be-beac-f0520a949b65/AS+KB+M+NK+DF+TEE+M90+SSNL2+FH.png",
-        "is_featured": 1,
+        "is_featured": 0,
         "created_at": "2026-11-17 17:07:41"
       }
     ],
