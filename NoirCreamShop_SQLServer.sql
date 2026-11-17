@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 4e796cb2bc151a96 | Updated: 2026-11-17T16:18:46.193Z
+-- Checksum: 4e8b3e7a00db2122 | Updated: 2026-11-17T16:18:51.925Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -478,6 +478,11 @@ SET IDENTITY_INSERT dbo.payment OFF;
 SET IDENTITY_INSERT dbo.shipment ON;
 INSERT INTO dbo.shipment (shipment_id, tracking_no, payment_id, order_id, product_id, carrier, status, shipping_address, shipped_at) VALUES (5, N'TH1212312121', 8, 8, 28, N'Flash', N'delivered', N'11 หมู่บ้านสัมกร กรุงเทพกรีฑรา ทับช้าง สะพานสูง กรุงเทพมหานคร 10250', '2026-11-17 16:17:50');
 SET IDENTITY_INSERT dbo.shipment OFF;
+
+-- ตาราง dbo.review (1 รายการ)
+SET IDENTITY_INSERT dbo.review ON;
+INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (5, 22, 28, N'จิราภรณ์', N'ธาราสืบ', 5, N'👍👍เสื้อสวย', N'2026-11-17', '2026-11-17 16:18:51');
+SET IDENTITY_INSERT dbo.review OFF;
 
 COMMIT TRANSACTION;
 SET NOCOUNT OFF;
