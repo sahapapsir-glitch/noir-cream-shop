@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 44496c31cf747877 | Updated: 2026-11-17T16:28:07.561Z
+-- Checksum: cc2aacc5ef6e505d | Updated: 2026-11-17T16:28:52.736Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -400,7 +400,7 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (39, N'Stripe Rugby Polo', N'เสื้อแขนยาว', N'Polo Ralph Lauren', N'active', 100, 100, 4800, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg', 0, '2026-11-17 16:18:00');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (40, N'Lee ON THE GO Women’s T-Shirt Pink', N'เสื้อยืด', N'เสื้อยืดแขนสั้นผู้หญิง คอลเลคชั่น On The Go Boyfriend Fit สีชมพู ผลิตจาก คอตตอน 100% ระบายอากาศได้ดี สวมใส่สบาย ไม่ร้อน ให้สัมผัสที่นุ่มและสบาย เหมาะกับการสวมใส่ในชีวิตประจำวัน เนื้อผ้าให้ความรู้สึกเป็นธรรมชาติและระบายอากาศได้ดี', N'active', 75, 75, 690, 2, 1, N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75', 0, '2026-11-17 16:18:46');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (41, N'Signature Classic Half Zip Sweatshirt', N'เสื้อแขนยาว', N'brand:Fear of God ESSENTIALS', N'active', 120, 120, 5888, 1, 2, N'https://is8.revolveassets.com/images/p4/n/z/FALF-MK136_V1.jpg', 0, '2026-11-17 16:21:43');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (42, N'maison mihara yasuhiro', N'เสื้อยืด', N'วัสดุ ผ้าฝ้าย 100% เสื้อยืดตัวนี้มีรายละเอียดเป็นลายพิมพ์กราฟิกแบบวาดเล่นของลีออน ซึ่งมีลักษณะเหมือนภาพวาดด้วยมือ', N'active', 15, 15, 11900, 2, 1, N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 1, '2026-11-17 16:27:24');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (42, N'maison mihara yasuhiro', N'เสื้อยืด', N'วัสดุ ผ้าฝ้าย 100% เสื้อยืดตัวนี้มีรายละเอียดเป็นลายพิมพ์กราฟิกแบบวาดเล่นของลีออน ซึ่งมีลักษณะเหมือนภาพวาดด้วยมือ', N'active', 15, 15, 11900, 2, 1, N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 0, '2026-11-17 16:27:24');
 SET IDENTITY_INSERT dbo.product OFF;
 
 -- ตาราง dbo.product_variant (61 รายการ)
