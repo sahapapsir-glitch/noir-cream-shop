@@ -55,8 +55,8 @@ const FAKE_CUSTOMERS = [
     phone: '081-234-5678',
     password: 'Customer01#',
     admin_id: 1,
-    address: '12/3 หมู่ 4 ถนนสุขุมวิท ตำบลคลองเตย อำเภอคลองเตย กรุงเทพมหานคร 10110',
-    addr_parts: { house_no: '12/3', village: 'หมู่ 4', road: 'ถนนสุขุมวิท', subdistrict: 'คลองเตย', district: 'คลองเตย', province: 'กรุงเทพมหานคร', postal_code: '10110' }
+    address: 'เลขที่ 128/45 ชั้น 14 ห้อง 1402 อาคารพาร์ควิว เอ็กเซ็กคิวทีฟ เรสซิเดนซ์ ซอยสุขุมวิท 55 (ทองหล่อ 13) ถนนสุขุมวิท แขวงคลองตันเหนือ เขตวัฒนา กรุงเทพมหานคร 10110',
+    addr_parts: { house_no: 'เลขที่ 128/45 ชั้น 14 ห้อง 1402', village: 'อาคารพาร์ควิว เอ็กเซ็กคิวทีฟ เรสซิเดนซ์', road: 'ซอยสุขุมวิท 55 (ทองหล่อ 13) ถนนสุขุมวิท', subdistrict: 'คลองตันเหนือ', district: 'วัฒนา', province: 'กรุงเทพมหานคร', postal_code: '10110' }
   },
   {
     first_name: 'กิตติศักดิ์',
@@ -65,8 +65,8 @@ const FAKE_CUSTOMERS = [
     phone: '082-345-6789',
     password: 'Customer02#',
     admin_id: 2,
-    address: '88/15 หมู่บ้านพฤกษา ถนนพหลโยธิน ตำบลคลองหนึ่ง อำเภอคลองหลวง ปทุมธานี 12120',
-    addr_parts: { house_no: '88/15', village: 'หมู่บ้านพฤกษา', road: 'ถนนพหลโยธิน', subdistrict: 'คลองหนึ่ง', district: 'คลองหลวง', province: 'ปทุมธานี', postal_code: '12120' }
+    address: 'เลขที่ 88/154 โซน C ซอย 9/2 หมู่บ้านพฤกษาวิลเลจ เดอะซีซัน คลอง 1 หมู่ 6 ซอยรังสิต-นครนายก 32 ถนนพหลโยธิน ตำบลคลองหนึ่ง อำเภอคลองหลวง จังหวัดปทุมธานี 12120',
+    addr_parts: { house_no: 'เลขที่ 88/154 โซน C ซอย 9/2', village: 'หมู่บ้านพฤกษาวิลเลจ เดอะซีซัน คลอง 1 หมู่ 6', road: 'ซอยรังสิต-นครนายก 32 ถนนพหลโยธิน', subdistrict: 'คลองหนึ่ง', district: 'คลองหลวง', province: 'ปทุมธานี', postal_code: '12120' }
   },
   {
     first_name: 'ชลธิชา',
@@ -75,8 +75,8 @@ const FAKE_CUSTOMERS = [
     phone: '083-456-7890',
     password: 'Customer03#',
     admin_id: 3,
-    address: '45/9 หมู่ 2 ถนนงามวงศ์วาน ตำบลบางเขน อำเภอเมืองนนทบุรี นนทบุรี 11000',
-    addr_parts: { house_no: '45/9', village: 'หมู่ 2', road: 'ถนนงามวงศ์วาน', subdistrict: 'บางเขน', district: 'เมืองนนทบุรี', province: 'นนทบุรี', postal_code: '11000' }
+    address: 'เลขที่ 45/92 ชั้น 8 อาคาร B ห้อง 815 คอนโดแอสปาย งามวงศ์วาน หมู่ 2 ซอยงามวงศ์วาน 18 (จุฬาเกษม) ถนนงามวงศ์วาน ตำบลบางเขน อำเภอเมืองนนทบุรี จังหวัดนนทบุรี 11000',
+    addr_parts: { house_no: 'เลขที่ 45/92 ชั้น 8 อาคาร B ห้อง 815', village: 'คอนโดแอสปาย งามวงศ์วาน หมู่ 2', road: 'ซอยงามวงศ์วาน 18 (จุฬาเกษม) ถนนงามวงศ์วาน', subdistrict: 'บางเขน', district: 'เมืองนนทบุรี', province: 'นนทบุรี', postal_code: '11000' }
   },
   {
     first_name: 'วรเมธ',
@@ -85,8 +85,8 @@ const FAKE_CUSTOMERS = [
     phone: '084-567-8901',
     password: 'Customer04#',
     admin_id: 4,
-    address: '102/4 หมู่บ้านศุภาลัย ถนนเพชรเกษม ตำบลบางหว้า อำเภอภาษีเจริญ กรุงเทพมหานคร 10160',
-    addr_parts: { house_no: '102/4', village: 'หมู่บ้านศุภาลัย', road: 'ถนนเพชรเกษม', subdistrict: 'บางหว้า', district: 'ภาษีเจริญ', province: 'กรุงเทพมหานคร', postal_code: '10160' }
+    address: 'เลขที่ 102/48 ซอย 15 เฟส 3 หมู่บ้านศุภาลัย พรีมา วิลลา เพชรเกษม ซอยเพชรเกษม 48 แยก 16 ถนนเพชรเกษม แขวงบางหว้า เขตภาษีเจริญ กรุงเทพมหานคร 10160',
+    addr_parts: { house_no: 'เลขที่ 102/48 ซอย 15 เฟส 3', village: 'หมู่บ้านศุภาลัย พรีมา วิลลา เพชรเกษม', road: 'ซอยเพชรเกษม 48 แยก 16 ถนนเพชรเกษม', subdistrict: 'บางหว้า', district: 'ภาษีเจริญ', province: 'กรุงเทพมหานคร', postal_code: '10160' }
   },
   {
     first_name: 'พิชญา',
@@ -95,8 +95,8 @@ const FAKE_CUSTOMERS = [
     phone: '085-678-9012',
     password: 'Customer05#',
     admin_id: 5,
-    address: '77/2 หมู่ 6 ถนนนิมมานเหมินท์ ตำบลสุเทพ อำเภอเมืองเชียงใหม่ เชียงใหม่ 50200',
-    addr_parts: { house_no: '77/2', village: 'หมู่ 6', road: 'ถนนนิมมานเหมินท์', subdistrict: 'สุเทพ', district: 'เมืองเชียงใหม่', province: 'เชียงใหม่', postal_code: '50200' }
+    address: 'เลขที่ 77/25 ชั้น 5 ห้อง 503 โครงการเดอะนิมมาน พรีเมียม คอนโดมิเนียม หมู่ 6 ซอยนิมมานเหมินท์ 9 ถนนนิมมานเหมินท์ ตำบลสุเทพ อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่ 50200',
+    addr_parts: { house_no: 'เลขที่ 77/25 ชั้น 5 ห้อง 503', village: 'โครงการเดอะนิมมาน พรีเมียม คอนโดมิเนียม หมู่ 6', road: 'ซอยนิมมานเหมินท์ 9 ถนนนิมมานเหมินท์', subdistrict: 'สุเทพ', district: 'เมืองเชียงใหม่', province: 'เชียงใหม่', postal_code: '50200' }
   },
   {
     first_name: 'ธนาธิป',
@@ -105,8 +105,8 @@ const FAKE_CUSTOMERS = [
     phone: '086-789-0123',
     password: 'Customer06#',
     admin_id: 1,
-    address: '215/8 หมู่ 3 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมืองชลบุรี ชลบุรี 20130',
-    addr_parts: { house_no: '215/8', village: 'หมู่ 3', road: 'ถนนลงหาดบางแสน', subdistrict: 'แสนสุข', district: 'เมืองชลบุรี', province: 'ชลบุรี', postal_code: '20130' }
+    address: 'เลขที่ 215/84 ซอย 4 บล็อค B หมู่บ้านคาซ่า แกรนด์ มิตรสัมพันธ์-บางแสน หมู่ 3 ซอยมิตรสัมพันธ์ 13 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมืองชลบุรี จังหวัดชลบุรี 20130',
+    addr_parts: { house_no: 'เลขที่ 215/84 ซอย 4 บล็อค B', village: 'หมู่บ้านคาซ่า แกรนด์ มิตรสัมพันธ์-บางแสน หมู่ 3', road: 'ซอยมิตรสัมพันธ์ 13 ถนนลงหาดบางแสน', subdistrict: 'แสนสุข', district: 'เมืองชลบุรี', province: 'ชลบุรี', postal_code: '20130' }
   },
   {
     first_name: 'ศิริพร',
@@ -115,8 +115,8 @@ const FAKE_CUSTOMERS = [
     phone: '087-890-1234',
     password: 'Customer07#',
     admin_id: 2,
-    address: '64/1 หมู่บ้านลดาวัลย์ ถนนศรีนครินทร์ ตำบลบางแก้ว อำเภอบางพลี สมุทรปราการ 10540',
-    addr_parts: { house_no: '64/1', village: 'หมู่บ้านลดาวัลย์', road: 'ถนนศรีนครินทร์', subdistrict: 'บางแก้ว', district: 'บางพลี', province: 'สมุทรปราการ', postal_code: '10540' }
+    address: 'เลขที่ 64/119 ซอยลดาวัลย์ 8 โซนการ์เดน หมู่บ้านลดาวัลย์ ศรีนครินทร์ โครงการ 2 หมู่ 5 ซอยศรีด่าน 22 ถนนศรีนครินทร์ ตำบลบางแก้ว อำเภอบางพลี จังหวัดสมุทรปราการ 10540',
+    addr_parts: { house_no: 'เลขที่ 64/119 ซอยลดาวัลย์ 8 โซนการ์เดน', village: 'หมู่บ้านลดาวัลย์ ศรีนครินทร์ โครงการ 2 หมู่ 5', road: 'ซอยศรีด่าน 22 ถนนศรีนครินทร์', subdistrict: 'บางแก้ว', district: 'บางพลี', province: 'สมุทรปราการ', postal_code: '10540' }
   },
   {
     first_name: 'อนุชา',
@@ -125,8 +125,8 @@ const FAKE_CUSTOMERS = [
     phone: '088-901-2345',
     password: 'Customer08#',
     admin_id: 3,
-    address: '159/3 หมู่ 1 ถนนมิตรภาพ ตำบลในเมือง อำเภอเมืองนครราชสีมา นครราชสีมา 30000',
-    addr_parts: { house_no: '159/3', village: 'หมู่ 1', road: 'ถนนมิตรภาพ', subdistrict: 'ในเมือง', district: 'เมืองนครราชสีมา', province: 'นครราชสีมา', postal_code: '30000' }
+    address: 'เลขที่ 159/37 ซอยมิตรภาพ 19 แยก 4 หมู่บ้านสีมานคร วิลเลจ แกรนด์พาร์ค หมู่ 1 ซอยมิตรภาพร่วมใจ ถนนมิตรภาพสายหลัก ตำบลในเมือง อำเภอเมืองนครราชสีมา จังหวัดนครราชสีมา 30000',
+    addr_parts: { house_no: 'เลขที่ 159/37 ซอยมิตรภาพ 19 แยก 4', village: 'หมู่บ้านสีมานคร วิลเลจ แกรนด์พาร์ค หมู่ 1', road: 'ซอยมิตรภาพร่วมใจ ถนนมิตรภาพสายหลัก', subdistrict: 'ในเมือง', district: 'เมืองนครราชสีมา', province: 'นครราชสีมา', postal_code: '30000' }
   },
   {
     first_name: 'กัญญาณัฐ',
@@ -135,8 +135,8 @@ const FAKE_CUSTOMERS = [
     phone: '089-012-3456',
     password: 'Customer09#',
     admin_id: 4,
-    address: '33/7 หมู่บ้านแสนสิริ ถนนพระราม 2 ตำบลท่าข้าม อำเภอบางขุนเทียน กรุงเทพมหานคร 10150',
-    addr_parts: { house_no: '33/7', village: 'หมู่บ้านแสนสิริ', road: 'ถนนพระราม 2', subdistrict: 'ท่าข้าม', district: 'บางขุนเทียน', province: 'กรุงเทพมหานคร', postal_code: '10150' }
+    address: 'เลขที่ 33/72 ซอย 22 เฟสเลควิว หมู่บ้านสราญสิริ ท่าข้าม-พระราม 2 โครงการหรู ซอยท่าข้าม 7 แยก 4 ถนนพระราม 2 แขวงท่าข้าม เขตบางขุนเทียน กรุงเทพมหานคร 10150',
+    addr_parts: { house_no: 'เลขที่ 33/72 ซอย 22 เฟสเลควิว', village: 'หมู่บ้านสราญสิริ ท่าข้าม-พระราม 2 โครงการหรู', road: 'ซอยท่าข้าม 7 แยก 4 ถนนพระราม 2', subdistrict: 'ท่าข้าม', district: 'บางขุนเทียน', province: 'กรุงเทพมหานคร', postal_code: '10150' }
   },
   {
     first_name: 'ธีรภัทร',
@@ -145,8 +145,8 @@ const FAKE_CUSTOMERS = [
     phone: '090-123-4567',
     password: 'Customer10#',
     admin_id: 5,
-    address: '512/9 หมู่ 5 ถนนมะลิวัลย์ ตำบลในเมือง อำเภอเมืองขอนแก่น ขอนแก่น 40000',
-    addr_parts: { house_no: '512/9', village: 'หมู่ 5', road: 'ถนนมะลิวัลย์', subdistrict: 'ในเมือง', district: 'เมืองขอนแก่น', province: 'ขอนแก่น', postal_code: '40000' }
+    address: 'เลขที่ 512/93 ชั้น 7 ห้อง 704 อาคาร A คอนโดกัลปพฤกษ์ พาร์ค ขอนแก่น แอร์พอร์ต หมู่ 5 ซอยมะลิวัลย์ 14 ถนนมะลิวัลย์ ตำบลในเมือง อำเภอเมืองขอนแก่น จังหวัดขอนแก่น 40000',
+    addr_parts: { house_no: 'เลขที่ 512/93 ชั้น 7 ห้อง 704 อาคาร A', village: 'คอนโดกัลปพฤกษ์ พาร์ค ขอนแก่น แอร์พอร์ต หมู่ 5', road: 'ซอยมะลิวัลย์ 14 ถนนมะลิวัลย์', subdistrict: 'ในเมือง', district: 'เมืองขอนแก่น', province: 'ขอนแก่น', postal_code: '40000' }
   },
   {
     first_name: 'ปริยากร',
@@ -155,8 +155,8 @@ const FAKE_CUSTOMERS = [
     phone: '091-234-5678',
     password: 'Customer11#',
     admin_id: 1,
-    address: '28/4 หมู่ 2 ถนนเทพกระษัตรี ตำบลตลาดใหญ่ อำเภอเมืองภูเก็ต ภูเก็ต 83000',
-    addr_parts: { house_no: '28/4', village: 'หมู่ 2', road: 'ถนนเทพกระษัตรี', subdistrict: 'ตลาดใหญ่', district: 'เมืองภูเก็ต', province: 'ภูเก็ต', postal_code: '83000' }
+    address: 'เลขที่ 28/46 ชั้น 3 ห้องพูลวิลล่า A3 เดอะรอยัล ภูเก็ต มารีนา ลักชัวรี เรสซิเดนซ์ หมู่ 2 ซอยเกาะแก้ว 24 ถนนเทพกระษัตรี ตำบลตลาดใหญ่ อำเภอเมืองภูเก็ต จังหวัดภูเก็ต 83000',
+    addr_parts: { house_no: 'เลขที่ 28/46 ชั้น 3 ห้องพูลวิลล่า A3', village: 'เดอะรอยัล ภูเก็ต มารีนา ลักชัวรี เรสซิเดนซ์ หมู่ 2', road: 'ซอยเกาะแก้ว 24 ถนนเทพกระษัตรี', subdistrict: 'ตลาดใหญ่', district: 'เมืองภูเก็ต', province: 'ภูเก็ต', postal_code: '83000' }
   },
   {
     first_name: 'ภาณุพงศ์',
@@ -165,8 +165,8 @@ const FAKE_CUSTOMERS = [
     phone: '092-345-6789',
     password: 'Customer12#',
     admin_id: 2,
-    address: '90/11 หมู่บ้านคาซ่าวิลล์ ถนนราชพฤกษ์ ตำบลบางรักน้อย อำเภอเมืองนนทบุรี นนทบุรี 11000',
-    addr_parts: { house_no: '90/11', village: 'หมู่บ้านคาซ่าวิลล์', road: 'ถนนราชพฤกษ์', subdistrict: 'บางรักน้อย', district: 'เมืองนนทบุรี', province: 'นนทบุรี', postal_code: '11000' }
+    address: 'เลขที่ 90/118 ซอยคาซ่า 5 ซอยย่อย 3 หมู่บ้านคาซ่า วิลล์ ราชพฤกษ์-พระราม 5 หมู่ 4 ซอยบางรักน้อย 18 ถนนราชพฤกษ์ ตำบลบางรักน้อย อำเภอเมืองนนทบุรี จังหวัดนนทบุรี 11000',
+    addr_parts: { house_no: 'เลขที่ 90/118 ซอยคาซ่า 5 ซอยย่อย 3', village: 'หมู่บ้านคาซ่า วิลล์ ราชพฤกษ์-พระราม 5 หมู่ 4', road: 'ซอยบางรักน้อย 18 ถนนราชพฤกษ์', subdistrict: 'บางรักน้อย', district: 'เมืองนนทบุรี', province: 'นนทบุรี', postal_code: '11000' }
   },
   {
     first_name: 'อภิญญา',
@@ -175,8 +175,8 @@ const FAKE_CUSTOMERS = [
     phone: '093-456-7890',
     password: 'Customer13#',
     admin_id: 3,
-    address: '14/2 หมู่ 8 ถนนสุรนารายณ์ ตำบลบ้านเกาะ อำเภอเมืองนครราชสีมา นครราชสีมา 30000',
-    addr_parts: { house_no: '14/2', village: 'หมู่ 8', road: 'ถนนสุรนารายณ์', subdistrict: 'บ้านเกาะ', district: 'เมืองนครราชสีมา', province: 'นครราชสีมา', postal_code: '30000' }
+    address: 'เลขที่ 14/255 ซอยสุรนารายณ์ 11/3 หมู่บ้านเซเรเน่การ์เด้น โคราช วิลล่า หมู่ 8 ซอยบ้านเกาะร่วมพัฒนา ถนนสุรนารายณ์ ตำบลบ้านเกาะ อำเภอเมืองนครราชสีมา จังหวัดนครราชสีมา 30000',
+    addr_parts: { house_no: 'เลขที่ 14/255 ซอยสุรนารายณ์ 11/3', village: 'หมู่บ้านเซเรเน่การ์เด้น โคราช วิลล่า หมู่ 8', road: 'ซอยบ้านเกาะร่วมพัฒนา ถนนสุรนารายณ์', subdistrict: 'บ้านเกาะ', district: 'เมืองนครราชสีมา', province: 'นครราชสีมา', postal_code: '30000' }
   },
   {
     first_name: 'กรกช',
@@ -185,8 +185,8 @@ const FAKE_CUSTOMERS = [
     phone: '094-567-8901',
     password: 'Customer14#',
     admin_id: 4,
-    address: '119/5 หมู่บ้านชัยพฤกษ์ ถนนรามอินทรา ตำบลคันนายาว อำเภอคันนายาว กรุงเทพมหานคร 10230',
-    addr_parts: { house_no: '119/5', village: 'หมู่บ้านชัยพฤกษ์', road: 'ถนนรามอินทรา', subdistrict: 'คันนายาว', district: 'คันนายาว', province: 'กรุงเทพมหานคร', postal_code: '10230' }
+    address: 'เลขที่ 119/53 ซอยรามอินทรา 65 แยก 2-4 หมู่บ้านชัยพฤกษ์ รามอินทรา-วงแหวน ซอย 12 ซอยคู้บอน 27 แยก 10 ถนนรามอินทรา แขวงคันนายาว เขตคันนายาว กรุงเทพมหานคร 10230',
+    addr_parts: { house_no: 'เลขที่ 119/53 ซอยรามอินทรา 65 แยก 2-4', village: 'หมู่บ้านชัยพฤกษ์ รามอินทรา-วงแหวน ซอย 12', road: 'ซอยคู้บอน 27 แยก 10 ถนนรามอินทรา', subdistrict: 'คันนายาว', district: 'คันนายาว', province: 'กรุงเทพมหานคร', postal_code: '10230' }
   },
   {
     first_name: 'มนัสวี',
@@ -195,8 +195,8 @@ const FAKE_CUSTOMERS = [
     phone: '095-678-9012',
     password: 'Customer15#',
     admin_id: 5,
-    address: '67/12 หมู่ 7 ถนนซุปเปอร์ไฮเวย์ ตำบลช้างเผือก อำเภอเมืองเชียงใหม่ เชียงใหม่ 50300',
-    addr_parts: { house_no: '67/12', village: 'หมู่ 7', road: 'ถนนซุปเปอร์ไฮเวย์', subdistrict: 'ช้างเผือก', district: 'เมืองเชียงใหม่', province: 'เชียงใหม่', postal_code: '50300' }
+    address: 'เลขที่ 67/124 ชั้น 10 อาคารแกรนด์ C เดอะไฮทส์ คอนโดมิเนียม แอท ช้างเผือก หมู่ 7 ซอยสุขเกษม 4 ถนนซุปเปอร์ไฮเวย์ เชียงใหม่-ลำปาง ตำบลช้างเผือก อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่ 50300',
+    addr_parts: { house_no: 'เลขที่ 67/124 ชั้น 10 อาคารแกรนด์ C', village: 'เดอะไฮทส์ คอนโดมิเนียม แอท ช้างเผือก หมู่ 7', road: 'ซอยสุขเกษม 4 ถนนซุปเปอร์ไฮเวย์ เชียงใหม่-ลำปาง', subdistrict: 'ช้างเผือก', district: 'เมืองเชียงใหม่', province: 'เชียงใหม่', postal_code: '50300' }
   },
   {
     first_name: 'พงศธร',
@@ -205,8 +205,8 @@ const FAKE_CUSTOMERS = [
     phone: '096-789-0123',
     password: 'Customer16#',
     admin_id: 1,
-    address: '203/6 หมู่ 1 ถนนสุขุมวิทพัทยา ตำบลนาเกลือ อำเภอบางละมุง ชลบุรี 20150',
-    addr_parts: { house_no: '203/6', village: 'หมู่ 1', road: 'ถนนสุขุมวิทพัทยา', subdistrict: 'นาเกลือ', district: 'บางละมุง', province: 'ชลบุรี', postal_code: '20150' }
+    address: 'เลขที่ 203/67 ชั้น 18 ห้องวิวทะเล 1802 ลุมพินี วิลล์ นาเกลือ-วงศ์อมาตย์ เฟสบี หมู่ 1 ซอยนาเกลือ 16/1 ถนนสุขุมวิท-พัทยา ตำบลนาเกลือ อำเภอบางละมุง จังหวัดชลบุรี 20150',
+    addr_parts: { house_no: 'เลขที่ 203/67 ชั้น 18 ห้องวิวทะเล 1802', village: 'ลุมพินี วิลล์ นาเกลือ-วงศ์อมาตย์ เฟสบี หมู่ 1', road: 'ซอยนาเกลือ 16/1 ถนนสุขุมวิท-พัทยา', subdistrict: 'นาเกลือ', district: 'บางละมุง', province: 'ชลบุรี', postal_code: '20150' }
   },
   {
     first_name: 'ลลิตา',
@@ -215,8 +215,8 @@ const FAKE_CUSTOMERS = [
     phone: '097-890-1234',
     password: 'Customer17#',
     admin_id: 2,
-    address: '55/18 หมู่บ้านเพอร์เฟคเพลส ถนนแจ้งวัฒนะ ตำบลบางพูด อำเภอปากเกร็ด นนทบุรี 11120',
-    addr_parts: { house_no: '55/18', village: 'หมู่บ้านเพอร์เฟคเพลส', road: 'ถนนแจ้งวัฒนะ', subdistrict: 'บางพูด', district: 'ปากเกร็ด', province: 'นนทบุรี', postal_code: '11120' }
+    address: 'เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 หมู่บ้านเพอร์เฟค เพลส แจ้งวัฒนะ โครงการพรีเมียม ซอยคลองเกลือ 12 ถนนแจ้งวัฒนะ ตำบลบางพูด อำเภอปากเกร็ด จังหวัดนนทบุรี 11120',
+    addr_parts: { house_no: 'เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6', village: 'หมู่บ้านเพอร์เฟค เพลส แจ้งวัฒนะ โครงการพรีเมียม', road: 'ซอยคลองเกลือ 12 ถนนแจ้งวัฒนะ', subdistrict: 'บางพูด', district: 'ปากเกร็ด', province: 'นนทบุรี', postal_code: '11120' }
   },
   {
     first_name: 'ศรัณย์',
@@ -225,8 +225,8 @@ const FAKE_CUSTOMERS = [
     phone: '098-901-2345',
     password: 'Customer18#',
     admin_id: 3,
-    address: '84/3 หมู่ 3 ถนนเพชรเกษม ตำบลชะอำ อำเภอชะอำ เพชรบุรี 76120',
-    addr_parts: { house_no: '84/3', village: 'หมู่ 3', road: 'ถนนเพชรเกษม', subdistrict: 'ชะอำ', district: 'ชะอำ', province: 'เพชรบุรี', postal_code: '76120' }
+    address: 'เลขที่ 84/39 ซอยชะอำใต้ 7 แปลงริมสระว่ายน้ำ วิลล่า มาลี บีชไซด์ รีสอร์ทแอนด์เรสซิเดนซ์ หมู่ 3 ซอยร่วมจิตรพัฒนา ถนนเพชรเกษมสายใต้ ตำบลชะอำ อำเภอชะอำ จังหวัดเพชรบุรี 76120',
+    addr_parts: { house_no: 'เลขที่ 84/39 ซอยชะอำใต้ 7 แปลงริมสระว่ายน้ำ', village: 'วิลล่า มาลี บีชไซด์ รีสอร์ทแอนด์เรสซิเดนซ์ หมู่ 3', road: 'ซอยร่วมจิตรพัฒนา ถนนเพชรเกษมสายใต้', subdistrict: 'ชะอำ', district: 'ชะอำ', province: 'เพชรบุรี', postal_code: '76120' }
   },
   {
     first_name: 'นภัสสร',
@@ -235,8 +235,8 @@ const FAKE_CUSTOMERS = [
     phone: '099-012-3456',
     password: 'Customer19#',
     admin_id: 4,
-    address: '310/2 หมู่บ้านมัณฑนา ถนนกาญจนาภิเษก ตำบลบางแค อำเภอบางแค กรุงเทพมหานคร 10160',
-    addr_parts: { house_no: '310/2', village: 'หมู่บ้านมัณฑนา', road: 'ถนนกาญจนาภิเษก', subdistrict: 'บางแค', district: 'บางแค', province: 'กรุงเทพมหานคร', postal_code: '10160' }
+    address: 'เลขที่ 310/25 ซอย 18 ซอยย่อยมัณฑนา 4 หมู่บ้านมัณฑนา วงแหวน-บางแค โครงการ 1 ซอยเพชรเกษม 63 แยก 8 ถนนกาญจนาภิเษก แขวงบางแค เขตบางแค กรุงเทพมหานคร 10160',
+    addr_parts: { house_no: 'เลขที่ 310/25 ซอย 18 ซอยย่อยมัณฑนา 4', village: 'หมู่บ้านมัณฑนา วงแหวน-บางแค โครงการ 1', road: 'ซอยเพชรเกษม 63 แยก 8 ถนนกาญจนาภิเษก', subdistrict: 'บางแค', district: 'บางแค', province: 'กรุงเทพมหานคร', postal_code: '10160' }
   },
   {
     first_name: 'ชานนท์',
@@ -245,23 +245,38 @@ const FAKE_CUSTOMERS = [
     phone: '080-123-4567',
     password: 'Customer20#',
     admin_id: 5,
-    address: '42/15 หมู่ 5 ถนนรอบเมือง ตำบลหมากแข้ง อำเภอเมืองอุดรธานี อุดรธานี 41000',
-    addr_parts: { house_no: '42/15', village: 'หมู่ 5', road: 'ถนนรอบเมือง', subdistrict: 'หมากแข้ง', district: 'เมืองอุดรธานี', province: 'อุดรธานี', postal_code: '41000' }
+    address: 'เลขที่ 42/158 ซอยพัฒนาอุดร 6 เฟสการ์เดน 2 หมู่บ้านสิทธาการ์เด้นท์ โฮม อุดรธานีการ์เดน หมู่ 5 ซอยบ้านหนองขาม 12 ถนนรอบเมืองสายเหนือ ตำบลหมากแข้ง อำเภอเมืองอุดรธานี จังหวัดอุดรธานี 41000',
+    addr_parts: { house_no: 'เลขที่ 42/158 ซอยพัฒนาอุดร 6 เฟสการ์เดน 2', village: 'หมู่บ้านสิทธาการ์เด้นท์ โฮม อุดรธานีการ์เดน หมู่ 5', road: 'ซอยบ้านหนองขาม 12 ถนนรอบเมืองสายเหนือ', subdistrict: 'หมากแข้ง', district: 'เมืองอุดรธานี', province: 'อุดรธานี', postal_code: '41000' }
   }
 ];
 
-if (!db.prepare('SELECT 1 FROM customer WHERE email=?').get('demo@shop.com')) {
-  const defaultAddrText = '99/1 หมู่บ้านสุขใจ ถนนบางนา-ตราด บางพลีใหญ่ บางพลี สมุทรปราการ 10540';
-  const c = db.prepare('INSERT INTO customer (first_name,last_name,phone,email,address,admin_id,password_hash) VALUES (?,?,?,?,?,?,?)')
-    .run('สมชาย', 'ทดสอบ', '089-999-9999', 'demo@shop.com', defaultAddrText, defaultAdminId, hash('demo1234'));
+const demoAddrText = 'เลขที่ 99/148 อาคารพาโนรามา ทาวเวอร์ ชั้น 19 ห้อง 1908 หมู่บ้านสุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 ตำบลบางพลีใหญ่ อำเภอบางพลี จังหวัดสมุทรปราการ 10540';
+const demoCust = db.prepare('SELECT customer_id FROM customer WHERE email=?').get('demo@shop.com');
+if (demoCust) {
+  db.prepare('UPDATE customer SET address=? WHERE customer_id=?').run(demoAddrText, demoCust.customer_id);
+  db.prepare('DELETE FROM address WHERE customer_id=?').run(demoCust.customer_id);
   db.prepare(`INSERT INTO address (customer_id,recipient,phone,house_no,village,road,subdistrict,district,province,postal_code,is_default)
     VALUES (?,?,?,?,?,?,?,?,?,?,1)`)
-    .run(c.lastInsertRowid, 'สมชาย ทดสอบ', '089-999-9999', '99/1', 'หมู่บ้านสุขใจ', 'ถนนบางนา-ตราด', 'บางพลีใหญ่', 'บางพลี', 'สมุทรปราการ', '10540');
+    .run(demoCust.customer_id, 'สมชาย ทดสอบ', '089-999-9999', 'เลขที่ 99/148 ชั้น 19 ห้อง 1908', 'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7', 'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12', 'บางพลีใหญ่', 'บางพลี', 'สมุทรปราการ', '10540');
+} else {
+  const c = db.prepare('INSERT INTO customer (first_name,last_name,phone,email,address,admin_id,password_hash) VALUES (?,?,?,?,?,?,?)')
+    .run('สมชาย', 'ทดสอบ', '089-999-9999', 'demo@shop.com', demoAddrText, defaultAdminId, hash('demo1234'));
+  db.prepare(`INSERT INTO address (customer_id,recipient,phone,house_no,village,road,subdistrict,district,province,postal_code,is_default)
+    VALUES (?,?,?,?,?,?,?,?,?,?,1)`)
+    .run(c.lastInsertRowid, 'สมชาย ทดสอบ', '089-999-9999', 'เลขที่ 99/148 ชั้น 19 ห้อง 1908', 'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7', 'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12', 'บางพลีใหญ่', 'บางพลี', 'สมุทรปราการ', '10540');
 }
 
 for (const fc of FAKE_CUSTOMERS) {
   const existing = db.prepare('SELECT customer_id FROM customer WHERE email=?').get(fc.email);
-  if (!existing) {
+  if (existing) {
+    db.prepare('UPDATE customer SET first_name=?,last_name=?,phone=?,address=?,admin_id=?,password_hash=? WHERE customer_id=?')
+      .run(fc.first_name, fc.last_name, fc.phone, fc.address, fc.admin_id || defaultAdminId, hash(fc.password), existing.customer_id);
+    const ap = fc.addr_parts;
+    db.prepare('DELETE FROM address WHERE customer_id=?').run(existing.customer_id);
+    db.prepare(`INSERT INTO address (customer_id,recipient,phone,house_no,village,road,subdistrict,district,province,postal_code,is_default)
+      VALUES (?,?,?,?,?,?,?,?,?,?,1)`)
+      .run(existing.customer_id, `${fc.first_name} ${fc.last_name}`, fc.phone, ap.house_no, ap.village, ap.road, ap.subdistrict, ap.district, ap.province, ap.postal_code);
+  } else {
     const c = db.prepare('INSERT INTO customer (first_name,last_name,phone,email,address,admin_id,password_hash) VALUES (?,?,?,?,?,?,?)')
       .run(fc.first_name, fc.last_name, fc.phone, fc.email, fc.address, fc.admin_id || defaultAdminId, hash(fc.password));
     const cid = c.lastInsertRowid;
