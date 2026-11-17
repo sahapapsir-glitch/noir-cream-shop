@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:24:01.646Z",
-  "checksum": "0076b88802528e40",
+  "timestamp": "2026-11-17T17:25:08.548Z",
+  "checksum": "0ccc68d0b4352e4e",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 30,
-    "product_variant": 128,
+    "product": 31,
+    "product_variant": 133,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -1131,6 +1131,21 @@
         "image_url": "https://www.jdsports.co.th/cdn/shop/files/jd_810593_c.jpg?v=1790642291&width=1007",
         "is_featured": 0,
         "created_at": "2026-11-17 17:23:49"
+      },
+      {
+        "product_id": 64,
+        "name": "Lyon Jeans",
+        "category": "กางเกง",
+        "description": "Won Hundred",
+        "status": "active",
+        "stock": 165,
+        "quantity": 165,
+        "price": 10300,
+        "supplier_id": 3,
+        "employee_id": 2,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/z/WONH-MJ13_V1.jpg",
+        "is_featured": 0,
+        "created_at": "2026-11-17 17:25:08"
       }
     ],
     "product_variant": [
@@ -2541,6 +2556,61 @@
         "stock": 15,
         "stock_quantity": 15,
         "sku": "SKU-63-34-ชมพูซาติน"
+      },
+      {
+        "variant_id": 332,
+        "product_id": 64,
+        "size": "28",
+        "color": "สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน",
+        "color_hex": "#7e919b",
+        "price": 10300,
+        "stock": 33,
+        "stock_quantity": 33,
+        "sku": "SKU-64-28-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน"
+      },
+      {
+        "variant_id": 333,
+        "product_id": 64,
+        "size": "30",
+        "color": "สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน",
+        "color_hex": "#7e919b",
+        "price": 10300,
+        "stock": 33,
+        "stock_quantity": 33,
+        "sku": "SKU-64-30-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน"
+      },
+      {
+        "variant_id": 334,
+        "product_id": 64,
+        "size": "32",
+        "color": "สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน",
+        "color_hex": "#7e919b",
+        "price": 10300,
+        "stock": 33,
+        "stock_quantity": 33,
+        "sku": "SKU-64-32-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน"
+      },
+      {
+        "variant_id": 335,
+        "product_id": 64,
+        "size": "34",
+        "color": "สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน",
+        "color_hex": "#7e919b",
+        "price": 10300,
+        "stock": 33,
+        "stock_quantity": 33,
+        "sku": "SKU-64-34-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน"
+      },
+      {
+        "variant_id": 336,
+        "product_id": 64,
+        "size": "36",
+        "color": "สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน",
+        "color_hex": "#7e919b",
+        "price": 10300,
+        "stock": 33,
+        "stock_quantity": 33,
+        "sku": "SKU-64-36-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน"
       }
     ],
     "cart_item": [],
