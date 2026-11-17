@@ -180,21 +180,48 @@ function renderChrome() {
   const u = state.user;
   let h = `<a class="icon-btn" href="#/shop" aria-label="ค้นหาสินค้า"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></a>`;
   if (u?.role === 'customer') {
-    h += `<a class="icon-btn" href="#/wishlist" aria-label="รายการโปรด"><span class="lbl">โปรด</span></a>
-      <a class="icon-btn" href="#/orders"><span class="lbl">คำสั่งซื้อ</span></a>
-      <a class="icon-btn" href="#/account">${esc(u.first_name)}</a>`;
+    h += `<a class="icon-btn hide-mobile" href="#/wishlist" aria-label="รายการโปรด">♡ <span class="lbl">โปรด</span></a>
+      <a class="icon-btn hide-mobile" href="#/orders">📦 <span class="lbl">คำสั่งซื้อ</span></a>
+      <a class="icon-btn" href="#/account" aria-label="บัญชีของฉัน">👤 <span class="lbl">${esc(u.first_name)}</span></a>`;
   } else if (u?.role === 'admin') {
-    h += `<a class="icon-btn" href="#/admin" style="font-weight:500;background:var(--cream-2)">⚙️ จัดการร้าน</a><a class="icon-btn" href="#/account">${esc(u.name)}</a>`;
+    h += `<a class="icon-btn" href="#/admin" style="font-weight:500;background:var(--cream-2)">⚙️ <span class="lbl">จัดการร้าน</span></a><a class="icon-btn hide-mobile" href="#/account">👤 <span class="lbl">${esc(u.name)}</span></a>`;
   } else {
-    h += `<a class="icon-btn" href="#/login">เข้าสู่ระบบ</a><a class="btn sm" href="#/register">สมัครสมาชิก</a>`;
+    h += `<a class="icon-btn" href="#/login">👤 <span class="lbl">เข้าสู่ระบบ</span></a><a class="btn sm hide-mobile" href="#/register">สมัครสมาชิก</a>`;
   }
   if (u?.role !== 'admin') {
-    h += `<a class="icon-btn" href="#/cart" aria-label="ตะกร้า">ตะกร้า${state.cart.count ? `<span class="badge">${state.cart.count}</span>` : ''}</a>`;
+    h += `<a class="icon-btn" href="#/cart" aria-label="ตะกร้า">🛍️ <span class="lbl">ตะกร้า</span>${state.cart.count ? `<span class="badge">${state.cart.count}</span>` : ''}</a>`;
   }
   if (u) {
-    h += `<button class="icon-btn" onclick="A.logout()" title="ออกจากระบบ">ออก</button>`;
+    h += `<button class="icon-btn hide-mobile" onclick="A.logout()" title="ออกจากระบบ">ออก</button>`;
   }
   $('#actions').innerHTML = h;
+
+  const mobUser = $('#mobileUserActions');
+  if (mobUser) {
+    if (u?.role === 'customer') {
+      mobUser.innerHTML = `
+        <a href="#/account" onclick="A.toggleMobileMenu()">👤 บัญชีของฉัน (${esc(u.first_name)})</a>
+        <a href="#/orders" onclick="A.toggleMobileMenu()">📦 คำสั่งซื้อของฉัน</a>
+        <a href="#/wishlist" onclick="A.toggleMobileMenu()">♡ รายการโปรด</a>
+        <a href="#/cart" onclick="A.toggleMobileMenu()">🛍️ ตะกร้าสินค้า (${state.cart.count} ชิ้น)</a>
+        <button class="btn ghost sm block" style="margin-top:8px" onclick="A.toggleMobileMenu(); A.logout()">ออกจากระบบ</button>
+      `;
+    } else if (u?.role === 'admin') {
+      mobUser.innerHTML = `
+        <a href="#/admin" onclick="A.toggleMobileMenu()">⚙️ ระบบจัดการร้านค้า (Admin)</a>
+        <a href="#/account" onclick="A.toggleMobileMenu()">👤 บัญชีผู้ดูแล (${esc(u.name)})</a>
+        <button class="btn ghost sm block" style="margin-top:8px" onclick="A.toggleMobileMenu(); A.logout()">ออกจากระบบ</button>
+      `;
+    } else {
+      mobUser.innerHTML = `
+        <a href="#/cart" onclick="A.toggleMobileMenu()">🛍️ ตะกร้าสินค้า</a>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <a class="btn ghost sm" href="#/login" onclick="A.toggleMobileMenu()">เข้าสู่ระบบ</a>
+          <a class="btn sm" href="#/register" onclick="A.toggleMobileMenu()">สมัครสมาชิก</a>
+        </div>
+      `;
+    }
+  }
 
   // Active nav highlighting
   const curHash = location.hash || '#/';
@@ -331,7 +358,7 @@ pages.home = async () => {
     `}
 
     <section class="panel" style="margin-top:56px;background:var(--cream);border-color:var(--cream-3)">
-      <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:center" class="hero-teaser">
+      <div class="hero-teaser">
         <div>
           <span style="letter-spacing:.2em;text-transform:uppercase;font-size:12px;color:var(--ink-3)">Size &amp; Fit Guide</span>
           <h2 style="margin:8px 0 12px">ไม่แน่ใจเรื่องขนาดไซส์?</h2>
