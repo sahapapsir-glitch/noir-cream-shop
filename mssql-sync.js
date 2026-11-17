@@ -1,11 +1,44 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 
 const SQL_FILE_PATH = path.join(__dirname, 'NoirCreamShop_SQLServer.sql');
+const SNAPSHOT_FILE_PATH = path.join(__dirname, 'db-snapshot.json');
+const DB_FILE_PATH = path.join(__dirname, 'shop.db');
+const TOKEN_FILE_PATH = path.join(__dirname, '.github-token');
+const GITHUB_REPO = process.env.GITHUB_REPO || 'sahapapsir-glitch/noir-cream-shop';
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const DEFAULT_INSTANCE = process.env.MSSQL_SERVER || '.\\SQLEXPRESS01';
 const DATABASE_NAME = process.env.MSSQL_DATABASE || 'NoirCreamShop';
+
+function getGitHubToken() {
+  if (process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN.trim()) {
+    return process.env.GITHUB_TOKEN.trim();
+  }
+  try {
+    if (fs.existsSync(TOKEN_FILE_PATH)) {
+      return fs.readFileSync(TOKEN_FILE_PATH, 'utf8').trim();
+    }
+  } catch {}
+  return '';
+}
+
+function setGitHubToken(token) {
+  const clean = String(token || '').trim();
+  if (!clean) {
+    try { if (fs.existsSync(TOKEN_FILE_PATH)) fs.unlinkSync(TOKEN_FILE_PATH); } catch {}
+    delete process.env.GITHUB_TOKEN;
+    return '';
+  }
+  process.env.GITHUB_TOKEN = clean;
+  try { fs.writeFileSync(TOKEN_FILE_PATH, clean, { encoding: 'utf8', mode: 0o600 }); } catch {}
+  return clean;
+}
+
+function hasLocalGitRepo() {
+  return fs.existsSync(path.join(__dirname, '.git'));
+}
 
 // ลำดับตารางเรียงตาม Foreign Key Dependency (Parent -> Child)
 const TABLE_SCHEMAS = [
@@ -577,6 +610,196 @@ function translateTSqlToSqlite(sql) {
   return s.trim();
 }
 
+async function restoreFromGitHubIfNewer(db, force = false) {
+  try {
+    let localSnap = null;
+    if (fs.existsSync(SNAPSHOT_FILE_PATH)) {
+      try {
+        localSnap = JSON.parse(fs.readFileSync(SNAPSHOT_FILE_PATH, 'utf8'));
+      } catch {}
+    }
+
+    const token = getGitHubToken();
+    const headers = {
+      'User-Agent': 'NoirCreamShop-Sync/1.0',
+      'Cache-Control': 'no-cache'
+    };
+    let url = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/db-snapshot.json?t=${Date.now()}`;
+    if (token) {
+      url = `https://api.github.com/repos/${GITHUB_REPO}/contents/db-snapshot.json?ref=${GITHUB_BRANCH}`;
+      headers['Authorization'] = `Bearer ${token}`;
+      headers['Accept'] = 'application/vnd.github.v3.raw';
+    }
+
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return { restored: false, status: res.status };
+
+    const remoteSnap = await res.json();
+    if (!remoteSnap || !remoteSnap.tables || typeof remoteSnap.tables !== 'object') {
+      return { restored: false };
+    }
+
+    const currentSnap = getSnapshot(db);
+    const remoteTime = new Date(remoteSnap.timestamp || 0).getTime();
+    const localTime = new Date(localSnap?.timestamp || 0).getTime();
+
+    const shouldRestore =
+      force ||
+      (remoteSnap.checksum &&
+        remoteSnap.checksum !== currentSnap.checksum &&
+        (!localSnap || remoteTime > localTime));
+
+    if (shouldRestore) {
+      applySnapshotToSqlite(db, remoteSnap.tables);
+      try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
+      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(remoteSnap, null, 2), 'utf8');
+      const script = generateSqlServerScript(db, remoteSnap);
+      fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
+      return {
+        restored: true,
+        checksum: remoteSnap.checksum,
+        timestamp: remoteSnap.timestamp,
+        counts: remoteSnap.counts
+      };
+    }
+    return { restored: false, checksum: currentSnap.checksum };
+  } catch (e) {
+    return { restored: false, error: e.message };
+  }
+}
+
+async function pushToGitHubViaApi(reason, token) {
+  const apiBase = `https://api.github.com/repos/${GITHUB_REPO}`;
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/vnd.github+json',
+    'Content-Type': 'application/json',
+    'User-Agent': 'NoirCreamShop-Sync/1.0',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+
+  const ghFetch = async (endpoint, options = {}) => {
+    const r = await fetch(`${apiBase}${endpoint}`, {
+      ...options,
+      headers: { ...headers, ...(options.headers || {}) },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!r.ok) {
+      const errText = await r.text().catch(() => '');
+      throw new Error(`GitHub API ${r.status}: ${errText.slice(0, 160)}`);
+    }
+    return r.json();
+  };
+
+  // 1. ดึง Commit ล่าสุดของ Branch
+  const refData = await ghFetch(`/git/ref/heads/${GITHUB_BRANCH}`);
+  const latestCommitSha = refData.object.sha;
+  const commitData = await ghFetch(`/git/commits/${latestCommitSha}`);
+  const baseTreeSha = commitData.tree.sha;
+
+  // 2. สร้าง Blobs สำหรับไฟล์ฐานข้อมูลทั้ง 3 ไฟล์
+  const filesToSync = [
+    {
+      path: 'db-snapshot.json',
+      content: fs.readFileSync(SNAPSHOT_FILE_PATH, 'utf8'),
+      encoding: 'utf-8'
+    },
+    {
+      path: 'NoirCreamShop_SQLServer.sql',
+      content: fs.readFileSync(SQL_FILE_PATH, 'utf8'),
+      encoding: 'utf-8'
+    }
+  ];
+
+  if (fs.existsSync(DB_FILE_PATH)) {
+    filesToSync.push({
+      path: 'shop.db',
+      content: fs.readFileSync(DB_FILE_PATH).toString('base64'),
+      encoding: 'base64'
+    });
+  }
+
+  const treeItems = [];
+  for (const f of filesToSync) {
+    const blob = await ghFetch('/git/blobs', {
+      method: 'POST',
+      body: JSON.stringify({ content: f.content, encoding: f.encoding })
+    });
+    treeItems.push({
+      path: f.path,
+      mode: '100644',
+      type: 'blob',
+      sha: blob.sha
+    });
+  }
+
+  // 3. สร้าง Tree และ Commit ใหม่ (ใส่ [skip render] เพื่อไม่ให้ Render รีสตาร์ทขณะใช้งาน)
+  const newTree = await ghFetch('/git/trees', {
+    method: 'POST',
+    body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
+  });
+
+  if (newTree.sha === baseTreeSha) {
+    return { ok: true, mode: 'github-api', commitSha: latestCommitSha.slice(0, 7), skipped: true };
+  }
+
+  const cleanReason = String(reason || 'update').replace(/[\r\n]+/g, ' ').slice(0, 80);
+  const newCommit = await ghFetch('/git/commits', {
+    method: 'POST',
+    body: JSON.stringify({
+      message: `Auto-sync database (${cleanReason}) [skip render]`,
+      tree: newTree.sha,
+      parents: [latestCommitSha]
+    })
+  });
+
+  await ghFetch(`/git/refs/heads/${GITHUB_BRANCH}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ sha: newCommit.sha, force: false })
+  });
+
+  return {
+    ok: true,
+    mode: 'github-api',
+    commitSha: newCommit.sha.slice(0, 7)
+  };
+}
+
+function pushToGitHubViaLocalGit(reason) {
+  return new Promise((resolve, reject) => {
+    if (!hasLocalGitRepo()) {
+      return reject(new Error('ไม่พบโฟลเดอร์ .git และยังไม่ได้ตั้งค่า GITHUB_TOKEN'));
+    }
+    const cleanReason = String(reason || 'update').replace(/["`$\\\r\n]/g, ' ').slice(0, 80);
+    const commitMsg = `Auto-sync database (${cleanReason}) [skip render]`;
+
+    const runGit = (args) =>
+      new Promise((res, rej) => {
+        execFile('git', args, { cwd: __dirname, timeout: 20000 }, (err, stdout, stderr) => {
+          if (err) return rej(new Error((stderr || stdout || err.message).trim()));
+          res(stdout.trim());
+        });
+      });
+
+    (async () => {
+      try {
+        await runGit(['add', 'shop.db', 'NoirCreamShop_SQLServer.sql', 'db-snapshot.json']);
+        const statusOut = await runGit(['status', '--porcelain', 'shop.db', 'NoirCreamShop_SQLServer.sql', 'db-snapshot.json']);
+        if (!statusOut) {
+          const sha = await runGit(['rev-parse', '--short', 'HEAD']);
+          return resolve({ ok: true, mode: 'local-git', commitSha: sha, skipped: true });
+        }
+        await runGit(['commit', '-m', commitMsg]);
+        await runGit(['push', 'origin', GITHUB_BRANCH]);
+        const sha = await runGit(['rev-parse', '--short', 'HEAD']);
+        resolve({ ok: true, mode: 'local-git', commitSha: sha });
+      } catch (e) {
+        reject(e);
+      }
+    })();
+  });
+}
+
 function createRealtimeSqlManager(db) {
   const sseClients = new Set();
   const activityLog = [];
@@ -590,6 +813,29 @@ function createRealtimeSqlManager(db) {
     lastError: null,
     syncCount: 0
   };
+
+  let githubStatus = {
+    connected: Boolean(getGitHubToken() || hasLocalGitRepo()),
+    repo: GITHUB_REPO,
+    branch: GITHUB_BRANCH,
+    mode: getGitHubToken() ? 'github-api' : (hasLocalGitRepo() ? 'local-git' : 'token-needed'),
+    hasToken: Boolean(getGitHubToken()),
+    hasLocalGit: hasLocalGitRepo(),
+    syncing: false,
+    lastSyncAt: null,
+    lastCommitSha: null,
+    lastError: null,
+    syncCount: 0
+  };
+
+  function refreshGitHubCapability() {
+    const hasTok = Boolean(getGitHubToken());
+    const hasGit = hasLocalGitRepo();
+    githubStatus.hasToken = hasTok;
+    githubStatus.hasLocalGit = hasGit;
+    githubStatus.connected = hasTok || hasGit;
+    githubStatus.mode = hasTok ? 'github-api' : (hasGit ? 'local-git' : 'token-needed');
+  }
 
   function addLog(type, message, extra = {}) {
     const entry = {
@@ -669,14 +915,96 @@ function createRealtimeSqlManager(db) {
     });
   }
 
+  // ซิงค์ฐานข้อมูลขึ้น GitHub อัตโนมัติ (Debounce 1.5 วินาทีเพื่อรวมการแก้ไขต่อเนื่องเป็น Commit เดียว)
+  let ghSyncTimer = null;
+  let pendingGhReason = null;
+
+  async function syncToGitHubNow(reason = 'manual') {
+    refreshGitHubCapability();
+    if (githubStatus.syncing) {
+      pendingGhReason = reason;
+      return githubStatus;
+    }
+    githubStatus.syncing = true;
+    broadcast('github_status', githubStatus);
+
+    try {
+      try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
+      const snap = getSnapshot(db);
+      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap, null, 2), 'utf8');
+      const script = generateSqlServerScript(db, snap);
+      fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
+
+      const token = getGitHubToken();
+      let result;
+      if (token) {
+        try {
+          result = await pushToGitHubViaApi(reason, token);
+        } catch (apiErr) {
+          if (hasLocalGitRepo()) {
+            result = await pushToGitHubViaLocalGit(reason);
+          } else {
+            throw apiErr;
+          }
+        }
+      } else if (hasLocalGitRepo()) {
+        result = await pushToGitHubViaLocalGit(reason);
+      } else {
+        throw new Error('กรุณาตั้งค่า GITHUB_TOKEN ในหน้าจัดการร้าน (หรือรัน Connect_SSMS_Realtime.bat บนเครื่อง) เพื่อซิงค์ขึ้น GitHub');
+      }
+
+      githubStatus.connected = true;
+      githubStatus.mode = result.mode;
+      githubStatus.lastSyncAt = new Date().toISOString();
+      githubStatus.lastCommitSha = result.commitSha || githubStatus.lastCommitSha;
+      githubStatus.lastError = null;
+      if (!result.skipped) githubStatus.syncCount++;
+
+      addLog('github', `[GITHUB] ซิงค์ฐานข้อมูลขึ้น GitHub (${GITHUB_REPO}@${GITHUB_BRANCH}) สำเร็จ [${result.commitSha || 'up-to-date'}] (${reason})`);
+    } catch (e) {
+      githubStatus.lastError = e.message;
+      addLog('error', `[GITHUB] ซิงค์ขึ้น GitHub ไม่สำเร็จ: ${e.message}`);
+    } finally {
+      githubStatus.syncing = false;
+      broadcast('github_status', githubStatus);
+      if (pendingGhReason) {
+        const nextR = pendingGhReason;
+        pendingGhReason = null;
+        scheduleGitHubPush(nextR);
+      }
+    }
+    return githubStatus;
+  }
+
+  function scheduleGitHubPush(reason = 'auto') {
+    refreshGitHubCapability();
+    if (!githubStatus.hasToken && !githubStatus.hasLocalGit) return;
+    if (ghSyncTimer) clearTimeout(ghSyncTimer);
+    ghSyncTimer = setTimeout(() => {
+      ghSyncTimer = null;
+      syncToGitHubNow(reason).catch(() => {});
+    }, 1500);
+  }
+
   function notifyChange(reason = 'manual', source = 'web') {
     try {
+      try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
       const snap = getSnapshot(db);
       const changed = snap.checksum !== lastChecksum;
       lastChecksum = snap.checksum;
 
+      if (fs.existsSync(SNAPSHOT_FILE_PATH)) {
+        try {
+          const prev = JSON.parse(fs.readFileSync(SNAPSHOT_FILE_PATH, 'utf8'));
+          if (prev && prev.checksum === snap.checksum && prev.timestamp && reason !== 'force') {
+            snap.timestamp = prev.timestamp;
+          }
+        } catch {}
+      }
+
       const script = generateSqlServerScript(db, snap);
       fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
+      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap, null, 2), 'utf8');
 
       if (changed || reason === 'init' || reason === 'force') {
         const logEntry = addLog('sync', `[${source.toUpperCase()}] ซิงค์ข้อมูล Realtime (${reason})`, {
@@ -690,9 +1018,14 @@ function createRealtimeSqlManager(db) {
           timestamp: snap.timestamp,
           counts: snap.counts,
           log: logEntry,
-          ssmsStatus
+          ssmsStatus,
+          githubStatus
         });
         pushToLocalWindowsSqlServer(script);
+
+        if ((changed && reason !== 'init' && reason !== 'seed') || reason === 'force') {
+          scheduleGitHubPush(reason);
+        }
       }
       return snap;
     } catch (e) {
@@ -711,12 +1044,13 @@ function createRealtimeSqlManager(db) {
     ssmsStatus.syncCount++;
   }
 
-  // สร้างไฟล์ .sql ครั้งแรกทันทีที่เริ่มระบบ
+  // สร้างไฟล์ .sql และ .json ครั้งแรกทันทีที่เริ่มระบบ
   notifyChange('init', 'system');
 
   return {
     TABLE_SCHEMAS,
     SQL_FILE_PATH,
+    SNAPSHOT_FILE_PATH,
     DEFAULT_INSTANCE,
     DATABASE_NAME,
     getSnapshot: () => getSnapshot(db),
@@ -728,12 +1062,27 @@ function createRealtimeSqlManager(db) {
     translateTSqlToSqlite,
     notifyChange,
     registerBridgeHeartbeat,
-    getStatus: () => ({
-      ...ssmsStatus,
-      checksum: lastChecksum,
-      clients: sseClients.size,
-      logs: activityLog
-    }),
+    syncToGitHubNow,
+    restoreFromGitHub: (force = false) => restoreFromGitHubIfNewer(db, force),
+    setGitHubToken: (tok) => {
+      setGitHubToken(tok);
+      refreshGitHubCapability();
+      return githubStatus;
+    },
+    getGitHubStatus: () => {
+      refreshGitHubCapability();
+      return githubStatus;
+    },
+    getStatus: () => {
+      refreshGitHubCapability();
+      return {
+        ...ssmsStatus,
+        github: githubStatus,
+        checksum: lastChecksum,
+        clients: sseClients.size,
+        logs: activityLog
+      };
+    },
     addSseClient: (res) => {
       sseClients.add(res);
       res.on('close', () => sseClients.delete(res));
@@ -747,5 +1096,8 @@ module.exports = {
   getSnapshot,
   generateSqlServerScript,
   applySnapshotToSqlite,
-  translateTSqlToSqlite
+  translateTSqlToSqlite,
+  restoreFromGitHubIfNewer,
+  getGitHubToken,
+  setGitHubToken
 };

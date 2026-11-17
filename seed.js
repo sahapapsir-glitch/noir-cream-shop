@@ -1,31 +1,40 @@
 const bcrypt = require('bcryptjs');
 const db = require('./db');
+const { createRealtimeSqlManager, restoreFromGitHubIfNewer } = require('./mssql-sync');
 
 const hash = (p) => bcrypt.hashSync(p, 10);
 
-// ผู้ดูแลระบบ 5 บัญชี (สร้างก่อนเพื่อให้มี admin_id อ้างอิงใน supplier และ customer ตาม ER)
-const ADMINS = [
-  { id: 1, name: 'ภูวมินทร์ วัฒนสาร', email: 'phuwamin@shop.com', phone: '081-000-0001' },
-  { id: 2, name: 'ธนกร อิ่มเพ็ง', email: 'thanakorn@shop.com', phone: '081-000-0002' },
-  { id: 3, name: 'ธนดล สมจิตต์', email: 'thanadon@shop.com', phone: '081-000-0003' },
-  { id: 4, name: 'สหภาพ ศิริพร', email: 'sahapap@shop.com', phone: '081-000-0004' },
-  { id: 5, name: 'ปวริศา โสมี', email: 'pawarisa@shop.com', phone: '081-000-0005' },
-];
-
-db.exec('PRAGMA foreign_keys = OFF;');
-db.prepare("DELETE FROM admin WHERE email='admin@shop.com' OR name='ผู้ดูแลระบบ'").run();
-for (const a of ADMINS) {
-  const existing = db.prepare('SELECT admin_id FROM admin WHERE admin_id=? OR email=?').get(a.id, a.email);
-  if (existing) {
-    db.prepare('UPDATE admin SET name=?, email=?, phone=?, password_hash=? WHERE admin_id=?')
-      .run(a.name, a.email, a.phone, hash('admin1234'), existing.admin_id);
-  } else {
-    db.prepare('INSERT INTO admin (admin_id,name,email,phone,password_hash) VALUES (?,?,?,?,?)')
-      .run(a.id, a.name, a.email, a.phone, hash('admin1234'));
+(async () => {
+  // ดึงข้อมูลล่าสุดจาก GitHub อัตโนมัติ (กรณีเซิร์ฟเวอร์ตื่นจากโหมด Sleep บน Render)
+  const restored = await restoreFromGitHubIfNewer(db, false);
+  if (restored?.restored) {
+    console.log(`☁️ กู้คืนข้อมูลล่าสุดจาก GitHub สำเร็จ (Checksum: ${restored.checksum}, เวลา: ${restored.timestamp})`);
   }
-}
-db.exec('PRAGMA foreign_keys = ON;');
-const defaultAdminId = db.prepare('SELECT admin_id FROM admin ORDER BY admin_id LIMIT 1').get()?.admin_id || 1;
+
+  // ผู้ดูแลระบบ 5 บัญชี (สร้างก่อนเพื่อให้มี admin_id อ้างอิงใน supplier และ customer ตาม ER)
+  const ADMINS = [
+    { id: 1, name: 'ภูวมินทร์ วัฒนสาร', email: 'phuwamin@shop.com', phone: '081-000-0001' },
+    { id: 2, name: 'ธนกร อิ่มเพ็ง', email: 'thanakorn@shop.com', phone: '081-000-0002' },
+    { id: 3, name: 'ธนดล สมจิตต์', email: 'thanadon@shop.com', phone: '081-000-0003' },
+    { id: 4, name: 'สหภาพ ศิริพร', email: 'sahapap@shop.com', phone: '081-000-0004' },
+    { id: 5, name: 'ปวริศา โสมี', email: 'pawarisa@shop.com', phone: '081-000-0005' },
+  ];
+
+  db.exec('PRAGMA foreign_keys = OFF;');
+  db.prepare("DELETE FROM admin WHERE email='admin@shop.com' OR name='ผู้ดูแลระบบ'").run();
+  for (const a of ADMINS) {
+    const existing = db.prepare('SELECT admin_id, password_hash FROM admin WHERE admin_id=? OR email=?').get(a.id, a.email);
+    if (existing) {
+      db.prepare('UPDATE admin SET name=?, email=?, phone=? WHERE admin_id=?')
+        .run(a.name, a.email, a.phone, existing.admin_id);
+    } else {
+      db.prepare('INSERT INTO admin (admin_id,name,email,phone,password_hash) VALUES (?,?,?,?,?)')
+        .run(a.id, a.name, a.email, a.phone, hash('admin1234'));
+    }
+  }
+  db.exec('PRAGMA foreign_keys = ON;');
+  const defaultAdminId = db.prepare('SELECT admin_id FROM admin ORDER BY admin_id LIMIT 1').get()?.admin_id || 1;
+
 
 // พนักงาน / ซัพพลายเออร์ (สร้างหากยังไม่มี)
 if (db.prepare('SELECT COUNT(*) c FROM employee').get().c === 0) {
@@ -252,13 +261,7 @@ const FAKE_CUSTOMERS = [
 
 const demoAddrText = 'เลขที่ 99/148 อาคารพาโนรามา ทาวเวอร์ ชั้น 19 ห้อง 1908 หมู่บ้านสุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 ตำบลบางพลีใหญ่ อำเภอบางพลี จังหวัดสมุทรปราการ 10540';
 const demoCust = db.prepare('SELECT customer_id FROM customer WHERE email=?').get('demo@shop.com');
-if (demoCust) {
-  db.prepare('UPDATE customer SET address=? WHERE customer_id=?').run(demoAddrText, demoCust.customer_id);
-  db.prepare('DELETE FROM address WHERE customer_id=?').run(demoCust.customer_id);
-  db.prepare(`INSERT INTO address (customer_id,recipient,phone,house_no,village,road,subdistrict,district,province,postal_code,is_default)
-    VALUES (?,?,?,?,?,?,?,?,?,?,1)`)
-    .run(demoCust.customer_id, 'สมชาย ทดสอบ', '089-999-9999', 'เลขที่ 99/148 ชั้น 19 ห้อง 1908', 'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7', 'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12', 'บางพลีใหญ่', 'บางพลี', 'สมุทรปราการ', '10540');
-} else {
+if (!demoCust) {
   const c = db.prepare('INSERT INTO customer (first_name,last_name,phone,email,address,admin_id,password_hash) VALUES (?,?,?,?,?,?,?)')
     .run('สมชาย', 'ทดสอบ', '089-999-9999', 'demo@shop.com', demoAddrText, defaultAdminId, hash('demo1234'));
   db.prepare(`INSERT INTO address (customer_id,recipient,phone,house_no,village,road,subdistrict,district,province,postal_code,is_default)
@@ -268,15 +271,7 @@ if (demoCust) {
 
 for (const fc of FAKE_CUSTOMERS) {
   const existing = db.prepare('SELECT customer_id FROM customer WHERE email=?').get(fc.email);
-  if (existing) {
-    db.prepare('UPDATE customer SET first_name=?,last_name=?,phone=?,address=?,admin_id=?,password_hash=? WHERE customer_id=?')
-      .run(fc.first_name, fc.last_name, fc.phone, fc.address, fc.admin_id || defaultAdminId, hash(fc.password), existing.customer_id);
-    const ap = fc.addr_parts;
-    db.prepare('DELETE FROM address WHERE customer_id=?').run(existing.customer_id);
-    db.prepare(`INSERT INTO address (customer_id,recipient,phone,house_no,village,road,subdistrict,district,province,postal_code,is_default)
-      VALUES (?,?,?,?,?,?,?,?,?,?,1)`)
-      .run(existing.customer_id, `${fc.first_name} ${fc.last_name}`, fc.phone, ap.house_no, ap.village, ap.road, ap.subdistrict, ap.district, ap.province, ap.postal_code);
-  } else {
+  if (!existing) {
     const c = db.prepare('INSERT INTO customer (first_name,last_name,phone,email,address,admin_id,password_hash) VALUES (?,?,?,?,?,?,?)')
       .run(fc.first_name, fc.last_name, fc.phone, fc.email, fc.address, fc.admin_id || defaultAdminId, hash(fc.password));
     const cid = c.lastInsertRowid;
@@ -316,7 +311,6 @@ for (const [name, cat, desc, supplier, employee, featured, shape, price, sizes, 
     pid = insP.run(name, cat, desc, supplier, employee, featured, 'shape:' + shape, price).lastInsertRowid;
   } else {
     pid = p.product_id;
-    db.prepare("UPDATE product SET status='active', price=? WHERE product_id=?").run(price, pid);
   }
 
   const existingVariants = db.prepare('SELECT COUNT(*) c FROM product_variant WHERE product_id=?').get(pid).c;
@@ -334,8 +328,6 @@ for (const [name, cat, desc, supplier, employee, featured, shape, price, sizes, 
 }
 console.log('สต็อกสินค้าครบทั้ง 4 หมวดหมู่ พร้อมจำหน่ายเรียบร้อยแล้ว');
 
-
-const { createRealtimeSqlManager } = require('./mssql-sync');
 createRealtimeSqlManager(db).notifyChange('seed', 'seed');
 
 console.log('ระบบพร้อมใช้งาน:');
@@ -346,3 +338,4 @@ for (const a of ADMINS) {
 }
 console.log('ลูกค้า (เดโม่): demo@shop.com / demo1234');
 console.log(`ลูกค้าตัวอย่าง (${FAKE_CUSTOMERS.length} บัญชี): พร้อมใช้งาน (รหัสผ่านตามลำดับ Customer01# ถึง Customer20#)`);
+})();

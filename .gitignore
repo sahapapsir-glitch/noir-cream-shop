@@ -3,3 +3,4 @@ backup/
 *.db-shm
 *.db-wal
 .env
+.github-token

@@ -125,7 +125,27 @@ foreach ($u in $apiUrls) {
 
 $baseDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 $localSqlFile = Join-Path $baseDir "NoirCreamShop_SQLServer.sql"
+$localSnapshotFile = Join-Path $baseDir "db-snapshot.json"
 $githubRawSqlUrl = "https://raw.githubusercontent.com/sahapapsir-glitch/noir-cream-shop/main/NoirCreamShop_SQLServer.sql"
+
+function Push-DatabaseToGitHub {
+    param([string]$Reason = "Realtime Sync")
+    $gitDir = Join-Path $baseDir ".git"
+    if (-not (Test-Path $gitDir)) { return }
+    try {
+        Push-Location $baseDir
+        git add "NoirCreamShop_SQLServer.sql" "db-snapshot.json" "shop.db" 2>$null
+        $porcelain = git status --porcelain "NoirCreamShop_SQLServer.sql" "db-snapshot.json" "shop.db" 2>$null
+        if ($porcelain) {
+            git commit -m "Auto-sync database ($Reason) [skip render]" 2>$null | Out-Null
+            git push origin main 2>$null | Out-Null
+            $sha = (git rev-parse --short HEAD 2>$null)
+            Write-Host "   ☁️ [GitHub Sync] อัปเดตข้อมูลขึ้น GitHub สำเร็จ! (Commit: $sha)" -ForegroundColor Cyan
+        }
+    } catch {} finally {
+        Pop-Location
+    }
+}
 
 # 3. ซิงค์เริ่มต้น (สร้างฐานข้อมูล NoirCreamShop + ตารางครบทั้ง 16 ตาราง + Views + ข้อมูลล่าสุด)
 Write-Host "⏳ กำลังสร้างและซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance ..." -ForegroundColor Cyan
@@ -163,7 +183,7 @@ if ($Once) {
     exit 0
 }
 
-Write-Host "🔄 เริ่มโหมดซิงค์ข้อมูล 2 ทางแบบ Realtime (Web <-> SSMS $activeInstance) ทุกๆ $IntervalSeconds วินาที (กด Ctrl+C เพื่อหยุด)..." -ForegroundColor Cyan
+Write-Host "🔄 เริ่มโหมดซิงค์ข้อมูล 2 ทางแบบ Realtime (Web <-> SSMS $activeInstance + GitHub Auto-Sync) ทุกๆ $IntervalSeconds วินาที (กด Ctrl+C เพื่อหยุด)..." -ForegroundColor Cyan
 Write-Host ""
 
 $lastFileHash = if (Test-Path $localSqlFile) { (Get-FileHash $localSqlFile -Algorithm SHA256).Hash } else { "" }
@@ -189,22 +209,25 @@ while ($true) {
 
     if ($activeWebUrl) {
         try {
-            # 1) ตรวจว่าหน้าเว็บมีการเปลี่ยนแปลงข้อมูลหรือไม่ (Web -> SSMS)
+            # 1) ตรวจว่าหน้าเว็บมีการเปลี่ยนแปลงข้อมูลหรือไม่ (Web -> SSMS -> GitHub)
             $webSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot?instance=$([uri]::EscapeDataString($activeInstance))" -Method Get -TimeoutSec 4 -ErrorAction Stop
             if ($webSnap.checksum -ne $lastWebChecksum) {
                 $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 8 -ErrorAction Stop
                 Invoke-SqlScriptBatches -ScriptText $scriptText
                 if (Test-Path $baseDir) {
                     [System.IO.File]::WriteAllText($localSqlFile, $scriptText, [System.Text.Encoding]::UTF8)
+                    $snapJson = ($webSnap | Select-Object instance, database, timestamp, checksum, counts, tables, views | ConvertTo-Json -Depth 8)
+                    [System.IO.File]::WriteAllText($localSnapshotFile, $snapJson, [System.Text.Encoding]::UTF8)
                 }
                 $lastWebChecksum = $webSnap.checksum
                 $ssmsState = Get-SsmsTablesState
                 $lastSsmsChecksum = $ssmsState.Checksum
                 Write-Host "[$now] ⚡ [Web -> SSMS] อัปเดตข้อมูลเข้า $activeInstance/$DatabaseName สำเร็จ (Checksum: $($webSnap.checksum))" -ForegroundColor Green
+                Push-DatabaseToGitHub -Reason "Web Update $($webSnap.checksum)"
                 continue
             }
 
-            # 2) ตรวจว่ามีการแก้ไขข้อมูลโดยตรงใน SSMS หรือไม่ (SSMS -> Web)
+            # 2) ตรวจว่ามีการแก้ไขข้อมูลโดยตรงใน SSMS หรือไม่ (SSMS -> Web -> GitHub)
             $currentSsms = Get-SsmsTablesState
             if ($currentSsms.Checksum -ne $lastSsmsChecksum) {
                 $bodyJson = (@{
@@ -216,6 +239,11 @@ while ($true) {
                 $lastSsmsChecksum = $currentSsms.Checksum
                 $lastWebChecksum = $pushResp.checksum
                 Write-Host "[$now] 🔄 [SSMS -> Web] ซิงค์ข้อมูลที่แก้ไขใน SSMS ขึ้นหน้าเว็บสำเร็จ! (Checksum: $($pushResp.checksum))" -ForegroundColor Magenta
+                $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 8 -ErrorAction SilentlyContinue
+                if ($scriptText -and (Test-Path $baseDir)) {
+                    [System.IO.File]::WriteAllText($localSqlFile, $scriptText, [System.Text.Encoding]::UTF8)
+                }
+                Push-DatabaseToGitHub -Reason "SSMS Update $($pushResp.checksum)"
             }
         } catch {
             # หากเซิร์ฟเวอร์รีสตาร์ทหรือหยุดชั่วคราว
@@ -228,6 +256,7 @@ while ($true) {
             Invoke-SqlScriptBatches -ScriptText $scriptText
             $lastFileHash = $curHash
             Write-Host "[$now] ⚡ [File -> SSMS] อัปเดตฐานข้อมูล $activeInstance/$DatabaseName จากไฟล์ SQL สำเร็จ!" -ForegroundColor Green
+            Push-DatabaseToGitHub -Reason "SQL File Update"
         }
     }
 }

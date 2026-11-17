@@ -903,6 +903,69 @@ app.get('/api/sql/stream', (req, res) => {
   res.on('close', () => clearInterval(keepAlive));
 });
 
-app.use('/api', (req, res) => res.status(404).json({ error: 'ไม่พบ API นี้' }));
-app.listen(PORT, () => console.log(`ร้านเปิดแล้วที่ http://localhost:${PORT} (พร้อมระบบเชื่อม SQL Server Realtime: .\\SQLEXPRESS01)`));
+app.get('/api/github/status', (req, res) => {
+  res.json({ github: sqlSync.getGitHubStatus() });
+});
 
+app.post('/api/github/sync', async (req, res) => {
+  try {
+    needAdmin(req);
+    const github = await sqlSync.syncToGitHubNow('Manual Admin Sync');
+    if (github.lastError) {
+      return res.status(400).json({ error: github.lastError, github });
+    }
+    res.json({ ok: true, github });
+  } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json({ error: e.message });
+    res.status(500).json({ error: e.message || 'ซิงค์ขึ้น GitHub ไม่สำเร็จ' });
+  }
+});
+
+app.post('/api/github/pull', async (req, res) => {
+  try {
+    needAdmin(req);
+    const restored = await sqlSync.restoreFromGitHub(true);
+    if (restored?.restored) {
+      for (const p of db.prepare('SELECT product_id FROM product').all()) {
+        syncStock(p.product_id);
+      }
+      for (const c of db.prepare('SELECT customer_id FROM customer').all()) {
+        syncCustomerAddress(c.customer_id);
+      }
+      sqlSync.notifyChange('GitHub Pull Restore', 'github');
+    }
+    res.json({ ok: true, restored, github: sqlSync.getGitHubStatus() });
+  } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json({ error: e.message });
+    res.status(500).json({ error: e.message || 'ดึงข้อมูลจาก GitHub ไม่สำเร็จ' });
+  }
+});
+
+app.post('/api/github/token', async (req, res) => {
+  try {
+    needAdmin(req);
+    const tok = String(req.body?.token || '').trim();
+    sqlSync.setGitHubToken(tok);
+    if (!tok) {
+      return res.json({ ok: true, github: sqlSync.getGitHubStatus() });
+    }
+    const github = await sqlSync.syncToGitHubNow('Setup GitHub Token');
+    if (github.lastError) {
+      return res.status(400).json({ error: github.lastError, github });
+    }
+    res.json({ ok: true, github });
+  } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json({ error: e.message });
+    res.status(500).json({ error: e.message || 'ตั้งค่า GitHub Token ไม่สำเร็จ' });
+  }
+});
+
+app.use('/api', (req, res) => res.status(404).json({ error: 'ไม่พบ API นี้' }));
+app.listen(PORT, () => {
+  console.log(`ร้านเปิดแล้วที่ http://localhost:${PORT} (พร้อมระบบเชื่อม SQL Server Realtime: .\\SQLEXPRESS01 และ GitHub Auto-Sync)`);
+  sqlSync.restoreFromGitHub(false).then((r) => {
+    if (r?.restored) {
+      console.log(`☁️ กู้คืนข้อมูลล่าสุดจาก GitHub สำเร็จ (Checksum: ${r.checksum})`);
+    }
+  }).catch(() => {});
+});

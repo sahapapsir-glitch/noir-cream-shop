@@ -1136,18 +1136,24 @@ pages.admin = async () => {
   ];
   app.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
         <button type="button" class="sql-live-pill" id="sqlHeaderPill" onclick="A.tab('sql')" title="คลิกเพื่อเปิดหน้า SQL Server Realtime Studio">
           <span class="sql-pulse-dot"></span>
           <span>SQL Realtime: <b>.\\SQLEXPRESS01</b> / <code>NoirCreamShop</code></span>
         </button>
+        <button type="button" class="sql-live-pill" id="githubHeaderPill" onclick="A.syncGitHubNow()" title="คลิกเพื่อซิงค์ฐานข้อมูล (สินค้า/สต็อก/ลูกค้า) ขึ้น GitHub ทันที">
+          <span class="sql-pulse-dot"></span>
+          <span id="githubHeaderText">☁️ GitHub Auto-Sync</span>
+        </button>
+        <button type="button" class="btn ghost sm" onclick="A.setupGitHubToken()" title="ตั้งค่า GitHub Token เพื่อให้ Render Cloud ซิงค์ขึ้น GitHub อัตโนมัติ">🔑 ตั้งค่า GitHub Token</button>
       </div>
       <button class="btn danger sm" onclick="A.clearAllStock()">⚠️ ล้างสต็อกสินค้าทั้งหมด</button>
     </div>
     <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
     <div id="tab"></div>
   `;
+
   await adminTabs[adminTab]();
 };
 
@@ -2143,6 +2149,44 @@ const A = window.A = {
   downloadSqlScript() {
     window.open('/api/sql/script?download=1', '_blank');
     toast('กำลังดาวน์โหลดไฟล์ NoirCreamShop_SQLServer.sql ข้อมูลล่าสุด');
+  },
+
+  async syncGitHubNow() {
+    const txt = $('#githubHeaderText');
+    if (txt) txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
+    safe(async () => {
+      try {
+        const { github } = await api('POST', '/api/github/sync');
+        if (txt) txt.innerHTML = `☁️ GitHub Synced ${github.lastCommitSha ? `(<code>${esc(github.lastCommitSha)}</code>)` : '✓'}`;
+        toast(`ซิงค์ข้อมูล (สินค้า/สต็อก/ลูกค้า) ขึ้น GitHub สำเร็จ!${github.lastCommitSha ? ` [${github.lastCommitSha}]` : ''}`);
+      } catch (err) {
+        if (txt) txt.innerHTML = '☁️ GitHub Auto-Sync';
+        if (String(err.message || '').includes('GITHUB_TOKEN')) {
+          A.setupGitHubToken();
+        } else {
+          throw err;
+        }
+      }
+    });
+  },
+
+  async setupGitHubToken() {
+    const token = prompt(
+      'ใส่ GitHub Personal Access Token (เช่น ghp_... หรือ github_pat_...) เพื่อให้เว็บบน Render อัปเดตข้อมูลสินค้า/สต็อก/ลูกค้าขึ้น GitHub อัตโนมัติทุกครั้งที่มีการแก้ไข:\n\n(สร้างได้ที่ GitHub -> Settings -> Developer settings -> Personal access tokens -> เปิดสิทธิ์ repo / contents:write)',
+      ''
+    );
+    if (token === null) return;
+    safe(async () => {
+      const { github } = await api('POST', '/api/github/token', { token: token.trim() });
+      const txt = $('#githubHeaderText');
+      if (github.hasToken) {
+        if (txt) txt.innerHTML = `☁️ GitHub Synced ${github.lastCommitSha ? `(<code>${esc(github.lastCommitSha)}</code>)` : '✓'}`;
+        toast('ตั้งค่า GitHub Token และซิงค์ฐานข้อมูลขึ้น GitHub สำเร็จแล้ว!');
+      } else {
+        if (txt) txt.innerHTML = '☁️ GitHub Auto-Sync';
+        toast('ล้างค่า GitHub Token แล้ว');
+      }
+    });
   }
 };
 
@@ -2153,6 +2197,24 @@ function initRealtimeSqlStream() {
   if (typeof EventSource === 'undefined' || sqlEventSource) return;
   try {
     sqlEventSource = new EventSource('/api/sql/stream');
+    sqlEventSource.addEventListener('github_status', (ev) => {
+      try {
+        const gh = JSON.parse(ev.data || '{}');
+        const txt = $('#githubHeaderText');
+        const pill = $('#githubHeaderPill');
+        if (!txt) return;
+        if (gh.syncing) {
+          txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
+        } else if (gh.lastCommitSha) {
+          txt.innerHTML = `☁️ GitHub Synced (<code>${esc(gh.lastCommitSha)}</code>)`;
+          if (pill) {
+            pill.classList.remove('flash');
+            void pill.offsetWidth;
+            pill.classList.add('flash');
+          }
+        }
+      } catch {}
+    });
     sqlEventSource.addEventListener('db_change', async (ev) => {
       try {
         const data = JSON.parse(ev.data || '{}');
