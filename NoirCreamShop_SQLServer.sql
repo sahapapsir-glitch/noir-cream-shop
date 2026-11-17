@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 20e75b34d1614c22 | Updated: 2026-11-17T16:13:19.765Z
+-- Checksum: 233fb6fc03caff6d | Updated: 2026-11-17T16:13:23.376Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -394,7 +394,7 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (35, N'Polo Bear Fleece Sweatshirt', N'เสื้อแขนยาว', N'brand:Polo Ralph Lauren', N'active', 160, 160, 2400, 1, 1, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg', 0, '2026-11-17 16:01:36');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (36, N'Kids Kkotch T-Shirt in Black', N'เสื้อยืด', N'ลาย Anti Social Social Club ผสานกับภาพผีเสื้อและดอกไม้ ผ้าฝ้าย 100%', N'active', 100, 100, 593, 1, 2, N'https://www.childsplayclothing.com/cdn/shop/files/ASSA6002_BLACK_1.jpg?v=1779286536&width=2138', 1, '2026-11-17 16:06:39');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (37, N'Collegiate Sweatshirt', N'เสื้อแขนยาว', N'Malbon', N'active', 175, 175, 5600, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 1, '2026-11-17 16:09:34');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (38, N'Script Logo Skate Hoodie', N'เสื้อแขนยาว', N'brand:OFF-WHITE', N'active', 80, 80, 19998, NULL, 1, N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 1, '2026-11-17 16:12:23');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (38, N'Script Logo Skate Hoodie', N'เสื้อแขนยาว', N'brand:OFF-WHITE', N'active', 80, 80, 19999, NULL, 1, N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 1, '2026-11-17 16:12:23');
 SET IDENTITY_INSERT dbo.product OFF;
 
 -- ตาราง dbo.product_variant (47 รายการ)
@@ -442,8 +442,8 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (221, 37, N'L', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-L-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (222, 37, N'XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-XL-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (223, 37, N'2XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-2XL-สีขาวงาช้าง/สีครีมอ่อน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (224, 38, N'S', N'ดำ', N'#000000', 19998, 20, 20, N'SKU-38-S-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (225, 38, N'M', N'ดำ', N'#000000', 19998, 20, 20, N'SKU-38-M-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (224, 38, N'S', N'ดำ', N'#000000', 19999, 20, 20, N'SKU-38-S-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (225, 38, N'M', N'ดำ', N'#000000', 19999, 20, 20, N'SKU-38-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', 19999, 20, 20, N'SKU-38-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (227, 38, N'XL', N'ดำ', N'#000000', 21000, 20, 20, N'SKU-38-XL-ดำ');
 SET IDENTITY_INSERT dbo.product_variant OFF;
