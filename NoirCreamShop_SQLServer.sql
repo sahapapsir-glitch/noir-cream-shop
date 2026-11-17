@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 0f1c7dffe7ca5958 | Updated: 2026-11-17T16:01:36.948Z
+-- Checksum: 7c4415d6b1baf690 | Updated: 2026-11-17T16:02:36.062Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -409,7 +409,7 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (191, 30, N'M', N'ดำ', N'#000000', 3000, 30, 30, N'SKU-30-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (192, 30, N'L', N'ดำ', N'#000000', 3000, 30, 30, N'SKU-30-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (193, 30, N'XL', N'ดำ', N'#000000', 3000, 30, 30, N'SKU-30-XL-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (194, 30, N'2XL', N'ดำ', N'#000000', 3000, 30, 30, N'SKU-30-2XL-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (194, 30, N'2XL', N'ดำ', N'#000000', 3299, 30, 30, N'SKU-30-2XL-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (195, 31, N'S', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (196, 31, N'M', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (197, 31, N'L', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-L-ดำ');
