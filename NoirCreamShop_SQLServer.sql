@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 3887ebbe6c387b5e | Updated: 2026-11-17T15:51:39.313Z
+-- Checksum: 15393df9e8d1d724 | Updated: 2026-11-17T15:52:14.859Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -386,7 +386,7 @@ SET IDENTITY_INSERT dbo.product ON;
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (24, N'Classic Fit Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 150, 150, 2900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 1, '2026-11-17 14:46:27');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (28, N'Ronron Pattern Logo Basic Fit T Shirt White Navy (Women''s)', N'เสื้อยืด', N'เนื้อผ้าคอตตอน', N'active', 60, 60, 790, 2, 1, N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 0, '2026-11-17 15:48:59');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (30, N'Fleece Hoodie', N'เสื้อแขนยาว', N'brand:Polo Ralph Lauren', N'active', 150, 150, 3000, 2, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK9M_V1.jpg', 1, '2026-11-17 15:49:26');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (31, N'90''S Crewneck Sweatshirt', N'เสื้อแขนยาว', N'brand:Fear of God ESSENTIALS', N'active', 100, 100, 2600, 2, 2, N'https://is8.revolveassets.com/images/p4/n/z/FALF-MK61_V1.jpg', 1, '2026-11-17 15:51:39');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (31, N'90''S Crewneck Sweatshirt', N'เสื้อแขนยาว', N'brand:Fear of God ESSENTIALS', N'active', 100, 100, 2600, 2, 2, N'https://is8.revolveassets.com/images/p4/n/z/FALF-MK61_V1.jpg', 0, '2026-11-17 15:51:39');
 SET IDENTITY_INSERT dbo.product OFF;
 
 -- ตาราง dbo.product_variant (18 รายการ)
