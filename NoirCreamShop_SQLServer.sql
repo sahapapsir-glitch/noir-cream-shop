@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 3a64c375b34bca60 | Updated: 2026-11-17T16:40:08.963Z
+-- Checksum: 9056b091ca65560c | Updated: 2026-11-17T16:40:33.103Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -403,7 +403,7 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (42, N'maison mihara yasuhiro', N'เสื้อยืด', N'วัสดุ ผ้าฝ้าย 100% เสื้อยืดตัวนี้มีรายละเอียดเป็นลายพิมพ์กราฟิกแบบวาดเล่นของลีออน ซึ่งมีลักษณะเหมือนภาพวาดด้วยมือ', N'active', 15, 15, 11900, 2, 1, N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 0, '2026-11-17 16:27:24');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (43, N'Short Sleeve Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 180, 180, 3900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS263_V1.jpg', 1, '2026-11-17 16:33:20');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (44, N'FOUND', N'เสื้อยืด', N'วัสดุภายนอก ผ้าฝ้าย 100% ปักลายยีราฟด้านหน้า คอกลม แขนสั้น', N'active', 15, 15, 5200, 3, 2, N'https://cdn-images.farfetch-contents.com/37/52/60/23/37526023_70405666_1000.jpg', 0, '2026-11-17 16:37:26');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (46, N'Short Sleeve Basic Mesh Litchfield Bear Polo', N'เสื้อโปโล', N'Polo Ralph Lauren', N'active', 125, 125, 4890, 1, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS521_V1.jpg', 0, '2026-11-17 16:40:08');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (46, N'Short Sleeve Basic Mesh Litchfield Bear Polo', N'เสื้อโปโล', N'Polo Ralph Lauren', N'active', 125, 125, 4890, 1, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS521_V1.jpg', 1, '2026-11-17 16:40:08');
 SET IDENTITY_INSERT dbo.product OFF;
 
 -- ตาราง dbo.product_variant (73 รายการ)
