@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:05:42.376Z",
-  "checksum": "07b9572dbd312b66",
+  "timestamp": "2026-11-17T17:07:41.140Z",
+  "checksum": "46722dfc6de41a31",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 23,
-    "product_variant": 95,
+    "product": 24,
+    "product_variant": 100,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -1026,6 +1026,21 @@
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/CBOL-MS12_V1.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 17:01:36"
+      },
+      {
+        "product_id": 54,
+        "name": "Kobe",
+        "category": "เสื้อยืด",
+        "description": "เสื้อยืดบาสเก็ตบอลผู้ชาย Nike Dri-FIT",
+        "status": "active",
+        "stock": 35,
+        "quantity": 35,
+        "price": 11111,
+        "supplier_id": 1,
+        "employee_id": 1,
+        "image_url": "https://static.nike.com/a/images/c_limit,w_2880/f_auto,q_auto,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/b41f11db-eef3-41be-beac-f0520a949b65/AS+KB+M+NK+DF+TEE+M90+SSNL2+FH.png",
+        "is_featured": 1,
+        "created_at": "2026-11-17 17:07:41"
       }
     ],
     "product_variant": [
@@ -2073,6 +2088,61 @@
         "stock": 40,
         "stock_quantity": 40,
         "sku": "SKU-52-2XL-สีเขียวเข้ม/สีขาวนวล"
+      },
+      {
+        "variant_id": 287,
+        "product_id": 54,
+        "size": "S",
+        "color": "สีขาว",
+        "color_hex": "#ffffff",
+        "price": 11111,
+        "stock": 7,
+        "stock_quantity": 7,
+        "sku": "SKU-54-S-สีขาว"
+      },
+      {
+        "variant_id": 288,
+        "product_id": 54,
+        "size": "M",
+        "color": "สีขาว",
+        "color_hex": "#ffffff",
+        "price": 11111,
+        "stock": 7,
+        "stock_quantity": 7,
+        "sku": "SKU-54-M-สีขาว"
+      },
+      {
+        "variant_id": 289,
+        "product_id": 54,
+        "size": "L",
+        "color": "สีขาว",
+        "color_hex": "#ffffff",
+        "price": 11111,
+        "stock": 7,
+        "stock_quantity": 7,
+        "sku": "SKU-54-L-สีขาว"
+      },
+      {
+        "variant_id": 290,
+        "product_id": 54,
+        "size": "XL",
+        "color": "สีขาว",
+        "color_hex": "#ffffff",
+        "price": 11111,
+        "stock": 7,
+        "stock_quantity": 7,
+        "sku": "SKU-54-XL-สีขาว"
+      },
+      {
+        "variant_id": 291,
+        "product_id": 54,
+        "size": "2XL",
+        "color": "สีขาว",
+        "color_hex": "#ffffff",
+        "price": 11111,
+        "stock": 7,
+        "stock_quantity": 7,
+        "sku": "SKU-54-2XL-สีขาว"
       }
     ],
     "cart_item": [],
