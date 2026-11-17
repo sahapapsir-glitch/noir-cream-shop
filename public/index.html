@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NOIR &amp; CREAM — เสื้อยืด · เสื้อโปโล · เสื้อแขนยาว · กางเกง</title>
+  <meta name="description" content="ร้านเสื้อผ้ามินิมอล โทนครีม ขาว ดำ จำหน่ายเสื้อยืด เสื้อโปโล เสื้อแขนยาว และกางเกง คุณภาพพรีเมียม ใส่สบายได้ทุกวัน">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="scroll-progress" id="scrollProgress"></div>
+  <div class="topbar" id="topbar">
+    <span>ส่งฟรีเมื่อซื้อครบ ฿1,000 · เปลี่ยนไซส์ได้ภายใน 7 วัน · โค้ด <b>WELCOME10</b> ลด 10%</span>
+  </div>
+
+  <header class="site-header">
+    <div class="wrap header-in">
+      <div class="mobile-toggle" id="menuToggle" aria-label="เปิดเมนู" onclick="A.toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </div>
+      <a href="#/" class="brand">NOIR<span>&amp;</span>CREAM</a>
+      <nav class="nav" id="nav">
+        <a href="#/shop" data-nav="shop">สินค้าทั้งหมด</a>
+        <a href="#/shop?category=เสื้อยืด" data-nav="tee">เสื้อยืด</a>
+        <a href="#/shop?category=เสื้อโปโล" data-nav="polo">เสื้อโปโล</a>
+        <a href="#/shop?category=เสื้อแขนยาว" data-nav="longsleeve">เสื้อแขนยาว</a>
+        <a href="#/shop?category=กางเกง" data-nav="pants">กางเกง</a>
+        <a href="#/size-guide" data-nav="size-guide" class="nav-highlight">ตารางไซส์ 📏</a>
+        <a href="#/help" data-nav="help">นโยบาย/ช่วยเหลือ</a>
+      </nav>
+      <div class="header-actions" id="actions"></div>
+    </div>
+  </header>
+
+  <div id="mobileMenu" class="mobile-menu-drawer">
+    <div class="mobile-menu-head">
+      <div class="brand small">NOIR<span>&amp;</span>CREAM</div>
+      <button class="icon-btn" onclick="A.toggleMobileMenu()" aria-label="ปิด">✕</button>
+    </div>
+    <div class="mobile-links">
+      <a href="#/shop" onclick="A.toggleMobileMenu()">สินค้าทั้งหมด</a>
+      <a href="#/shop?category=เสื้อยืด" onclick="A.toggleMobileMenu()">👕 เสื้อยืด</a>
+      <a href="#/shop?category=เสื้อโปโล" onclick="A.toggleMobileMenu()">👔 เสื้อโปโล</a>
+      <a href="#/shop?category=เสื้อแขนยาว" onclick="A.toggleMobileMenu()">🧥 เสื้อแขนยาว</a>
+      <a href="#/shop?category=กางเกง" onclick="A.toggleMobileMenu()">👖 กางเกง</a>
+      <div class="mobile-divider"></div>
+      <a href="#/size-guide" onclick="A.toggleMobileMenu()">📏 ตารางเทียบไซส์มาตรฐาน</a>
+      <a href="#/help" onclick="A.toggleMobileMenu()">ℹ️ ข้อมูลจัดส่ง / เปลี่ยนสินค้า / FAQ</a>
+    </div>
+  </div>
+  <div id="menuBackdrop" class="menu-backdrop" onclick="A.toggleMobileMenu()"></div>
+
+  <main id="app" class="wrap"></main>
+
+  <footer class="site-footer">
+    <div class="wrap foot-in">
+      <div class="foot-col">
+        <div class="brand small">NOIR<span>&amp;</span>CREAM</div>
+        <p class="foot-desc">เสื้อผ้าคอลเลกชันโทนครีม ขาว ดำ ดีไซน์เรียบนิ่งเหนือกาลเวลา เราคัดสรรเฉพาะ 4 หมวดหมู่หลัก: เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว และกางเกง ที่ตัดเย็บด้วยความประณีตเพื่อการสวมใส่ได้ทุกวัน</p>
+        <div class="theme-chips">
+          <span class="chip-color" style="background:#FAF7F2" title="ครีม"></span>
+          <span class="chip-color" style="background:#FFFFFF" title="ขาว"></span>
+          <span class="chip-color" style="background:#141414" title="ดำ"></span>
+          <small>Signature Cream · White · Noir</small>
+        </div>
+      </div>
+      <div class="foot-col">
+        <h4>หมวดหมู่สินค้า</h4>
+        <ul class="foot-links">
+          <li><a href="#/shop?category=เสื้อยืด">เสื้อยืด (T-Shirts)</a></li>
+          <li><a href="#/shop?category=เสื้อโปโล">เสื้อโปโล (Polo Shirts)</a></li>
+          <li><a href="#/shop?category=เสื้อแขนยาว">เสื้อแขนยาว (Long Sleeve)</a></li>
+          <li><a href="#/shop?category=กางเกง">กางเกง (Trousers &amp; Pants)</a></li>
+          <li><a href="#/shop">ดูสินค้าทั้งหมด</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>ข้อมูล &amp; การบริการ</h4>
+        <ul class="foot-links">
+          <li><a href="#/size-guide">ตารางเทียบไซส์ &amp; วิธีวัดตัว</a></li>
+          <li><a href="#/help#exchange">นโยบายเปลี่ยนไซส์ (ภายใน 7 วัน)</a></li>
+          <li><a href="#/help#shipping">การจัดส่ง (ส่งฟรีครบ ฿1,000)</a></li>
+          <li><a href="#/help#care">คำแนะนำการดูแลรักษาเนื้อผ้า</a></li>
+          <li><a href="#/help#faq">คำถามที่พบบ่อย (FAQ)</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>ติดต่อร้านค้า</h4>
+        <p class="foot-contact">
+          <b>LINE OA:</b> @noircream<br>
+          <b>Instagram:</b> @noircream.official<br>
+          <b>โทรศัพท์:</b> 081-234-5678<br>
+          <b>อีเมล:</b> contact@noircream.example<br>
+          <span class="muted" style="display:inline-block;margin-top:6px">เปิดให้บริการ จันทร์ – เสาร์ 09:00 – 19:00 น.</span>
+        </p>
+      </div>
+    </div>
+    <div class="copy wrap">
+      <div>© 2026 NOIR &amp; CREAM. All rights reserved. มินิมอลสไตล์ ครีม · ขาว · ดำ</div>
+    </div>
+  </footer>
+
+  <!-- Modal สำหรับ Size Guide หรือแจ้งเตือน -->
+  <div id="modal" class="modal-backdrop" onclick="if(event.target===this) A.closeModal()">
+    <div class="modal-box" id="modalBox"></div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

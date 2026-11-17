@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: noir-cream-shop
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run setup
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0

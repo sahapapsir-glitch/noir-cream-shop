@@ -1,0 +1,21 @@
+{
+  "name": "noir-cream-shop",
+  "version": "1.0.0",
+  "description": "เว็บร้านเสื้อผ้า NOIR & CREAM",
+  "main": "server.js",
+  "scripts": {
+    "seed": "node --disable-warning=ExperimentalWarning seed.js",
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "setup": "npm run seed && npm start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

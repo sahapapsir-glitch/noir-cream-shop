@@ -1,0 +1,1985 @@
+/* NOIR & CREAM — front-end (vanilla JS SPA, hash routing)
+   Specialized in 4 Categories: เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว, กางเกง
+   Minimalist Cream · White · Noir Theme
+*/
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const app = $('#app');
+const state = {
+  user: null,
+  cart: { items: [], count: 0, subtotal: 0 },
+  config: {
+    free_shipping_min: 1000,
+    shipping_fee: 50,
+    pay_methods: ['โอนผ่านธนาคาร', 'PromptPay', 'บัตรเครดิต/เดบิต', 'เก็บเงินปลายทาง'],
+    categories: ['เสื้อยืด', 'เสื้อโปโล', 'เสื้อแขนยาว', 'กางเกง'],
+    contact: { line: '@noircream', phone: '081-234-5678', email: 'contact@noircream.example' }
+  }
+};
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n) => '฿' + Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 });
+const dt = (s) => (s ? esc(s.slice(0, 16).replace('T', ' ')) : '-');
+const STATUS = { pending: 'รอชำระเงิน', paid: 'ชำระแล้ว', shipped: 'กำลังจัดส่ง', completed: 'สำเร็จ', cancelled: 'ยกเลิก' };
+const PAY_STATUS = { pending: 'รอชำระ', paid: 'ชำระแล้ว', cancelled: 'ยกเลิก' };
+const SHIP_STATUS = { preparing: 'เตรียมจัดส่ง', shipped: 'ส่งออกแล้ว', delivered: 'ส่งถึงแล้ว' };
+
+async function api(method, url, body) {
+  const r = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(j.error || 'เกิดข้อผิดพลาด');
+    e.status = r.status;
+    throw e;
+  }
+  return j;
+}
+
+let toastTimer;
+function toast(msg, bad = false) {
+  const t = $('#toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'toast show' + (bad ? ' bad' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.className = 'toast'), 2800);
+}
+
+const go = (h) => { location.hash = h; };
+const safe = async (fn) => {
+  try { return await fn(); }
+  catch (e) {
+    if (e.status === 401) { go('#/login'); toast('กรุณาเข้าสู่ระบบก่อน', true); }
+    else toast(e.message, true);
+  }
+};
+
+/* ---------- Size Guides Data (ตารางไซส์ 4 หมวดหมู่) ---------- */
+const SIZE_GUIDES = {
+  'เสื้อยืด': {
+    title: 'ตารางเทียบไซส์เสื้อยืด (T-Shirt Size Guide)',
+    desc: 'ทรงเรกูลาร์-คอมฟอร์ท ใส่สบาย ผ้าคอตตอน 100% พรีเมียม (หน่วยวัด: นิ้ว)',
+    headers: ['ไซส์', 'รอบอก (นิ้ว)', 'ความยาวเสื้อ (นิ้ว)', 'ไหล่กว้าง (นิ้ว)'],
+    rows: [
+      ['S', '36 – 38', '26.0', '16.5'],
+      ['M', '39 – 40', '27.0', '17.5'],
+      ['L', '41 – 43', '28.0', '18.5'],
+      ['XL', '44 – 46', '29.0', '19.5'],
+      ['2XL', '47 – 49', '30.0', '20.5']
+    ]
+  },
+  'เสื้อโปโล': {
+    title: 'ตารางเทียบไซส์เสื้อโปโล (Polo Shirt Size Guide)',
+    desc: 'ทรงสมาร์ทแคชชวล คอปกทอแน่น ทรงสวยพอดีตัว (หน่วยวัด: นิ้ว)',
+    headers: ['ไซส์', 'รอบอก (นิ้ว)', 'ความยาวเสื้อ (นิ้ว)', 'ไหล่กว้าง (นิ้ว)', 'ความยาวแขน (นิ้ว)'],
+    rows: [
+      ['S', '36 – 38', '26.5', '16.5', '8.0'],
+      ['M', '39 – 41', '27.5', '17.5', '8.5'],
+      ['L', '42 – 44', '28.5', '18.5', '9.0'],
+      ['XL', '45 – 47', '29.5', '19.5', '9.5'],
+      ['2XL', '48 – 50', '30.5', '20.5', '10.0']
+    ]
+  },
+  'เสื้อแขนยาว': {
+    title: 'ตารางเทียบไซส์เสื้อแขนยาว (Long Sleeve Size Guide)',
+    desc: 'ทรงโอเวอร์ไซส์เล็กน้อย ปลายแขนกระชับ ใส่สบายในห้องแอร์และสภาพอากาศทั่วไป (หน่วยวัด: นิ้ว)',
+    headers: ['ไซส์', 'รอบอก (นิ้ว)', 'ความยาวเสื้อ (นิ้ว)', 'ไหล่กว้าง (นิ้ว)', 'ความยาวแขน (นิ้ว)'],
+    rows: [
+      ['S', '38 – 40', '27.0', '17.0', '23.5'],
+      ['M', '40 – 42', '28.0', '18.0', '24.5'],
+      ['L', '43 – 45', '29.0', '19.0', '25.5'],
+      ['XL', '46 – 48', '30.0', '20.0', '26.5'],
+      ['2XL', '49 – 51', '31.0', '21.0', '27.5']
+    ]
+  },
+  'กางเกง': {
+    title: 'ตารางเทียบไซส์กางเกง (Pants & Trousers Size Guide)',
+    desc: 'ทรงกระบอกตรง/ชิโน เอวระดับมาตรฐาน ผ้ายืดหยุ่นเล็กน้อย (หน่วยวัด: นิ้ว)',
+    headers: ['ไซส์ (เอว)', 'รอบสะโพก (นิ้ว)', 'ความยาวกางเกง (นิ้ว)', 'รอบต้นขา (นิ้ว)', 'ปลายขา (นิ้ว)'],
+    rows: [
+      ['28 / S', '36', '38.0', '21.0', '13.0'],
+      ['30 / M', '38', '39.0', '22.0', '14.0'],
+      ['32 / L', '40', '40.0', '23.0', '14.5'],
+      ['34 / XL', '42', '40.5', '24.0', '15.0'],
+      ['36 / 2XL', '44', '41.0', '25.0', '15.5']
+    ]
+  }
+};
+
+/* ---------- Product Illustration (SVG Vector เฉพาะ 4 หมวดหมู่) ---------- */
+function art(img, color) {
+  if (img && /^https?:\/\//i.test(img)) {
+    return `<img src="${esc(img)}" alt="" loading="lazy">`;
+  }
+  const key = (img || '').replace('shape:', '').toLowerCase();
+  const fill = color || '#FAF7F2';
+  const dark = ['#1A1A1A', '#141414', '#161616', '#2B3447', '#7A5C45', '#000000'].includes(fill.toUpperCase()) || fill.startsWith('#1') || fill.startsWith('#2');
+  const stroke = dark ? '#000000' : '#141414';
+  const detailStroke = dark ? '#FFFFFF' : '#141414';
+  const detailOpacity = dark ? '0.45' : '0.35';
+
+  if (key === 'polo') {
+    return `<svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d="M32 18 L44 12 L60 16 L76 12 L88 18 L106 38 L92 48 L84 40 L84 108 L36 108 L36 40 L28 48 L14 38 Z" fill="${esc(fill)}" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M44 12 L56 26 L60 16 L64 26 L76 12" fill="none" stroke="${detailStroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M60 26 L60 52" fill="none" stroke="${detailStroke}" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="60" cy="34" r="1.3" fill="${detailStroke}"/>
+      <circle cx="60" cy="44" r="1.3" fill="${detailStroke}"/>
+    </svg>`;
+  }
+  if (key === 'longsleeve' || key === 'sweater' || key === 'shirt') {
+    return `<svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d="M32 18 L46 12 Q60 22 74 12 L88 18 L108 82 L94 86 L84 56 L84 108 L36 108 L36 56 L26 86 L12 82 Z" fill="${esc(fill)}" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M46 12 Q60 22 74 12" fill="none" stroke="${detailStroke}" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M14 78 L26 82 M94 82 L106 78" fill="none" stroke="${detailStroke}" stroke-width="1.4" stroke-opacity="${detailOpacity}"/>
+    </svg>`;
+  }
+  if (key === 'pants') {
+    return `<svg viewBox="0 0 120 120" aria-hidden="true">
+      <path d="M34 14 L86 14 L90 108 L66 108 L60 46 L54 108 L30 108 Z" fill="${esc(fill)}" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M34 22 L86 22" fill="none" stroke="${detailStroke}" stroke-width="1.4" stroke-opacity="${detailOpacity}"/>
+      <path d="M60 22 L60 42" fill="none" stroke="${detailStroke}" stroke-width="1.4" stroke-opacity="${detailOpacity}"/>
+      <path d="M38 28 Q44 34 50 28 M82 28 Q76 34 70 28" fill="none" stroke="${detailStroke}" stroke-width="1.2" stroke-opacity="${detailOpacity}"/>
+    </svg>`;
+  }
+  // Default tee (เสื้อยืด)
+  return `<svg viewBox="0 0 120 120" aria-hidden="true">
+    <path d="M30 16 L44 10 Q60 22 76 10 L90 16 L108 38 L94 48 L86 40 L86 108 L34 108 L34 40 L26 48 L12 38 Z" fill="${esc(fill)}" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M44 10 Q60 22 76 10" fill="none" stroke="${detailStroke}" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M15 35 L25 43 M95 43 L105 35" fill="none" stroke="${detailStroke}" stroke-width="1.3" stroke-opacity="${detailOpacity}"/>
+  </svg>`;
+}
+
+const stars = (r, n) => (n ? `<span class="stars">★ ${r} <span class="muted">(${n})</span></span>` : '<span class="stars muted">ยังไม่มีรีวิว</span>');
+const heartSvg = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.8 5 6.2 5c2 0 3.4 1 4.3 2.4h3C14.4 6 15.8 5 17.8 5c3.4 0 5.3 3.4 3.8 6.8C19.5 16.4 12 21 12 21z"/></svg>';
+
+function card(p) {
+  const out = p.stock === 0;
+  const price = p.min_price === p.max_price ? money(p.min_price) : `${money(p.min_price)} – ${money(p.max_price)}`;
+  return `<article class="card">
+    <button class="heart ${p.wished ? 'on' : ''}" aria-label="เพิ่มในรายการโปรด" onclick="A.wish(${p.product_id}, this)">${heartSvg}</button>
+    <a href="#/product/${p.product_id}">
+      <div class="img">${p.is_featured ? '<span class="tag">แนะนำ</span>' : ''}${out ? '<span class="tag out">สินค้าหมด</span>' : ''}${art(p.image_url)}</div>
+      <h3>${esc(p.name)}</h3>
+      <div class="cat-name">${esc(p.category)}</div>
+      <div class="price">${price}</div>
+      ${stars(p.rating, p.review_count)}
+    </a></article>`;
+}
+
+/* ---------- Chrome (Header, Nav, Topbar) ---------- */
+function renderChrome() {
+  const top = $('#topbar');
+  if (top) {
+    top.innerHTML = `<span>ส่งฟรีเมื่อซื้อครบ ${money(state.config.free_shipping_min)} · เปลี่ยนไซส์ได้ภายใน 7 วัน · โค้ด <b>WELCOME10</b> ลด 10%</span>`;
+  }
+  const u = state.user;
+  let h = `<a class="icon-btn" href="#/shop" aria-label="ค้นหาสินค้า"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></a>`;
+  if (u?.role === 'customer') {
+    h += `<a class="icon-btn" href="#/wishlist" aria-label="รายการโปรด"><span class="lbl">โปรด</span></a>
+      <a class="icon-btn" href="#/orders"><span class="lbl">คำสั่งซื้อ</span></a>
+      <a class="icon-btn" href="#/account">${esc(u.first_name)}</a>`;
+  } else if (u?.role === 'admin') {
+    h += `<a class="icon-btn" href="#/admin" style="font-weight:500;background:var(--cream-2)">⚙️ จัดการร้าน</a><a class="icon-btn" href="#/account">${esc(u.name)}</a>`;
+  } else {
+    h += `<a class="icon-btn" href="#/login">เข้าสู่ระบบ</a><a class="btn sm" href="#/register">สมัครสมาชิก</a>`;
+  }
+  if (u?.role !== 'admin') {
+    h += `<a class="icon-btn" href="#/cart" aria-label="ตะกร้า">ตะกร้า${state.cart.count ? `<span class="badge">${state.cart.count}</span>` : ''}</a>`;
+  }
+  if (u) {
+    h += `<button class="icon-btn" onclick="A.logout()" title="ออกจากระบบ">ออก</button>`;
+  }
+  $('#actions').innerHTML = h;
+
+  // Active nav highlighting
+  const curHash = location.hash || '#/';
+  const navLinks = $$('#nav a');
+  // First pass: find the most specific match
+  let bestMatch = null;
+  let bestLen = 0;
+  navLinks.forEach((a) => {
+    const href = a.getAttribute('href');
+    if (href === curHash) {
+      // Exact match always wins
+      bestMatch = a;
+      bestLen = Infinity;
+    } else if (href !== '#/' && curHash.startsWith(href.split('?')[0]) && href.length > bestLen && bestLen < Infinity) {
+      // Check if the full href (including query) matches
+      if (curHash === href || curHash.startsWith(href + '&')) {
+        bestMatch = a;
+        bestLen = href.length;
+      }
+    }
+  });
+  // If navigating to #/shop?category=X, match the specific category link, not the generic #/shop
+  if (!bestMatch && curHash.startsWith('#/shop')) {
+    const curParams = new URLSearchParams(curHash.split('?')[1] || '');
+    const curCat = curParams.get('category') || '';
+    navLinks.forEach((a) => {
+      const href = a.getAttribute('href');
+      if (!href.includes('?')) return;
+      const hrefParams = new URLSearchParams(href.split('?')[1] || '');
+      const hrefCat = hrefParams.get('category') || '';
+      if (curCat && hrefCat === curCat) { bestMatch = a; }
+    });
+    // If no category selected, match generic "สินค้าทั้งหมด" (#/shop)
+    if (!bestMatch && !curCat) {
+      navLinks.forEach((a) => {
+        if (a.getAttribute('href') === '#/shop') bestMatch = a;
+      });
+    }
+  }
+  navLinks.forEach((a) => a.classList.toggle('active', a === bestMatch));
+}
+
+async function loadCart() {
+  if (state.user?.role === 'customer') {
+    try { state.cart = await api('GET', '/api/cart'); } catch { /* ignore */ }
+  } else {
+    state.cart = { items: [], count: 0, subtotal: 0 };
+  }
+  renderChrome();
+  const badge = $('#actions .badge');
+  if (badge && state.cart.count > 0) {
+    badge.classList.remove('bump');
+    void badge.offsetWidth;
+    badge.classList.add('bump');
+  }
+}
+
+/* ---------- Pages ---------- */
+const pages = {};
+
+pages.home = async () => {
+  const [{ products }, { categories }] = await Promise.all([
+    api('GET', '/api/products?featured=1'),
+    api('GET', '/api/categories')
+  ]);
+
+  const catIcons = {
+    'เสื้อยืด': 'shape:tee',
+    'เสื้อโปโล': 'shape:polo',
+    'เสื้อแขนยาว': 'shape:longsleeve',
+    'กางเกง': 'shape:pants'
+  };
+
+  app.innerHTML = `
+    <section class="hero">
+      <div class="hero-text">
+        <span class="eyebrow">Collection 2026 · Noir &amp; Cream</span>
+        <h1>เสื้อยืด · เสื้อโปโล<br>เสื้อแขนยาว · กางเกง</h1>
+        <p>โทนครีม ขาว ดำ เรียบนิ่งเหนือกาลเวลา คัดสรรเฉพาะ 4 ชิ้นหลักที่คุณต้องมี ตัดเย็บประณีต ใส่สบายได้ทุกวัน</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="btn light" href="#/shop">เลือกชมสินค้า</a>
+          <button class="btn ghost" style="color:var(--cream);border-color:var(--cream-3)" onclick="A.openSizeModal('เสื้อยืด')">ตารางเทียบไซส์ 📏</button>
+        </div>
+      </div>
+      <div class="hero-art">${art('shape:polo', '#141414')}</div>
+    </section>
+
+    <div class="perks">
+      <div class="perk"><div class="perk-icon">🚚</div><b>ส่งฟรีทั่วประเทศ</b><span>เมื่อซื้อครบ ${money(state.config.free_shipping_min)}</span></div>
+      <div class="perk"><div class="perk-icon">🔄</div><b>เปลี่ยนไซส์ได้ใน 7 วัน</b><span>หากใส่ไม่พอดี ป้ายครบไม่ตัด</span></div>
+      <div class="perk"><div class="perk-icon">💳</div><b>ชำระเงินสะดวก</b><span>PromptPay · โอน · บัตร · COD</span></div>
+      <div class="perk"><div class="perk-icon">🧵</div><b>ผ้าพรีเมียมคอตตอน</b><span>เนื้อนุ่ม อยู่ทรง โทนครีม ขาว ดำ</span></div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <h2>หมวดหมู่สินค้าหลัก</h2>
+        <p class="muted" style="margin:4px 0 0">ร้านจำหน่ายเฉพาะ 4 ไอเทมคลาสสิกที่แมตช์เข้ากันได้ทุกลุค</p>
+      </div>
+    </div>
+    <div class="cats">
+      ${categories.map((c) => `
+        <a class="cat" href="#/shop?category=${encodeURIComponent(c.category)}">
+          <div class="cat-preview">${art(catIcons[c.category] || 'shape:tee', '#141414')}</div>
+          <b>${esc(c.category)}</b>
+          <small>${c.n > 0 ? `${c.n} รายการพร้อมส่ง` : 'เปิดรับสต็อก'}</small>
+        </a>
+      `).join('')}
+    </div>
+
+    <div class="section-head">
+      <div>
+        <h2>สินค้าแนะนำ (Featured)</h2>
+        <p class="muted" style="margin:4px 0 0">ชิ้นยอดนิยมประจำสัปดาห์</p>
+      </div>
+      <a class="link" href="#/shop">ดูสินค้าทั้งหมด →</a>
+    </div>
+
+    ${products.length ? `
+      <div class="grid">${products.map(card).join('')}</div>
+    ` : `
+      <div class="empty">
+        <div style="font-size:36px;margin-bottom:8px">🧺</div>
+        <h3>ร้านกำลังเตรียมสต็อกสินค้าใหม่</h3>
+        <p class="muted">เราจำหน่ายเฉพาะ: <b>เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว และกางเกง</b> โทนครีม ขาว ดำ</p>
+        ${state.user?.role === 'admin' ? `
+          <div style="margin-top:16px">
+            <a class="btn" href="#/admin">+ เพิ่มสินค้าใหม่และสต็อกลงร้าน</a>
+          </div>
+        ` : `
+          <p style="font-size:13.5px;color:var(--ink-3);margin-top:8px">กำลังนำเข้าสินค้าล็อตใหม่ เร็วๆ นี้</p>
+        `}
+      </div>
+    `}
+
+    <section class="panel" style="margin-top:56px;background:var(--cream);border-color:var(--cream-3)">
+      <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:center" class="hero-teaser">
+        <div>
+          <span style="letter-spacing:.2em;text-transform:uppercase;font-size:12px;color:var(--ink-3)">Size &amp; Fit Guide</span>
+          <h2 style="margin:8px 0 12px">ไม่แน่ใจเรื่องขนาดไซส์?</h2>
+          <p style="margin:0 0 18px;color:var(--ink-2)">เรามีตารางเทียบไซส์มาตรฐานครบทั้ง เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว และกางเกง พร้อมคำแนะนำวิธีวัดขนาดร่างกาย เพื่อให้คุณได้ชิ้นที่ใส่พอดีที่สุด</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn sm" onclick="A.openSizeModal('เสื้อยืด')">ดูตารางไซส์เสื้อยืด</button>
+            <button class="btn sm" onclick="A.openSizeModal('เสื้อโปโล')">ดูตารางไซส์โปโล</button>
+            <button class="btn sm" onclick="A.openSizeModal('เสื้อแขนยาว')">ดูตารางไซส์แขนยาว</button>
+            <button class="btn sm" onclick="A.openSizeModal('กางเกง')">ดูตารางไซส์กางเกง</button>
+          </div>
+        </div>
+        <div style="text-align:center;background:var(--white);padding:24px;border-radius:var(--radius);border:1px solid var(--line)">
+          <div style="font-size:32px;margin-bottom:6px">🔄</div>
+          <b style="display:block;font-size:16px;margin-bottom:4px">รับประกันเปลี่ยนไซส์ใน 7 วัน</b>
+          <p class="muted" style="font-size:13px;margin:0">หากสั่งไปแล้วใส่ไม่พอดี สามารถติดต่อขอเปลี่ยนไซส์ได้ทันที สินค้าต้องอยู่ในสภาพเดิมและยังไม่ผ่านการซัก</p>
+        </div>
+      </div>
+    </section>
+  `;
+};
+
+pages.shop = async (params) => {
+  const q = params.get('q') || '', category = params.get('category') || '', sort = params.get('sort') || '';
+  const qs = new URLSearchParams({ q, category, sort }).toString();
+  const [{ products }, { categories }] = await Promise.all([
+    api('GET', '/api/products?' + qs),
+    api('GET', '/api/categories')
+  ]);
+
+  const chip = (c, label) => `<a class="chip ${category === c ? 'on' : ''}" href="#/shop?${new URLSearchParams({ q, category: c, sort })}">${esc(label)}</a>`;
+
+  app.innerHTML = `
+    <div class="crumbs"><a href="#/">หน้าแรก</a> / สินค้าทั้งหมด ${category ? `/ ${esc(category)}` : ''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="margin:0">${category ? esc(category) : 'สินค้าทั้งหมด'}</h2>
+        <span class="muted" style="font-size:13.5px">จำหน่ายเฉพาะ: เสื้อยืด · เสื้อโปโล · เสื้อแขนยาว · กางเกง</span>
+      </div>
+      <button class="btn ghost sm" onclick="A.openSizeModal('${category || 'เสื้อยืด'}')">📏 ตารางเทียบไซส์</button>
+    </div>
+
+    <div class="shop-head">
+      <div class="chips">
+        ${chip('', 'ทั้งหมด')}
+        ${categories.map((c) => chip(c.category, `${c.category}${c.n > 0 ? ` (${c.n})` : ''}`)).join('')}
+      </div>
+      <form class="tools" onsubmit="return A.search(event)">
+        <input name="q" value="${esc(q)}" placeholder="ค้นหาสินค้า..." aria-label="ค้นหาสินค้า">
+        <select name="sort" onchange="this.form.requestSubmit()" aria-label="เรียงลำดับ">
+          ${[
+            ['', 'เรียงตามปกติ'],
+            ['new', 'มาใหม่'],
+            ['price_asc', 'ราคา ต่ำ → สูง'],
+            ['price_desc', 'ราคา สูง → ต่ำ'],
+            ['rating', 'คะแนนรีวิว']
+          ].map(([v, l]) => `<option value="${v}" ${v === sort ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+        <input type="hidden" name="category" value="${esc(category)}">
+      </form>
+    </div>
+
+    ${products.length ? `
+      <div class="grid">${products.map(card).join('')}</div>
+    ` : `
+      <div class="empty">
+        <div style="font-size:36px;margin-bottom:8px">🔍</div>
+        <h3>ไม่พบสินค้าในหมวดหมู่นี้</h3>
+        <p class="muted">${q ? `ไม่พบสินค้าที่ตรงกับคำค้นหา "${esc(q)}"` : 'ร้านยังไม่ได้เพิ่มสินค้าในหมวดหมู่นี้ หรือสินค้ากำลังอยู่ระหว่างเตรียมสต็อก'}</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+          <a class="btn sm ghost" href="#/shop">ดูสินค้าหมวดหมู่อื่น</a>
+          ${state.user?.role === 'admin' ? `<a class="btn sm" href="#/admin">+ ไปเพิ่มสินค้าในระบบจัดการร้าน</a>` : ''}
+        </div>
+      </div>
+    `}
+  `;
+};
+
+pages.product = async (params, id) => {
+  const { product: p } = await api('GET', '/api/products/' + id);
+  if (!p.variants || !p.variants.length) {
+    app.innerHTML = `<div class="empty"><h3>สินค้านี้ยังไม่มีรูปแบบหรือไซส์ที่พร้อมจำหน่าย</h3><a class="btn" href="#/shop">กลับหน้าร้าน</a></div>`;
+    return;
+  }
+  const colors = [...new Map(p.variants.map((v) => [v.color, v.color_hex])).entries()];
+  const sizes = [...new Set(p.variants.map((v) => v.size))];
+  const sel = {
+    color: (p.variants.find((v) => v.stock > 0) || p.variants[0]).color,
+    size: (p.variants.find((v) => v.stock > 0) || p.variants[0]).size,
+    qty: 1
+  };
+  const find = () => p.variants.find((v) => v.color === sel.color && v.size === sel.size);
+  const price = p.min_price === p.max_price ? money(p.min_price) : `${money(p.min_price)} – ${money(p.max_price)}`;
+
+  const draw = (animColor = false) => {
+    const v = find();
+    const hex = colors.find((c) => c[0] === sel.color)?.[1] || '#FAF7F2';
+    const pdImg = $('#pd-img');
+    if (pdImg) {
+      pdImg.innerHTML = art(p.image_url, hex);
+      if (animColor) {
+        pdImg.classList.remove('switching');
+        void pdImg.offsetWidth;
+        pdImg.classList.add('switching');
+      }
+    }
+    const pdPrice = $('#pd-price');
+    if (pdPrice) {
+      pdPrice.textContent = v ? money(v.price) : price;
+      if (animColor) {
+        pdPrice.classList.remove('pop');
+        void pdPrice.offsetWidth;
+        pdPrice.classList.add('pop');
+      }
+    }
+    $('#pd-colorname').textContent = sel.color;
+    $('#pd-swatches').innerHTML = colors.map(([c, h]) => `
+      <button class="swatch ${c === sel.color ? 'on' : ''}" style="background:${esc(h)}" title="${esc(c)}" aria-label="สี ${esc(c)}" onclick="A.pick('color', ${JSON.stringify(c).replace(/"/g, '&quot;')})"></button>
+    `).join('');
+
+    $('#pd-sizes').innerHTML = sizes.map((s) => {
+      const vv = p.variants.find((x) => x.color === sel.color && x.size === s);
+      const dis = !vv || vv.stock === 0;
+      return `<button class="size ${s === sel.size ? 'on' : ''}" ${dis ? 'disabled title="หมด"' : ''} onclick="A.pick('size', ${JSON.stringify(s).replace(/"/g, '&quot;')})">${esc(s)}</button>`;
+    }).join('');
+
+    if (v) {
+      const vidTag = ` <span class="muted" style="font-size:12px">· Variant_ID: #${v.variant_id}</span>`;
+      if (v.stock === 0) {
+        $('#pd-stock').innerHTML = '<span style="color:var(--danger)">สินค้าหมดชั่วคราว</span>' + vidTag;
+      } else if (v.stock <= 3) {
+        $('#pd-stock').innerHTML = `<span style="color:var(--danger)">เหลือเพียง ${v.stock} ชิ้นสุดท้าย!</span>` + vidTag;
+      } else {
+        $('#pd-stock').innerHTML = `มีสินค้าพร้อมส่ง (${v.stock} ชิ้น)` + vidTag;
+      }
+    } else {
+      $('#pd-stock').textContent = 'กรุณาเลือกไซส์และสี';
+    }
+
+    const qEl = $('#pd-qty');
+    if (qEl) qEl.textContent = sel.qty;
+    const addBtn = $('#pd-add');
+    if (addBtn) addBtn.disabled = !v || v.stock === 0;
+  };
+
+  A.pick = (k, val) => {
+    const changed = sel[k] !== val;
+    sel[k] = val;
+    if (k === 'color') {
+      const v = find();
+      if (!v || v.stock === 0) {
+        const firstAvail = p.variants.find((x) => x.color === sel.color && x.stock > 0);
+        if (firstAvail) sel.size = firstAvail.size;
+      }
+    }
+    sel.qty = 1;
+    draw(changed);
+  };
+
+  A.qty = (d) => {
+    const v = find();
+    const max = v ? v.stock : 1;
+    sel.qty = Math.min(max, Math.max(1, sel.qty + d));
+    draw(false);
+    const qEl = $('#pd-qty');
+    if (qEl) {
+      qEl.classList.remove('pop');
+      void qEl.offsetWidth;
+      qEl.classList.add('pop');
+    }
+  };
+
+  A.addToCart = () => safe(async () => {
+    if (!state.user) { go('#/login'); return toast('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า', true); }
+    if (state.user.role === 'admin') return toast('บัญชีผู้ดูแลไม่สามารถสั่งซื้อได้', true);
+    const v = find();
+    if (!v || v.stock === 0) return toast('กรุณาเลือกไซส์ที่มีสินค้าพร้อมส่ง', true);
+    const addBtn = $('#pd-add');
+    if (addBtn) spawnParticles(addBtn, ['✦', '🛍️', '•', '✧']);
+    flyToCart($('#pd-img'));
+    state.cart = await api('POST', '/api/cart', { variant_id: v.variant_id, quantity: sel.qty });
+    renderChrome();
+    const badge = $('#actions .badge');
+    if (badge) {
+      badge.classList.remove('bump');
+      void badge.offsetWidth;
+      badge.classList.add('bump');
+    }
+    toast(`เพิ่ม "${p.name} (${sel.color}/${sel.size})" ลงในตะกร้าแล้ว`);
+  });
+
+  app.innerHTML = `
+    <div class="crumbs"><a href="#/">หน้าแรก</a> / <a href="#/shop?category=${encodeURIComponent(p.category)}">${esc(p.category)}</a> / ${esc(p.name)}</div>
+    <div class="pd">
+      <div class="pd-img" id="pd-img"></div>
+      <div>
+        <div class="muted" style="text-transform:uppercase;letter-spacing:.08em;font-size:12.5px">${esc(p.category)} · <span style="text-transform:none">Product_id: #${p.product_id}</span></div>
+        <h1 style="font-size:clamp(28px,3.4vw,40px);margin:4px 0 8px">${esc(p.name)}</h1>
+        ${stars(p.rating, p.review_count)}
+        <div class="pd-price" id="pd-price"></div>
+        <p style="color:var(--ink-2);line-height:1.7">${esc(p.description || 'เสื้อผ้าโทนครีม ขาว ดำ ทรงเรียบ สวมใส่สบาย ออกแบบให้แมตช์ง่ายได้ทุกวัน')}</p>
+
+        <div class="label"><span>สี: <b id="pd-colorname" style="font-weight:500"></b></span></div>
+        <div class="swatches" id="pd-swatches"></div>
+
+        <div class="label">
+          <span>ไซส์</span>
+          <button class="link" style="font-size:13px" onclick="A.openSizeModal('${esc(p.category)}')">📏 ตารางเทียบไซส์</button>
+        </div>
+        <div class="sizes" id="pd-sizes"></div>
+        <div id="pd-stock" style="font-size:13px;margin-top:6px;color:var(--ink-3)"></div>
+
+        <div class="label"><span>จำนวน</span></div>
+        <div class="qty">
+          <button onclick="A.qty(-1)" aria-label="ลด">−</button>
+          <span id="pd-qty">1</span>
+          <button onclick="A.qty(1)" aria-label="เพิ่ม">+</button>
+        </div>
+
+        <div class="buy-row">
+          <button class="btn" id="pd-add" onclick="A.addToCart()">เพิ่มลงตะกร้า</button>
+          <button class="btn ghost" onclick="A.wish(${p.product_id}, this)">♡ รายการโปรด</button>
+        </div>
+
+        <div class="info-list">
+          <div>🚚 <b>ส่งฟรี</b> เมื่อซื้อครบ ${money(state.config.free_shipping_min)} (จัดส่งภายใน 1-3 วัน)</div>
+          <div>🔄 <b>เปลี่ยนไซส์ได้</b> ภายใน 7 วัน หากใส่ไม่พอดี</div>
+          <div>🧵 <b>การดูแลรักษา</b> ซักน้ำเย็น ถนอมผ้า รีดไฟปานกลาง</div>
+        </div>
+      </div>
+    </div>
+
+    <section class="reviews">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">รีวิวจากลูกค้า (${p.reviews ? p.reviews.length : 0})</h2>
+        <span class="muted" style="font-size:13.5px">${stars(p.rating, p.review_count)}</span>
+      </div>
+      ${reviewForm(p)}
+      ${p.reviews && p.reviews.length ? p.reviews.map((r) => {
+        const isMyReview = state.user?.id === r.customer_id;
+        const isAdmin = state.user?.role === 'admin';
+        return `
+        <div class="review" id="review-${r.review_id}">
+          <div class="review-top">
+            <div class="review-author">
+              <b>${esc(r.customer_name || r.name || 'ลูกค้า')}</b>
+              <span class="muted" style="font-size:12px;margin-left:4px">(Customer #${r.customer_id})</span>
+              ${isMyReview ? '<span class="review-tag">รีวิวของคุณ</span>' : ''}
+              <div style="margin-left:8px">${'★'.repeat(r.rating)}<span class="muted">${'★'.repeat(5 - r.rating)}</span></div>
+            </div>
+            <div class="meta">Review #${r.review_id} · ${dt(r.created_at)}</div>
+          </div>
+          <div class="review-text">${esc(r.comment) || '<span class="muted">(ไม่มีข้อความรีวิว)</span>'}</div>
+          <div class="review-foot">
+            <button class="like-btn ${r.liked_by_me ? 'liked' : ''}" onclick="A.likeReview(${r.review_id}, ${p.product_id}, this)" title="กดไลค์รีวิวนี้">
+              ${r.liked_by_me ? '❤️' : '🤍'} ถูกใจ (${r.like_count || 0})
+            </button>
+            <div class="review-actions">
+              ${isMyReview ? `
+                <button class="btn ghost sm" onclick="A.startEditReview(${p.product_id}, ${r.rating}, ${JSON.stringify(r.comment || '').replace(/"/g, '&quot;')})">✏️ แก้ไข</button>
+                <button class="btn danger sm" onclick="A.deleteReview(${r.review_id}, ${p.product_id})">ลบ</button>
+              ` : ''}
+              ${isAdmin && !isMyReview ? `
+                <button class="btn danger sm" onclick="A.deleteReview(${r.review_id}, ${p.product_id})">🗑️ ลบรีวิว (Admin)</button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `; }).join('') : '<p class="muted">ยังไม่มีรีวิวสำหรับสินค้านี้ สั่งซื้อแล้วมาร่วมแบ่งปันความประทับใจได้เลย</p>'}
+    </section>
+  `;
+  draw();
+};
+
+function reviewForm(p) {
+  if (!state.user || state.user.role !== 'customer') {
+    return '<p class="muted" style="font-size:13.5px">เข้าสู่ระบบเพื่อเขียนรีวิว (เฉพาะผู้ที่เคยสั่งซื้อสินค้านี้)</p>';
+  }
+  if (!p.can_review) {
+    return '<p class="muted" style="font-size:13.5px">รีวิวได้เฉพาะสินค้าที่คุณเคยสั่งซื้อและชำระเงินแล้ว</p>';
+  }
+  const r = p.my_review || { rating: 5, comment: '' };
+  A._rate = r.rating || 5;
+  return `
+    <form class="panel" id="review-form-${p.product_id}" style="margin:16px 0 16px" onsubmit="return A.review(event, ${p.product_id})">
+      <div class="review-form-title" style="margin-bottom:8px">
+        <b>${p.my_review ? '✏️ แก้ไขรีวิวของคุณ' : '✍️ เขียนรีวิวสินค้านี้'}</b>
+      </div>
+      <div class="starpick" id="stars">
+        ${[1, 2, 3, 4, 5].map((n) => `
+          <button type="button" class="${n <= A._rate ? 'on' : ''}" aria-label="${n} ดาว" onclick="A.rate(${n})">★</button>
+        `).join('')}
+      </div>
+      <div class="field" style="margin-top:10px">
+        <textarea name="comment" rows="3" maxlength="1000" placeholder="บอกเล่าประสบการณ์การสวมใส่ เช่น เนื้อผ้า ความพอดีไซส์...">${esc(r.comment)}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn sm">${p.my_review ? 'บันทึกการแก้ไขรีวิว' : 'ส่งรีวิว'}</button>
+        ${p.my_review ? `<button type="button" class="btn danger sm" onclick="A.deleteReview(${p.my_review.review_id}, ${p.product_id})">ลบรีวิวนี้</button>` : ''}
+      </div>
+    </form>
+  `;
+}
+
+/* ---------- Dedicated Size Guide Page ---------- */
+pages['size-guide'] = async (params) => {
+  const cat = params.get('cat') || 'เสื้อยืด';
+  const renderTable = (cName) => {
+    const g = SIZE_GUIDES[cName];
+    if (!g) return '';
+    return `
+      <div class="policy-card" id="guide-${esc(cName)}">
+        <h3 style="margin-bottom:6px">${esc(g.title)}</h3>
+        <p class="muted" style="font-size:13.5px;margin:0 0 14px">${esc(g.desc)}</p>
+        <div class="table-wrap">
+          <table class="size-table">
+            <thead>
+              <tr>${g.headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${g.rows.map((row) => `
+                <tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join('')}</tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  };
+
+  app.innerHTML = `
+    <div class="crumbs"><a href="#/">หน้าแรก</a> / ตารางเทียบไซส์มาตรฐาน</div>
+    <div style="margin-bottom:28px">
+      <h2>ตารางเทียบไซส์เสื้อผ้า (Size Guide)</h2>
+      <p class="muted" style="margin:4px 0 0">ข้อมูลขนาดและวิธีวัดตัวสำหรับ เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว และกางเกง</p>
+    </div>
+
+    <div class="chips" style="margin-bottom:24px">
+      ${Object.keys(SIZE_GUIDES).map((k) => `
+        <a class="chip ${k === cat ? 'on' : ''}" href="#/size-guide?cat=${encodeURIComponent(k)}">${esc(k)}</a>
+      `).join('')}
+    </div>
+
+    ${renderTable(cat)}
+
+    <div class="measure-tips">
+      <h4>📐 วิธีการวัดขนาดร่างกายที่ถูกต้อง (How to Measure)</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;margin-top:12px">
+        <div>
+          <b>1. รอบอก (Chest):</b>
+          <p class="muted" style="margin:4px 0 0">ใช้สายวัดทาบผ่านจุดกึ่งกลางหน้าอกและสะบักหลัง ให้สายวัดขนานกับพื้น แนบพอดีไม่รัดแน่น</p>
+        </div>
+        <div>
+          <b>2. ความยาวเสื้อ (Length):</b>
+          <p class="muted" style="margin:4px 0 0">วัดจากจุดรอยต่อคอเสื้อด้านบนสุด ตรงลงมาถึงชายเสื้อด้านล่าง</p>
+        </div>
+        <div>
+          <b>3. รอบเอว (Waist):</b>
+          <p class="muted" style="margin:4px 0 0">วัดรอบเอวจริงบริเวณเหนือสะดือประมาณ 1 นิ้ว (จุดที่คอดที่สุดของลำตัว)</p>
+        </div>
+        <div>
+          <b>4. รอบสะโพก (Hips):</b>
+          <p class="muted" style="margin:4px 0 0">วัดรอบส่วนที่กว้างที่สุดของสะโพก โดยยืนเท้าชิด</p>
+        </div>
+      </div>
+      <p style="margin:16px 0 0;font-size:13px;color:var(--ink-2)">
+        💡 <b>คำแนะนำ:</b> หากขนาดตัวอยู่ก้ำกึ่งระหว่าง 2 ไซส์ สำหรับทรงพอดีตัวแนะนำเลือกไซส์เล็ก สำหรับทรงหลวมใส่สบายหรือทรง Oversize แนะนำเลือกไซส์ใหญ่กว่า
+      </p>
+    </div>
+  `;
+};
+
+/* ---------- Store Policies & Help Page ---------- */
+pages.help = async () => {
+  app.innerHTML = `
+    <div class="crumbs"><a href="#/">หน้าแรก</a> / ข้อมูลบริการและนโยบาย</div>
+    <h2>นโยบายการบริการ &amp; ช่วยเหลือ (Help &amp; Policies)</h2>
+    <p class="muted" style="margin-top:-6px;margin-bottom:28px">ข้อมูลการจัดส่ง การเปลี่ยนสินค้า วิธีการดูแลรักษาผ้า และช่องทางติดต่อ</p>
+
+    <div class="policy-card" id="exchange">
+      <h3>🔄 นโยบายการเปลี่ยนไซส์สินค้า (Exchange Policy)</h3>
+      <p>ร้าน NOIR &amp; CREAM รับประกันความพึงพอใจ หากคุณสั่งซื้อแล้วใส่ไม่พอดี สามารถขอเปลี่ยนไซส์ได้ภายใต้เงื่อนไขดังนี้:</p>
+      <ul style="padding-left:20px;color:var(--ink-2);line-height:1.8">
+        <li>แจ้งเปลี่ยนไซส์ได้ภายใน <b>7 วัน</b> นับจากวันที่ได้รับพัสดุ</li>
+        <li>สินค้าต้องอยู่ในสภาพสมบูรณ์ <b>ยังไม่ผ่านการซัก</b> และ <b>ป้ายสินค้ายังไม่ถูกตัด</b></li>
+        <li>สามารถเปลี่ยนเป็นไซส์อื่นในรุ่นเดิม หรือเปลี่ยนเป็นรุ่นอื่นในมูลค่าเท่ากัน/สูงกว่าได้</li>
+        <li>ติดต่อขอเปลี่ยนสินค้าได้สะดวกรวดเร็วทาง LINE OA: <b>@noircream</b></li>
+      </ul>
+    </div>
+
+    <div class="policy-card" id="shipping">
+      <h3>🚚 ข้อมูลการจัดส่งพัสดุ (Shipping &amp; Delivery)</h3>
+      <ul style="padding-left:20px;color:var(--ink-2);line-height:1.8">
+        <li><b>จัดส่งฟรีทั่วประเทศ</b> เมื่อมียอดสั่งซื้อครบ <b>฿1,000</b> ขึ้นไป (ยอดต่ำกว่า คิดค่าจัดส่งตามจริง ฿50)</li>
+        <li>จัดส่งผ่านขนส่งเอกชนมาตรฐาน (Flash Express / Kerry Express / EMS) มีเลขติดตามพัสดุเช็กได้ในระบบ</li>
+        <li>ระยะเวลาจัดส่ง: กรุงเทพฯ และปริมณฑล <b>1–2 วันทำการ</b>, ต่างจังหวัด <b>2–3 วันทำการ</b></li>
+        <li>รอบจัดส่งทุกวันจันทร์ – เสาร์ (ตัดรอบ 12:00 น.)</li>
+      </ul>
+    </div>
+
+    <div class="policy-card" id="care">
+      <h3>🧵 คำแนะนำการดูแลรักษาเนื้อผ้า (Fabric Care Guide)</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:16px;margin-top:12px">
+        <div>
+          <b>เสื้อยืด &amp; เสื้อแขนยาว Cotton:</b>
+          <p class="muted" style="margin:4px 0 0">ซักด้วยน้ำอุณหภูมิปกติ กลับด้านเสื้อก่อนซักและตาก หลีกเลี่ยงการอบผ้าด้วยความร้อนสูงเพื่อป้องกันการหดตัว</p>
+        </div>
+        <div>
+          <b>เสื้อโปโล Pique:</b>
+          <p class="muted" style="margin:4px 0 0">จัดทรงคอปกให้ตรงก่อนตาก แขวนด้วยไม้แขวนเสื้อทรงโค้งเพื่อรักษารูปทรงไหล่</p>
+        </div>
+        <div>
+          <b>กางเกง Chino &amp; Denim:</b>
+          <p class="muted" style="margin:4px 0 0">กลับด้านซักเพื่อรักษาสีโทนครีมและดำ ตากในที่ร่มมีลมโกรก รีดด้วยไฟปานกลาง</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="policy-card" id="faq">
+      <h3>💬 คำถามที่พบบ่อย (FAQ)</h3>
+      <details class="faq-item">
+        <summary>ร้านจำหน่ายสินค้าประเภทใดบ้าง?</summary>
+        <p>เราเน้นคัดสรรเฉพาะ 4 ชิ้นหลักที่ใส่ได้ทุกวัน: <b>เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว และกางเกง</b> โดยคุมโทนสีเฉพาะ ครีม ขาว ดำ เพื่อให้หยิบจับมาแมตช์เข้ากันได้ง่ายที่สุด</p>
+      </details>
+      <details class="faq-item">
+        <summary>มีบริการเก็บเงินปลายทาง (COD) หรือไม่?</summary>
+        <p>มีบริการเก็บเงินปลายทาง ลูกค้าสามารถเลือกวิธีชำระเงิน "เก็บเงินปลายทาง" ในหน้าสั่งซื้อได้ทันที</p>
+      </details>
+      <details class="faq-item">
+        <summary>หากต้องการยกเลิกคำสั่งซื้อ ทำได้อย่างไร?</summary>
+        <p>หากคำสั่งซื้อยังอยู่ในสถานะ "รอชำระเงิน" คุณสามารถกดยกเลิกในหน้า "คำสั่งซื้อของฉัน" ได้ด้วยตนเองทันที</p>
+      </details>
+      <details class="faq-item">
+        <summary>ติดต่อแอดมินได้อย่างไร?</summary>
+        <p>ติดต่อสอบถามหรือแจ้งปัญหาได้ทาง LINE OA: <b>@noircream</b> หรือโทร <b>081-234-5678</b> เวลา 09:00 – 19:00 น.</p>
+      </details>
+    </div>
+  `;
+};
+
+/* ---------- Auth & Cart & Checkout Pages ---------- */
+pages.login = async () => {
+  app.innerHTML = `<div class="auth"><h2>เข้าสู่ระบบ</h2>
+    <div class="err" id="err"></div>
+    <form onsubmit="return A.login(event)">
+      <div class="field"><label for="email">อีเมล</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="name@example.com"></div>
+      <div class="field"><label for="pw">รหัสผ่าน</label><input id="pw" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+      <button class="btn block" style="margin-top:16px">เข้าสู่ระบบ</button>
+    </form>
+    <div style="font-size:13px;background:var(--cream);padding:12px;border-radius:var(--radius);margin-top:16px;border:1px solid var(--line)">
+      <b>บัญชีทดลอง:</b><br>
+      • แอดมิน: admin@shop.com / admin1234<br>
+      • ลูกค้า: demo@shop.com / demo1234
+    </div>
+    <p style="text-align:center;margin:18px 0 0">ยังไม่มีบัญชี? <a class="link" href="#/register">สมัครสมาชิก</a></p></div>`;
+};
+
+pages.register = async () => {
+  app.innerHTML = `<div class="auth"><h2>สมัครสมาชิก</h2>
+    <div class="err" id="err"></div>
+    <form onsubmit="return A.register(event)">
+      <div class="row2">
+        <div class="field"><label for="fn">ชื่อ</label><input id="fn" name="first_name" autocomplete="given-name" required maxlength="60"></div>
+        <div class="field"><label for="ln">นามสกุล</label><input id="ln" name="last_name" autocomplete="family-name" required maxlength="60"></div>
+      </div>
+      <div class="field"><label for="em">อีเมล</label><input id="em" name="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="ph">เบอร์โทรศัพท์</label><input id="ph" name="phone" type="tel" autocomplete="tel" placeholder="08x-xxx-xxxx"></div>
+      <div class="row2">
+        <div class="field"><label for="p1">รหัสผ่าน (อย่างน้อย 8 ตัว)</label><input id="p1" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
+        <div class="field"><label for="p2">ยืนยันรหัสผ่าน</label><input id="p2" name="confirm" type="password" minlength="8" autocomplete="new-password" required></div>
+      </div>
+      <button class="btn block" style="margin-top:16px">สร้างบัญชี</button>
+    </form>
+    <p style="text-align:center;margin:18px 0 0">มีบัญชีแล้ว? <a class="link" href="#/login">เข้าสู่ระบบ</a></p></div>`;
+};
+
+pages.cart = async () => {
+  if (!state.user) return go('#/login');
+  if (state.user.role === 'admin') return go('#/admin');
+  await loadCart();
+  const c = state.cart;
+  if (!c.items.length) {
+    app.innerHTML = `
+      <div class="empty">
+        <div style="font-size:36px;margin-bottom:8px">🛒</div>
+        <h3>ตะกร้าของคุณยังว่างอยู่</h3>
+        <p class="muted">เลือกซื้อเสื้อยืด เสื้อโปโล เสื้อแขนยาว หรือกางเกง โทนครีม ขาว ดำ ที่คุณชอบ</p>
+        <a class="btn" style="margin-top:14px" href="#/shop">ไปเลือกสินค้า</a>
+      </div>
+    `;
+    return;
+  }
+  const ship = c.subtotal >= state.config.free_shipping_min ? 0 : state.config.shipping_fee;
+  const pct = Math.min(100, (c.subtotal / state.config.free_shipping_min) * 100);
+  app.innerHTML = `
+    <h2>ตะกร้าสินค้า (${c.count} ชิ้น)</h2>
+    <div class="two-col">
+      <div class="panel">
+        ${c.items.map((i) => `
+          <div class="line">
+            <a class="thumb" href="#/product/${i.product_id}">${art(i.image_url, i.color_hex)}</a>
+            <div>
+              <div class="name">${esc(i.name)}</div>
+              <div class="opt">สี: ${esc(i.color)} · ไซส์: ${esc(i.size)} <span class="muted" style="font-size:12px">· Cart #${i.cart_id} (PID #${i.product_id} / VID #${i.variant_id})</span></div>
+              <div class="qty" style="margin-top:8px">
+                <button onclick="A.setQty(${i.cart_id}, ${i.quantity - 1})" aria-label="ลด">−</button>
+                <span>${i.quantity}</span>
+                <button onclick="A.setQty(${i.cart_id}, ${i.quantity + 1})" aria-label="เพิ่ม">+</button>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:500">${money(i.price * i.quantity)}</div>
+              <button class="link muted" style="font-size:13px;margin-top:6px" onclick="A.removeItem(${i.cart_id})">ลบ</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <aside class="panel summary">
+        <h3>สรุปคำสั่งซื้อ</h3>
+        ${ship ? `
+          <div class="muted" style="font-size:13px">ซื้อเพิ่มอีก <b>${money(state.config.free_shipping_min - c.subtotal)}</b> เพื่อส่งฟรี!</div>
+        ` : `
+          <div style="font-size:13px;color:var(--ok)">🎉 คุณได้รับสิทธิ์ส่งฟรีทั่วประเทศ</div>
+        `}
+        <div class="progress"><i style="width:${pct}%"></i></div>
+        <div class="sum-row"><span>ราคาสินค้า</span><span>${money(c.subtotal)}</span></div>
+        <div class="sum-row"><span>ค่าจัดส่ง</span><span>${ship ? money(ship) : 'ฟรี'}</span></div>
+        <div class="sum-row total"><span>ยอดรวม</span><span>${money(c.subtotal + ship)}</span></div>
+        <a class="btn block" style="margin-top:16px" href="#/checkout">ดำเนินการชำระเงิน</a>
+      </aside>
+    </div>
+  `;
+};
+
+pages.checkout = async () => {
+  if (!state.user) return go('#/login');
+  if (state.user.role !== 'customer') return go('#/');
+  await loadCart();
+  if (!state.cart.items.length) return go('#/cart');
+  const { addresses } = await api('GET', '/api/addresses');
+  const co = {
+    address: (addresses.find((a) => a.is_default) || addresses[0] || {}).address_id,
+    method: state.config.pay_methods[0],
+    coupon: '',
+    discount: 0
+  };
+  const c = state.cart;
+  const ship = c.subtotal >= state.config.free_shipping_min ? 0 : state.config.shipping_fee;
+
+  const sum = () => {
+    $('#sum').innerHTML = `
+      <div class="sum-row"><span>ราคาสินค้า</span><span>${money(c.subtotal)}</span></div>
+      ${co.discount ? `<div class="sum-row"><span>ส่วนลด (${esc(co.coupon)})</span><span>−${money(co.discount)}</span></div>` : ''}
+      <div class="sum-row"><span>ค่าจัดส่ง</span><span>${ship ? money(ship) : 'ฟรี'}</span></div>
+      <div class="sum-row total"><span>ยอดชำระ</span><span>${money(c.subtotal - co.discount + ship)}</span></div>
+    `;
+  };
+
+  A.coState = co;
+  A.pickAddr = (id) => {
+    co.address = id;
+    document.querySelectorAll('[data-addr]').forEach((e) => e.classList.toggle('on', +e.dataset.addr === id));
+  };
+  A.pickPay = (m) => {
+    co.method = m;
+    document.querySelectorAll('[data-pay]').forEach((e) => e.classList.toggle('on', e.dataset.pay === m));
+  };
+  A.applyCoupon = () => safe(async () => {
+    const code = $('#coupon').value.trim();
+    if (!code) { co.coupon = ''; co.discount = 0; return sum(); }
+    const r = await api('POST', '/api/coupon/check', { code });
+    co.coupon = r.code; co.discount = r.discount; sum(); toast('ใช้โค้ดส่วนลดแล้ว');
+  });
+  A.placeOrder = () => safe(async () => {
+    if (!co.address) return toast('กรุณาเพิ่มและเลือกที่อยู่จัดส่ง', true);
+    const r = await api('POST', '/api/orders', { address_id: co.address, method: co.method, coupon_code: co.coupon });
+    await loadCart(); toast('สั่งซื้อสำเร็จ'); go('#/orders?new=' + r.order_id);
+  });
+
+  app.innerHTML = `
+    <h2>ชำระเงิน</h2>
+    <div class="two-col">
+      <div>
+        <div class="panel">
+          <h3>ที่อยู่จัดส่ง</h3>
+          ${addresses.map((a) => `
+            <label class="opt-card ${a.address_id === co.address ? 'on' : ''}" data-addr="${a.address_id}">
+              <input type="radio" name="addr" ${a.address_id === co.address ? 'checked' : ''} onchange="A.pickAddr(${a.address_id})">
+              <div><b>${esc(a.recipient)}</b> · ${esc(a.phone)}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+            </label>
+          `).join('')}
+          ${addresses.length ? '' : '<p class="muted">ยังไม่มีที่อยู่จัดส่ง กรุณาเพิ่มที่อยู่ด้านล่าง</p>'}
+          <details ${addresses.length ? '' : 'open'}><summary class="link">+ เพิ่มที่อยู่ใหม่</summary><div style="margin-top:14px">${addressForm('A.addAddress(event, true)')}</div></details>
+        </div>
+
+        <div class="panel">
+          <h3>วิธีชำระเงิน</h3>
+          ${state.config.pay_methods.map((m) => `
+            <label class="opt-card ${m === co.method ? 'on' : ''}" data-pay="${esc(m)}">
+              <input type="radio" name="pay" ${m === co.method ? 'checked' : ''} onchange="A.pickPay(this.parentElement.dataset.pay)">
+              <div><b>${esc(m)}</b></div>
+            </label>
+          `).join('')}
+          <p class="muted" style="font-size:13px;margin:6px 0 0">* จำลองระบบชำระเงิน (ยังไม่มีการตัดเงินจริง)</p>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>สรุปคำสั่งซื้อ</h3>
+        ${c.items.map((i) => `
+          <div class="sum-row" style="font-size:14px">
+            <span>${esc(i.name)} <span class="muted">(${esc(i.color)}/${esc(i.size)}) ×${i.quantity}</span></span>
+            <span>${money(i.price * i.quantity)}</span>
+          </div>
+        `).join('')}
+        <div class="coupon">
+          <input id="coupon" placeholder="โค้ดส่วนลด เช่น WELCOME10" aria-label="โค้ดส่วนลด">
+          <button class="btn ghost sm" onclick="A.applyCoupon()">ใช้โค้ด</button>
+        </div>
+        <div id="sum"></div>
+        <button class="btn block" style="margin-top:16px" onclick="A.placeOrder()">ยืนยันสั่งซื้อ</button>
+      </aside>
+    </div>
+  `;
+  sum();
+};
+
+const fmtAddr = (a) => [a.house_no, a.village, a.road, 'ต.' + a.subdistrict, 'อ./เขต ' + a.district, 'จ.' + a.province, a.postal_code].filter(Boolean).join(' ');
+function addressForm(handler) {
+  const f = (n, l, extra = '') => `<div class="field"><label>${l}</label><input name="${n}" ${extra}></div>`;
+  return `<form onsubmit="return ${handler}">
+    <div class="row2">${f('recipient', 'ชื่อผู้รับ', 'required')}${f('phone', 'เบอร์โทรศัพท์', 'required type="tel"')}</div>
+    <div class="row3">${f('house_no', 'บ้านเลขที่', 'required')}${f('village', 'หมู่บ้าน/หมู่ที่')}${f('road', 'ถนน')}</div>
+    <div class="row3">${f('subdistrict', 'ตำบล/แขวง', 'required')}${f('district', 'อำเภอ/เขต', 'required')}${f('province', 'จังหวัด', 'required')}</div>
+    <div class="row2">${f('postal_code', 'รหัสไปรษณีย์', 'required inputmode="numeric" maxlength="5" pattern="[0-9]{5}"')}
+      <label style="display:flex;gap:8px;align-items:center;margin-top:24px"><input type="checkbox" name="is_default" style="width:auto"> ตั้งเป็นที่อยู่หลัก</label></div>
+    <button class="btn sm">บันทึกที่อยู่</button></form>`;
+}
+
+pages.orders = async (params) => {
+  if (!state.user) return go('#/login');
+  if (state.user.role !== 'customer') return go('#/admin');
+  const { orders } = await api('GET', '/api/orders');
+  const fresh = +params.get('new') || 0;
+  app.innerHTML = `
+    <h2>คำสั่งซื้อของฉัน</h2>
+    ${fresh ? `<div class="panel" style="background:var(--ink);color:var(--cream);margin-bottom:18px">🎉 ขอบคุณที่สั่งซื้อ! คำสั่งซื้อ #${fresh} ได้รับการบันทึกเรียบร้อยแล้ว</div>` : ''}
+    ${orders.length ? orders.map(orderCard).join('') : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3><a class="btn" style="margin-top:12px" href="#/shop">เริ่มเลือกชมสินค้า</a></div>'}
+  `;
+};
+
+function orderItems(o) {
+  return o.items.map((i) => `
+    <div class="line">
+      <a class="thumb" href="#/product/${i.product_id}">${art(i.image_url, i.color_hex)}</a>
+      <div><div class="name">${esc(i.name)}</div><div class="opt">${esc(i.color)} · ${esc(i.size)} × ${i.quantity} <span class="muted" style="font-size:12px">· Item #${i.order_item_id} (PID #${i.product_id}${i.variant_id ? ` / VID #${i.variant_id}` : ''})</span></div></div>
+      <div>${money(i.unit_price * i.quantity)}</div>
+    </div>
+  `).join('');
+}
+
+function shipInfo(o) {
+  if (!o.shipment) return '';
+  return `<div class="ship-box">🚚 Shipment #${o.shipment.shipment_id} · ${esc(o.shipment.carrier)} · หมายเลขพัสดุ (PK) <b>${esc(o.shipment.tracking_no)}</b> · ${SHIP_STATUS[o.shipment.status] || esc(o.shipment.status)} · วันที่ส่ง ${dt(o.shipment.shipped_at)} <span class="muted" style="font-size:12px">(Payment #${o.shipment.payment_id})</span></div>`;
+}
+
+function orderCard(o) {
+  const cod = o.payment.method === 'เก็บเงินปลายทาง';
+  return `
+    <div class="panel order">
+      <div class="order-head">
+        <div><b>คำสั่งซื้อ #${o.order_id}</b> <span class="muted">· ลูกค้า #${o.customer_id} · ${dt(o.order_date)}</span></div>
+        <span class="status ${o.status}">${STATUS[o.status]}</span>
+      </div>
+      ${orderItems(o)}
+      <div class="muted" style="font-size:13.5px">จัดส่งถึง: ${esc(o.ship_name)} · ${esc(o.ship_phone)}<br>${esc(o.ship_address)}</div>
+      <div class="muted" style="font-size:13.5px;margin-top:6px">ชำระเงิน (Payment #${o.payment.payment_id}): ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || esc(o.payment.status)}${o.payment.paid_at ? ' · ' + dt(o.payment.paid_at) : ''})</div>
+      ${shipInfo(o)}
+      <div class="order-foot">
+        <div>ยอดรวม <b style="font-size:18px">${money(o.total_price)}</b>${o.discount ? ` <span class="muted">(ส่วนลด ${money(o.discount)})</span>` : ''}</div>
+        <div class="actions">
+          ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">ชำระเงิน (จำลอง)</button>` : ''}
+          ${o.status === 'pending' ? `<button class="btn danger sm" onclick="A.cancelOrder(${o.order_id})">ยกเลิก</button>` : ''}
+          ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.received(${o.order_id})">ได้รับสินค้าแล้ว</button>` : ''}
+          ${['paid', 'shipped', 'completed'].includes(o.status) ? `<a class="btn ghost sm" href="#/product/${o.items[0].product_id}">เขียนรีวิว</a>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+pages.wishlist = async () => {
+  if (!state.user) return go('#/login');
+  if (state.user.role !== 'customer') return go('#/');
+  const { products } = await api('GET', '/api/wishlist');
+  app.innerHTML = `<h2>รายการโปรด</h2>${products.length ? `<div class="grid">${products.map(card).join('')}</div>` : '<div class="empty"><h3>ยังไม่มีสินค้าที่ถูกใจ</h3><a class="btn" href="#/shop">ไปเลือกสินค้า</a></div>'}`;
+};
+
+pages.account = async () => {
+  if (!state.user) return go('#/login');
+  const u = state.user;
+  if (u.role === 'admin') {
+    app.innerHTML = `<h2>บัญชีผู้ดูแลระบบ</h2><div class="panel"><p><span class="muted">รหัสแอดมิน (admin_id): <b>#${u.id}</b></span><br><b>${esc(u.name)}</b><br>${esc(u.email)}<br>${esc(u.phone || '')}</p><a class="btn" href="#/admin">ไปหน้าจัดการร้าน</a></div>`;
+    return;
+  }
+  const { addresses } = await api('GET', '/api/addresses');
+  app.innerHTML = `
+    <h2>บัญชีของฉัน <span class="muted" style="font-size:16px;font-weight:400">(Customer_ID: #${u.id})</span></h2>
+    <div class="panel">
+      <h3>ข้อมูลส่วนตัว</h3>
+      <form onsubmit="return A.saveProfile(event)">
+        <div class="row2">
+          <div class="field"><label>ชื่อ</label><input name="first_name" value="${esc(u.first_name)}" required></div>
+          <div class="field"><label>นามสกุล</label><input name="last_name" value="${esc(u.last_name)}" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>อีเมล</label><input value="${esc(u.email)}" disabled></div>
+          <div class="field"><label>เบอร์โทรศัพท์</label><input name="phone" value="${esc(u.phone || '')}"></div>
+        </div>
+        <button class="btn sm">บันทึกข้อมูล</button>
+      </form>
+    </div>
+    <div class="panel">
+      <h3>ที่อยู่จัดส่ง</h3>
+      ${addresses.map((a) => `
+        <div class="opt-card" style="cursor:default">
+          <div style="flex:1"><span class="muted" style="font-size:12px">#${a.address_id} · </span><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+          <div class="actions">
+            ${a.is_default ? '' : `<button class="btn ghost sm" onclick="A.defAddr(${a.address_id})">ตั้งเป็นหลัก</button>`}
+            <button class="btn danger sm" onclick="A.delAddr(${a.address_id})">ลบ</button>
+          </div>
+        </div>
+      `).join('') || '<p class="muted">ยังไม่มีที่อยู่จัดส่ง</p>'}
+      <details><summary class="link">+ เพิ่มที่อยู่ใหม่</summary><div style="margin-top:14px">${addressForm('A.addAddress(event, false)')}</div></details>
+    </div>
+    <div class="panel">
+      <h3>เปลี่ยนรหัสผ่าน</h3>
+      <form onsubmit="return A.changePw(event)">
+        <div class="row2">
+          <div class="field"><label>รหัสผ่านเดิม</label><input name="old_password" type="password" autocomplete="current-password" required></div>
+          <div class="field"><label>รหัสผ่านใหม่ (8 ตัวขึ้นไป)</label><input name="new_password" type="password" minlength="8" autocomplete="new-password" required></div>
+        </div>
+        <button class="btn sm">เปลี่ยนรหัสผ่าน</button>
+      </form>
+    </div>
+  `;
+};
+
+/* ---------- Admin Panel (พร้อมระบบเพิ่มสินค้าและไซส์แบบด่วน) ---------- */
+let adminTab = 'dash';
+pages.admin = async () => {
+  if (state.user?.role !== 'admin') { go('#/login'); return; }
+  const tabs = [
+    ['dash', '📊 ภาพรวม'],
+    ['products', '📦 สินค้า/สต็อก'],
+    ['orders', '📑 คำสั่งซื้อ'],
+    ['customers', '👥 ลูกค้า'],
+    ['suppliers', '🏭 ซัพพลายเออร์/พนักงาน']
+  ];
+  app.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <h2>ระบบจัดการร้านค้า (Admin)</h2>
+      <button class="btn danger sm" onclick="A.clearAllStock()">⚠️ ล้างสต็อกสินค้าทั้งหมด</button>
+    </div>
+    <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
+    <div id="tab"></div>
+  `;
+  await adminTabs[adminTab]();
+};
+
+const adminTabs = {};
+
+adminTabs.dash = async () => {
+  const s = await api('GET', '/api/admin/stats');
+  $('#tab').innerHTML = `
+    <div class="stats">
+      <div class="stat"><small>รายได้ (ชำระแล้ว)</small><b data-count="${s.revenue}" data-money="1">${money(s.revenue)}</b></div>
+      <div class="stat"><small>คำสั่งซื้อทั้งหมด</small><b data-count="${s.orders}">${s.orders}</b></div>
+      <div class="stat"><small>รอดำเนินการ</small><b data-count="${s.pending}">${s.pending}</b></div>
+      <div class="stat"><small>สมาชิกทั้งหมด</small><b data-count="${s.customers}">${s.customers}</b></div>
+      <div class="stat"><small>สินค้าที่วางขาย</small><b data-count="${s.products}">${s.products}</b></div>
+    </div>
+    <div class="panel">
+      <h3>สินค้าใกล้หมด (≤ 3 ชิ้น)</h3>
+      ${s.low_stock.length ? `
+        <div class="table-wrap">
+          <table>
+            <tr><th>สินค้า</th><th>สี</th><th>ไซซ์</th><th>คงเหลือ</th></tr>
+            ${s.low_stock.map((v) => `<tr><td>${esc(v.name)}</td><td>${esc(v.color)}</td><td>${esc(v.size)}</td><td><b style="color:var(--danger)">${v.stock}</b></td></tr>`).join('')}
+          </table>
+        </div>
+      ` : '<p class="muted">ไม่มีสินค้าใกล้หมด</p>'}
+    </div>
+  `;
+  animateCounters();
+};
+
+adminTabs.products = async () => {
+  const { products, suppliers, employees = [], allowed_categories } = await api('GET', '/api/admin/products');
+  const cats = allowed_categories || ['เสื้อยืด', 'เสื้อโปโล', 'เสื้อแขนยาว', 'กางเกง'];
+  const supOpts = (cur) => '<option value="">— ไม่ระบุ —</option>' + suppliers.map((s) => `<option value="${s.supplier_id}" ${s.supplier_id === cur ? 'selected' : ''}>#${s.supplier_id} ${esc(s.name)}</option>`).join('');
+  const empOpts = (cur) => '<option value="">— ไม่ระบุ —</option>' + employees.map((e) => `<option value="${e.employee_id}" ${e.employee_id === cur ? 'selected' : ''}>#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}${e.position ? ` (${esc(e.position)})` : ''}</option>`).join('');
+
+  $('#tab').innerHTML = `
+    <details class="prod" style="margin-bottom:20px" open>
+      <summary style="font-size:16px;background:var(--cream);font-weight:500">
+        <span><b>+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก</b> (จำหน่ายเฉพาะ 4 หมวดหมู่)</span>
+      </summary>
+      <div class="inner" style="padding-top:16px">
+        <form onsubmit="return A.saveProductWithVariants(event)">
+          <div class="row2">
+            <div class="field">
+              <label>หมวดหมู่สินค้า *</label>
+              <select name="category" id="newProdCat" onchange="A.onCatChange(this.value)">
+                ${cats.map((c) => `<option value="${c}">${c}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field"><label>ชื่อสินค้า *</label><input name="name" placeholder="เช่น เสื้อยืด Heavy Cotton" required></div>
+          </div>
+          <div class="field"><label>รายละเอียดสินค้า</label><textarea name="description" rows="2" placeholder="อธิบายเนื้อผ้า ทรงเสื้อ หรือคุณสมบัติเด่น..."></textarea></div>
+          <div class="row4">
+            <div class="field">
+              <label>รูปภาพ (ลิงก์ URL หรือรูปวาด)</label>
+              <input name="image_url" id="newProdImg" value="shape:tee" placeholder="shape:tee หรือ https://...">
+            </div>
+            <div class="field"><label>ซัพพลายเออร์ (จัดหาสินค้า)</label><select name="supplier_id">${supOpts(null)}</select></div>
+            <div class="field"><label>พนักงานผู้ดูแลสินค้า (Employee)</label><select name="employee_id">${empOpts(employees[0]?.employee_id || null)}</select></div>
+            <div class="field"><label>สถานะ</label><select name="status"><option value="active">วางขาย</option><option value="inactive">ซ่อน</option></select></div>
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;margin:8px 0 16px"><input type="checkbox" name="is_featured" style="width:auto" checked> แสดงเป็นสินค้าแนะนำที่หน้าแรก</label>
+
+          <!-- Quick Variant Generator -->
+          <div class="batch-box">
+            <b>⚡ สร้างรูปแบบ ไซส์ และสต็อกตั้งต้นพร้อมกัน:</b>
+            <div class="row3" style="margin-top:10px">
+              <div class="field"><label>ชื่อสี</label><input name="batch_color" value="ครีม" placeholder="เช่น ครีม, ดำ, ขาว" required></div>
+              <div class="field"><label>โค้ดสี</label><input name="batch_color_hex" type="color" value="#EADFC8" style="padding:2px;height:42px" aria-label="เลือกสี"></div>
+              <div class="field"><label>ราคาต่อชิ้น (บาท)</label><input name="batch_price" type="number" min="1" value="390" required></div>
+            </div>
+            <div class="field">
+              <label>เลือกไซส์และจำนวนสต็อกต่อไซส์:</label>
+              <div id="sizeCheckboxes" class="size-checks"></div>
+              <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+                <span class="muted" style="font-size:13px">สต็อกเริ่มต้นต่อไซส์:</span>
+                <input name="batch_stock" type="number" min="0" value="10" style="width:100px;padding:6px 10px">
+                <button type="button" class="btn ghost sm" onclick="A.selectAllSizes(true)">เลือกไซส์ทั้งหมด</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn block" style="margin-top:14px">บันทึกและสร้างสินค้าพร้อมสต็อก</button>
+        </form>
+      </div>
+    </details>
+
+    <div class="section-head" style="margin:24px 0 12px">
+      <h3>รายการสินค้าในร้าน (${products.length} รายการ)</h3>
+    </div>
+
+    ${products.length ? products.map((p) => `
+      <details class="prod">
+        <summary>
+          <span><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)} · สต็อกรวม ${p.stock} ชิ้น${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
+          <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
+        </summary>
+        <div class="inner">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
+            <h4 style="margin:0">รูปแบบ ไซส์ และสต็อก (Product_ID: #${p.product_id})</h4>
+            <button class="btn danger sm" onclick="A.deleteProduct(${p.product_id})">🗑️ ลบสินค้านี้</button>
+          </div>
+          ${p.variants && p.variants.length ? `
+            <div class="table-wrap">
+              <table>
+                <tr><th># (Variant_ID)</th><th>สี</th><th>ไซซ์</th><th>ราคา</th><th>สต็อก</th><th>การจัดการ</th></tr>
+                ${p.variants.map((v) => `
+                  <tr>
+                    <td><b>#${v.variant_id}</b></td>
+                    <td><span class="dot" style="background:${esc(v.color_hex)}"></span>${esc(v.color)}</td>
+                    <td><b>${esc(v.size)}</b></td>
+                    <td><input class="mini-in" type="number" min="1" id="vp${v.variant_id}" value="${v.price}"></td>
+                    <td><input class="mini-in" type="number" min="0" id="vs${v.variant_id}" value="${v.stock}"></td>
+                    <td class="actions">
+                      <button class="btn ghost sm" onclick="A.saveVariant(${v.variant_id})">บันทึก</button>
+                      <button class="btn danger sm" onclick="A.delVariant(${v.variant_id})">ลบ</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </table>
+            </div>
+          ` : '<p class="muted">ยังไม่มีรูปแบบไซส์/สี (กรุณาเพิ่มด้านล่าง)</p>'}
+
+          <!-- Batch Add Sizes for existing product -->
+          <div class="batch-box" style="margin:16px 0 12px;background:var(--cream);border:1px solid var(--line);border-radius:var(--radius);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <b>⚡ เพิ่มหลายไซส์พร้อมกัน (Batch Add Sizes):</b>
+              <span class="muted" style="font-size:12.5px">หมวดหมู่: ${esc(p.category)}</span>
+            </div>
+            <form onsubmit="return A.addBatchVariants(event, ${p.product_id})">
+              <div class="row4">
+                <div class="field"><label>ชื่อสี *</label><input name="color" placeholder="เช่น ดำ, ขาว, ครีม" required></div>
+                <div class="field"><label>โค้ดสี</label><input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px" aria-label="เลือกสี"></div>
+                <div class="field"><label>ราคาต่อชิ้น (฿) *</label><input name="price" type="number" min="1" placeholder="เช่น 390" required></div>
+                <div class="field"><label>สต็อกต่อไซส์ *</label><input name="stock" type="number" min="0" value="10" placeholder="เช่น 10" required></div>
+              </div>
+              <div class="field" style="margin-top:6px">
+                <label>เลือกไซส์ที่ต้องการเพิ่ม:</label>
+                <div class="size-checks">
+                  ${(p.category === 'กางเกง' ? ['28', '30', '32', '34', '36'] : ['S', 'M', 'L', 'XL', '2XL']).map((sz, idx) => `
+                    <label class="size-check-label">
+                      <input type="checkbox" name="sizes" value="${sz}" ${idx < 4 ? 'checked' : ''}>
+                      <span>${sz}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+                <button class="btn sm" style="background:var(--ink);color:var(--cream)">+ เพิ่มทุกไซส์ที่เลือกพร้อมกัน</button>
+                <button type="button" class="btn ghost sm" onclick="A.toggleFormSizes(this.form, true)">เลือกทั้งหมด</button>
+                <button type="button" class="btn ghost sm" onclick="A.toggleFormSizes(this.form, false)">ยกเลิกทั้งหมด</button>
+              </div>
+            </form>
+          </div>
+
+          <details style="margin:10px 0 16px">
+            <summary class="link muted" style="font-size:13px;cursor:pointer">+ หรือเพิ่มรูปแบบเดี่ยวทีละ 1 ไซส์</summary>
+            <form class="inline-form" style="margin-top:10px" onsubmit="return A.addVariant(event, ${p.product_id})">
+              <input name="color" placeholder="สี เช่น ดำ" required>
+              <input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px;max-width:60px" aria-label="สี">
+              <input name="size" placeholder="ไซซ์ เช่น L" required>
+              <input name="price" type="number" min="1" placeholder="ราคา" required>
+              <input name="stock" type="number" min="0" placeholder="สต็อก" required>
+              <button class="btn sm">+ เพิ่มรูปแบบเดี่ยว</button>
+            </form>
+          </details>
+
+          <h4 style="margin-top:22px">แก้ไขข้อมูลสินค้า</h4>
+          <form onsubmit="return A.saveProduct(event, ${p.product_id})">
+            <div class="row2">
+              <div class="field"><label>ชื่อสินค้า</label><input name="name" value="${esc(p.name)}" required></div>
+              <div class="field">
+                <label>หมวดหมู่</label>
+                <select name="category">
+                  ${cats.map((c) => `<option value="${c}" ${c === p.category ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="field"><label>รายละเอียด</label><textarea name="description" rows="2">${esc(p.description)}</textarea></div>
+            <div class="row4">
+              <div class="field"><label>รูปภาพ</label><input name="image_url" value="${esc(p.image_url)}"></div>
+              <div class="field"><label>ซัพพลายเออร์ (จัดหาสินค้า)</label><select name="supplier_id">${supOpts(p.supplier_id)}</select></div>
+              <div class="field"><label>พนักงานผู้ดูแลสินค้า (Employee)</label><select name="employee_id">${empOpts(p.employee_id)}</select></div>
+              <div class="field"><label>สถานะ</label><select name="status"><option value="active">วางขาย</option><option value="inactive" ${p.status === 'inactive' ? 'selected' : ''}>ซ่อน</option></select></div>
+            </div>
+            <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="is_featured" style="width:auto" ${p.is_featured ? 'checked' : ''}> แสดงเป็นสินค้าแนะนำที่หน้าแรก</label>
+            <button class="btn sm">บันทึกการแก้ไข</button>
+          </form>
+        </div>
+      </details>
+    `).join('') : '<div class="empty"><h3>ยังไม่มีสินค้าในสต็อก</h3><p class="muted">คุณสามารถใช้ฟอร์ม "+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก" ด้านบนเพื่อเริ่มลงสินค้าได้เลย</p></div>'}
+  `;
+  A.onCatChange($('#newProdCat')?.value || 'เสื้อยืด');
+};
+
+adminTabs.orders = async () => {
+  const { orders } = await api('GET', '/api/admin/orders');
+  $('#tab').innerHTML = orders.length ? orders.map((o) => {
+    const cod = o.payment.method === 'เก็บเงินปลายทาง';
+    const canShip = o.status === 'paid' || (o.status === 'pending' && cod);
+    return `
+      <div class="panel order">
+        <div class="order-head">
+          <div><b>Order #${o.order_id}</b> · ลูกค้า #${o.customer_id} (${esc(o.customer)}) <span class="muted">· ${dt(o.order_date)}</span></div>
+          <span class="status ${o.status}">${STATUS[o.status]}</span>
+        </div>
+        ${o.items.map((i) => `
+          <div style="display:flex;justify-content:space-between;padding:4px 0">
+            <span><span class="muted" style="font-size:12px">[Item #${i.order_item_id} · PID #${i.product_id}${i.variant_id ? ` · VID #${i.variant_id}` : ''}]</span> ${esc(i.name)} <span class="muted">(${esc(i.color)}/${esc(i.size)}) ×${i.quantity}</span></span>
+            <span>${money(i.unit_price * i.quantity)}</span>
+          </div>
+        `).join('')}
+        <div class="muted" style="font-size:13.5px;margin-top:8px">
+          ส่งถึง: ${esc(o.ship_name)} ${esc(o.ship_phone)} · ${esc(o.ship_address)}<br>
+          ชำระ (Payment #${o.payment.payment_id}): ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || ''}) · ยอดรวม <b>${money(o.total_price)}</b>
+        </div>
+        ${shipInfo(o)}
+        ${canShip ? `
+          <form class="inline-form" onsubmit="return A.ship(event, ${o.order_id})">
+            <input name="carrier" placeholder="ขนส่ง เช่น Flash Express, Kerry" required>
+            <input name="tracking_no" placeholder="หมายเลขพัสดุ เช่น TH12345678" required>
+            <button class="btn sm">บันทึกการจัดส่ง</button>
+          </form>
+        ` : ''}
+        <div class="actions" style="margin-top:10px">
+          ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
+          ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('') : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3></div>';
+};
+
+adminTabs.customers = async () => {
+  const { customers } = await api('GET', '/api/admin/customers');
+  $('#tab').innerHTML = `
+    <div class="panel table-wrap">
+      <table>
+        <tr><th># (Customer_ID)</th><th>ชื่อ</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>แอดมินดูแล (FK)</th><th>สมัครเมื่อ</th><th>ออเดอร์</th><th>ยอดซื้อ</th></tr>
+        ${customers.map((c) => `<tr><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${esc(c.email)}</td><td>${esc(c.phone || '-')}</td><td>${esc(c.address || '-')}</td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td>${dt(c.created_at)}</td><td>${c.orders}</td><td>${money(c.spent)}</td></tr>`).join('')}
+      </table>
+    </div>
+  `;
+};
+
+adminTabs.suppliers = async () => {
+  const { suppliers, employees } = await api('GET', '/api/admin/suppliers');
+  $('#tab').innerHTML = `
+    <div class="panel">
+      <h3>ซัพพลายเออร์</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th># (Supplier_ID)</th><th>ชื่อ</th><th>ผู้ติดต่อ</th><th>โทร</th><th>อีเมล</th><th>ที่อยู่</th><th>พนักงานดูแล (FK)</th><th>แอดมิน (FK)</th><th>การจัดการ</th></tr>
+          ${suppliers.length ? suppliers.map((s) => `
+            <tr>
+              <td><b>#${s.supplier_id}</b></td>
+              <td>${esc(s.name)}</td>
+              <td>${esc(s.contact_name || '-')}</td>
+              <td>${esc(s.phone || '-')}</td>
+              <td>${esc(s.email || '-')}</td>
+              <td>${esc(s.address || '-')}</td>
+              <td>${s.employee_id ? `#${s.employee_id} ` : ''}${esc(s.employee_name || '-')}</td>
+              <td>${s.admin_id ? `#${s.admin_id} ` : ''}${esc(s.admin_name || '-')}</td>
+              <td><button class="btn danger sm" onclick="A.deleteSupplier(${s.supplier_id}, ${JSON.stringify(s.name).replace(/"/g, '&quot;')})">ลบ</button></td>
+            </tr>
+          `).join('') : '<tr><td colspan="9" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูลซัพพลายเออร์</td></tr>'}
+        </table>
+      </div>
+      <form class="inline-form" onsubmit="return A.addSupplier(event)">
+        <input name="name" placeholder="ชื่อซัพพลายเออร์" required>
+        <input name="contact_name" placeholder="ผู้ติดต่อ">
+        <input name="phone" placeholder="เบอร์โทร">
+        <input name="email" placeholder="อีเมล">
+        <input name="address" placeholder="ที่อยู่">
+        <select name="employee_id"><option value="">พนักงานดูแล</option>${employees.map((e) => `<option value="${e.employee_id}">#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}</option>`).join('')}</select>
+        <button class="btn sm">+ เพิ่ม</button>
+      </form>
+    </div>
+    <div class="panel">
+      <h3>พนักงาน</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th># (Employee_ID)</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>การจัดการ</th></tr>
+          ${employees.length ? employees.map((e) => `
+            <tr>
+              <td><b>#${e.employee_id}</b></td>
+              <td>${esc(e.first_name)} ${esc(e.last_name)}</td>
+              <td>${esc(e.position || '-')}</td>
+              <td>${esc(e.email || '-')}</td>
+              <td>${esc(e.phone || '-')}</td>
+              <td>${esc(e.address || '-')}</td>
+              <td><button class="btn danger sm" onclick="A.deleteEmployee(${e.employee_id}, ${JSON.stringify(`${e.first_name} ${e.last_name}`).replace(/"/g, '&quot;')})">ลบ</button></td>
+            </tr>
+          `).join('') : '<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูลพนักงาน</td></tr>'}
+        </table>
+      </div>
+      <form class="inline-form" onsubmit="return A.addEmployee(event)">
+        <input name="first_name" placeholder="ชื่อ" required>
+        <input name="last_name" placeholder="นามสกุล" required>
+        <input name="position" placeholder="ตำแหน่ง">
+        <input name="email" placeholder="อีเมล">
+        <input name="phone" placeholder="เบอร์โทร">
+        <input name="address" placeholder="ที่อยู่">
+        <button class="btn sm">+ เพิ่ม</button>
+      </form>
+    </div>
+  `;
+};
+
+/* ---------- Actions & Handlers ---------- */
+const formData = (e) => { e.preventDefault(); return Object.fromEntries(new FormData(e.target).entries()); };
+const showErr = (m) => { const el = $('#err'); if (el) { el.textContent = m; el.className = 'err show'; } else toast(m, true); };
+const refresh = () => route();
+
+const A = window.A = {
+  toggleMobileMenu() {
+    const d = $('#mobileMenu'), b = $('#menuBackdrop');
+    if (d && b) {
+      d.classList.toggle('open');
+      b.classList.toggle('open');
+    }
+  },
+
+  openSizeModal(cat) {
+    const c = cat || 'เสื้อยืด';
+    const g = SIZE_GUIDES[c] || SIZE_GUIDES['เสื้อยืด'];
+    const mb = $('#modalBox');
+    if (!mb) return;
+    mb.innerHTML = `
+      <button class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 6px">${esc(g.title)}</h3>
+      <p class="muted" style="margin:0 0 16px;font-size:13.5px">${esc(g.desc)}</p>
+      <div class="chips" style="margin-bottom:16px">
+        ${Object.keys(SIZE_GUIDES).map((k) => `
+          <button type="button" class="chip ${k === c ? 'on' : ''}" onclick="A.openSizeModal('${k}')">${esc(k)}</button>
+        `).join('')}
+      </div>
+      <div class="table-wrap">
+        <table class="size-table">
+          <thead>
+            <tr>${g.headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+            ${g.rows.map((row) => `
+              <tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join('')}</tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="measure-tips" style="margin-top:14px">
+        <b>💡 คำแนะนำ:</b> หากไม่แน่ใจ แนะนำให้วัดเทียบกับเสื้อผ้าตัวเดิมที่ใส่พอดีที่สุด
+      </div>
+    `;
+    $('#modal').classList.add('open');
+  },
+
+  closeModal() {
+    $('#modal')?.classList.remove('open');
+  },
+
+  onCatChange(cat) {
+    const imgIn = $('#newProdImg');
+    const shapeMap = {
+      'เสื้อยืด': 'shape:tee',
+      'เสื้อโปโล': 'shape:polo',
+      'เสื้อแขนยาว': 'shape:longsleeve',
+      'กางเกง': 'shape:pants'
+    };
+    if (imgIn && (!imgIn.value || imgIn.value.startsWith('shape:'))) {
+      imgIn.value = shapeMap[cat] || 'shape:tee';
+    }
+
+    // Update size checkboxes based on category
+    const checks = $('#sizeCheckboxes');
+    if (checks) {
+      const isPants = cat === 'กางเกง';
+      const sizeList = isPants ? ['28', '30', '32', '34', '36'] : ['S', 'M', 'L', 'XL', '2XL'];
+      checks.innerHTML = sizeList.map((s, idx) => `
+        <label class="size-check-label">
+          <input type="checkbox" name="sizes" value="${s}" ${idx < 4 ? 'checked' : ''}>
+          <span>${s}</span>
+        </label>
+      `).join('');
+    }
+  },
+
+  selectAllSizes(val) {
+    $$('#sizeCheckboxes input[type="checkbox"]').forEach((cb) => (cb.checked = val));
+  },
+
+  search(e) {
+    const d = formData(e);
+    go('#/shop?' + new URLSearchParams(d));
+    return false;
+  },
+
+  async login(e) {
+    const d = formData(e);
+    try {
+      const r = await api('POST', '/api/login', d);
+      state.user = r.user;
+      await loadCart();
+      toast('ยินดีต้อนรับ ' + (r.user.first_name || r.user.name));
+      go(r.user.role === 'admin' ? '#/admin' : '#/');
+    } catch (x) {
+      showErr(x.message);
+    }
+    return false;
+  },
+
+  async register(e) {
+    const d = formData(e);
+    if (d.password !== d.confirm) {
+      showErr('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+      return false;
+    }
+    try {
+      const r = await api('POST', '/api/register', d);
+      state.user = r.user;
+      await loadCart();
+      toast('สมัครสมาชิกสำเร็จ ยินดีต้อนรับสู่ NOIR & CREAM');
+      go('#/');
+    } catch (x) {
+      showErr(x.message);
+    }
+    return false;
+  },
+
+  async logout() {
+    await api('POST', '/api/logout');
+    state.user = null;
+    await loadCart();
+    toast('ออกจากระบบเรียบร้อย');
+    go('#/');
+  },
+
+  wish(id, btn) {
+    safe(async () => {
+      if (state.user?.role !== 'customer') {
+        go('#/login');
+        return toast('กรุณาเข้าสู่ระบบเพื่อบันทึกรายการโปรด', true);
+      }
+      const r = await api('POST', '/api/wishlist/' + id);
+      if (btn) {
+        btn.classList.toggle('on', r.wished);
+        if (r.wished) spawnParticles(btn, ['♥', '♡', '✦']);
+      }
+      toast(r.wished ? 'เพิ่มในรายการโปรดแล้ว' : 'นำออกจากรายการโปรดแล้ว');
+      if (location.hash.startsWith('#/wishlist')) refresh();
+    });
+  },
+
+  rate(n) {
+    A._rate = n;
+    document.querySelectorAll('#stars button').forEach((b, i) => b.classList.toggle('on', i < n));
+  },
+
+  review(e, pid) {
+    const d = formData(e);
+    safe(async () => {
+      await api('POST', `/api/products/${pid}/reviews`, { rating: A._rate, comment: d.comment });
+      toast('บันทึกรีวิวของคุณเรียบร้อยแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  likeReview(rid, pid, btn) {
+    safe(async () => {
+      if (!state.user) {
+        go('#/login');
+        return toast('กรุณาเข้าสู่ระบบก่อนกดถูกใจรีวิว', true);
+      }
+      if (btn) spawnParticles(btn, ['❤️', '✦', '♥']);
+      const r = await api('POST', `/api/reviews/${rid}/like`);
+      toast(r.liked ? '❤️ กดถูกใจรีวิวแล้ว' : 'ยกเลิกการถูกใจแล้ว');
+      refresh();
+    });
+  },
+
+  deleteReview(rid, pid) {
+    if (confirm('คุณต้องการลบรีวิวนี้หรือไม่?')) {
+      safe(async () => {
+        await api('DELETE', `/api/reviews/${rid}`);
+        toast('ลบรีวิวเรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  },
+
+  startEditReview(pid, rating, comment) {
+    const form = $('#review-form-' + pid);
+    if (form) {
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const textarea = form.querySelector('textarea[name="comment"]');
+      if (textarea) {
+        textarea.value = comment || '';
+        textarea.focus();
+      }
+      A.rate(rating || 5);
+      const title = form.querySelector('.review-form-title');
+      if (title) title.innerHTML = '<b>✏️ กำลังแก้ไขรีวิวของคุณ (สามารถเปลี่ยนคะแนนหรือข้อความได้)</b>';
+      toast('คุณกำลังแก้ไขรีวิว');
+    }
+  },
+
+  setQty(id, q) {
+    safe(async () => {
+      if (q < 1) return A.removeItem(id);
+      state.cart = await api('PUT', '/api/cart/' + id, { quantity: q });
+      refresh();
+    });
+  },
+
+  removeItem(id) {
+    safe(async () => {
+      state.cart = await api('DELETE', '/api/cart/' + id);
+      refresh();
+    });
+  },
+
+  addAddress(e) {
+    const d = formData(e);
+    d.is_default = !!d.is_default;
+    safe(async () => {
+      await api('POST', '/api/addresses', d);
+      toast('บันทึกที่อยู่จัดส่งแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  defAddr(id) { safe(async () => { await api('PUT', `/api/addresses/${id}/default`); refresh(); }); },
+  delAddr(id) { if (confirm('ต้องการลบที่อยู่นี้หรือไม่?')) safe(async () => { await api('DELETE', '/api/addresses/' + id); refresh(); }); },
+  saveProfile(e) { const d = formData(e); safe(async () => { const r = await api('PUT', '/api/me', d); state.user = r.user; renderChrome(); toast('บันทึกข้อมูลส่วนตัวเรียบร้อย'); }); return false; },
+  changePw(e) { const d = formData(e); const f = e.target; safe(async () => { await api('PUT', '/api/me/password', d); f.reset(); toast('เปลี่ยนรหัสผ่านเรียบร้อย'); }); return false; },
+  payOrder(id) { safe(async () => { await api('POST', `/api/orders/${id}/pay`); toast('ชำระเงินเรียบร้อยแล้ว (จำลอง)'); refresh(); }); },
+  cancelOrder(id) { if (confirm('ยืนยันยกเลิกคำสั่งซื้อนี้?')) safe(async () => { await api('POST', `/api/orders/${id}/cancel`); toast('ยกเลิกคำสั่งซื้อแล้ว'); refresh(); }); },
+  received(id) { safe(async () => { await api('POST', `/api/orders/${id}/received`); toast('ขอบคุณที่ใช้บริการกับ NOIR & CREAM'); refresh(); }); },
+
+  /* Admin Actions */
+  tab(k) { adminTab = k; refresh(); },
+
+  saveProduct(e, id) {
+    const d = formData(e);
+    d.is_featured = !!d.is_featured;
+    safe(async () => {
+      if (id) await api('PUT', '/api/admin/products/' + id, d);
+      else await api('POST', '/api/admin/products', d);
+      toast('บันทึกข้อมูลสินค้าแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  saveProductWithVariants(e) {
+    e.preventDefault();
+    const form = e.target;
+    const fd = new FormData(form);
+    const checkedSizes = fd.getAll('sizes');
+    if (!checkedSizes.length) {
+      return toast('กรุณาเลือกไซส์อย่างน้อย 1 ไซส์', true);
+    }
+    const color = String(fd.get('batch_color') || '').trim();
+    const colorHex = String(fd.get('batch_color_hex') || '#EADFC8').trim();
+    const price = Number(fd.get('batch_price')) || 390;
+    const stock = Number(fd.get('batch_stock')) || 10;
+
+    const variants = checkedSizes.map((sz) => ({
+      size: sz,
+      color: color,
+      color_hex: colorHex,
+      price: price,
+      stock: stock
+    }));
+
+    const payload = {
+      name: String(fd.get('name') || '').trim(),
+      category: String(fd.get('category') || 'เสื้อยืด').trim(),
+      description: String(fd.get('description') || '').trim(),
+      image_url: String(fd.get('image_url') || '').trim(),
+      supplier_id: fd.get('supplier_id') ? Number(fd.get('supplier_id')) : null,
+      employee_id: fd.get('employee_id') ? Number(fd.get('employee_id')) : null,
+      status: fd.get('status') || 'active',
+      is_featured: !!fd.get('is_featured'),
+      variants: variants
+    };
+
+    safe(async () => {
+      await api('POST', '/api/admin/products', payload);
+      toast(`สร้างสินค้า "${payload.name}" พร้อมสต็อก ${checkedSizes.length} ไซส์เรียบร้อยแล้ว!`);
+      refresh();
+    });
+    return false;
+  },
+
+  deleteProduct(id) {
+    if (confirm('ยืนยันลบสินค้านี้ออกจากร้าน?')) {
+      safe(async () => {
+        const r = await api('DELETE', '/api/admin/products/' + id);
+        toast(r.message || 'ลบสินค้าเรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  },
+
+  clearAllStock() {
+    if (confirm('คำเตือน: คุณต้องการล้างสต็อกสินค้าทั้งหมดออกจากระบบหรือไม่? (เมื่อล้างแล้วคุณสามารถเพิ่มสินค้าใหม่เองได้ทันที)')) {
+      safe(async () => {
+        await api('POST', '/api/admin/stock/clear');
+        toast('ล้างสต็อกและสินค้าทั้งหมดเรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  },
+
+  saveVariant(id) {
+    safe(async () => {
+      await api('PUT', '/api/admin/variants/' + id, { price: $('#vp' + id).value, stock: $('#vs' + id).value });
+      toast('บันทึกราคาและสต็อกแล้ว');
+    });
+  },
+
+  delVariant(id) {
+    if (confirm('ต้องการลบรูปแบบสินค้านี้หรือไม่?')) {
+      safe(async () => {
+        await api('DELETE', '/api/admin/variants/' + id);
+        toast('ลบรูปแบบสินค้าเรียบร้อย');
+        refresh();
+      });
+    }
+  },
+
+  toggleFormSizes(form, val) {
+    form.querySelectorAll('input[name="sizes"]').forEach((cb) => (cb.checked = val));
+  },
+
+  addBatchVariants(e, pid) {
+    e.preventDefault();
+    const form = e.target;
+    const fd = new FormData(form);
+    const checkedSizes = fd.getAll('sizes');
+    if (!checkedSizes.length) {
+      return toast('กรุณาเลือกไซส์อย่างน้อย 1 ไซส์', true);
+    }
+    const color = String(fd.get('color') || '').trim();
+    const colorHex = String(fd.get('color_hex') || '#141414').trim();
+    const price = Number(fd.get('price'));
+    const stock = Number(fd.get('stock'));
+
+    if (!color || !(price > 0) || stock < 0) {
+      return toast('กรุณากรอกข้อมูลสี ราคา และสต็อกให้ถูกต้อง', true);
+    }
+
+    const variants = checkedSizes.map((sz) => ({
+      size: sz,
+      color,
+      color_hex: colorHex,
+      price,
+      stock
+    }));
+
+    safe(async () => {
+      await api('POST', `/api/admin/products/${pid}/variants`, { variants });
+      toast(`เพิ่มไซส์สี "${color}" (${checkedSizes.join(', ')}) เรียบร้อยแล้ว!`);
+      refresh();
+    });
+    return false;
+  },
+
+  addVariant(e, pid) {
+    const d = formData(e);
+    safe(async () => {
+      await api('POST', `/api/admin/products/${pid}/variants`, d);
+      toast('เพิ่มรูปแบบสินค้าแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  ship(e, id) {
+    const d = formData(e);
+    safe(async () => {
+      await api('POST', `/api/admin/orders/${id}/ship`, d);
+      toast('บันทึกการจัดส่งและเลขพัสดุแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  adminComplete(id) { safe(async () => { await api('POST', `/api/admin/orders/${id}/complete`); refresh(); }); },
+  adminCancel(id) { if (confirm('ยกเลิกออเดอร์นี้และคืนสต็อก?')) safe(async () => { await api('POST', `/api/admin/orders/${id}/cancel`); refresh(); }); },
+  addSupplier(e) { const d = formData(e); safe(async () => { await api('POST', '/api/admin/suppliers', d); toast('เพิ่มซัพพลายเออร์แล้ว'); refresh(); }); return false; },
+  deleteSupplier(id, name) {
+    if (confirm(`ยืนยันการลบซัพพลายเออร์ "${name || ''}" ออกจากระบบ?`)) {
+      safe(async () => {
+        await api('DELETE', `/api/admin/suppliers/${id}`);
+        toast('ลบซัพพลายเออร์เรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  },
+  addEmployee(e) { const d = formData(e); safe(async () => { await api('POST', '/api/admin/employees', d); toast('เพิ่มพนักงานแล้ว'); refresh(); }); return false; },
+  deleteEmployee(id, name) {
+    if (confirm(`ยืนยันการลบพนักงาน "${name || ''}" ออกจากระบบ?`)) {
+      safe(async () => {
+        await api('DELETE', `/api/admin/employees/${id}`);
+        toast('ลบพนักงานเรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  }
+};
+
+/* ---------- Smooth Animations & Visual Effects Engine ---------- */
+let revealObserver = null;
+
+function initScrollReveal() {
+  if (revealObserver) revealObserver.disconnect();
+  const targets = $$('.cat, .perk, .card, .policy-card, .review, .stat, .panel, .section-head', app);
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach((el) => el.classList.add('is-visible'));
+    return;
+  }
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -24px 0px' });
+
+  // Group siblings for smooth staggered delay
+  targets.forEach((el, idx) => {
+    el.classList.add('reveal-item');
+    const sibIndex = [...(el.parentElement?.children || [])].indexOf(el);
+    const delay = Math.min(Math.max(0, sibIndex) * 55, 330);
+    el.style.setProperty('--reveal-delay', `${delay}ms`);
+    revealObserver.observe(el);
+  });
+}
+
+function spawnParticles(anchorEl, symbols = ['✦', '•', '✧']) {
+  if (!anchorEl) return;
+  const rect = anchorEl.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const count = 8;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('span');
+    p.className = 'fx-particle';
+    p.textContent = symbols[i % symbols.length];
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+    const dist = 34 + Math.random() * 34;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - 18;
+    const rot = (Math.random() - 0.5) * 90;
+    p.style.left = `${cx}px`;
+    p.style.top = `${cy}px`;
+    p.style.setProperty('--tx', `${tx.toFixed(1)}px`);
+    p.style.setProperty('--ty', `${ty.toFixed(1)}px`);
+    p.style.setProperty('--rot', `${rot.toFixed(0)}deg`);
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 780);
+  }
+}
+
+function flyToCart(sourceEl) {
+  const cartLink = $('#actions a[href="#/cart"]');
+  if (!sourceEl || !cartLink) return;
+  const sRect = sourceEl.getBoundingClientRect();
+  const cRect = cartLink.getBoundingClientRect();
+  const clone = document.createElement('div');
+  clone.className = 'fly-clone';
+  const size = 64;
+  clone.style.width = `${size}px`;
+  clone.style.height = `${size}px`;
+  clone.style.left = `${sRect.left + sRect.width / 2 - size / 2}px`;
+  clone.style.top = `${sRect.top + sRect.height / 2 - size / 2}px`;
+  clone.innerHTML = sourceEl.innerHTML;
+  document.body.appendChild(clone);
+
+  requestAnimationFrame(() => {
+    const dx = (cRect.left + cRect.width / 2) - (sRect.left + sRect.width / 2);
+    const dy = (cRect.top + cRect.height / 2) - (sRect.top + sRect.height / 2);
+    clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.2) rotate(12deg)`;
+    clone.style.opacity = '0.15';
+  });
+  setTimeout(() => clone.remove(), 700);
+}
+
+function animateCounters() {
+  $$('[data-count]').forEach((el) => {
+    const target = Number(el.dataset.count) || 0;
+    const isMoney = el.dataset.money === '1';
+    const dur = 650;
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const val = Math.round(target * eased);
+      el.textContent = isMoney ? money(val) : val.toLocaleString('th-TH');
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// Click ripple wave on interactive buttons/chips
+document.addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest('.btn, .chip, .size, .like-btn');
+  if (!btn || btn.disabled) return;
+  const rect = btn.getBoundingClientRect();
+  const wave = document.createElement('span');
+  wave.className = 'ripple-wave';
+  const d = Math.max(rect.width, rect.height);
+  wave.style.width = wave.style.height = `${d}px`;
+  wave.style.left = `${e.clientX - rect.left - d / 2}px`;
+  wave.style.top = `${e.clientY - rect.top - d / 2}px`;
+  btn.appendChild(wave);
+  setTimeout(() => wave.remove(), 680);
+});
+
+// Interactive spotlight cursor tracking on cards, categories, and hero
+document.addEventListener('pointermove', (e) => {
+  const box = e.target.closest('.card, .cat, .hero');
+  if (!box) return;
+  const r = box.getBoundingClientRect();
+  box.style.setProperty('--mouse-x', `${e.clientX - r.left}px`);
+  box.style.setProperty('--mouse-y', `${e.clientY - r.top}px`);
+}, { passive: true });
+
+// Scroll progress bar & sticky header elevation
+window.addEventListener('scroll', () => {
+  const doc = document.documentElement;
+  const scrollTop = doc.scrollTop || document.body.scrollTop;
+  const scrollHeight = doc.scrollHeight - doc.clientHeight;
+  const bar = $('#scrollProgress');
+  if (bar) {
+    bar.style.width = scrollHeight > 0 ? `${(scrollTop / scrollHeight) * 100}%` : '0%';
+  }
+  const hdr = $('.site-header');
+  if (hdr) hdr.classList.toggle('scrolled', scrollTop > 12);
+}, { passive: true });
+
+/* ---------- Router ---------- */
+async function route() {
+  const raw = location.hash.slice(1) || '/';
+  const [path, qs] = raw.split('?');
+  const params = new URLSearchParams(qs || '');
+  const parts = path.split('/').filter(Boolean);
+  const name = parts[0] || 'home';
+  const page = pages[name];
+  window.scrollTo(0, 0);
+
+  if (!page) {
+    app.innerHTML = '<div class="empty"><h3>ไม่พบหน้านี้</h3><a class="btn" style="margin-top:12px" href="#/">กลับหน้าแรก</a></div>';
+    renderChrome();
+    return;
+  }
+  try {
+    await page(params, parts[1]);
+    app.classList.remove('page-enter');
+    void app.offsetWidth;
+    app.classList.add('page-enter');
+    renderChrome();
+    initScrollReveal();
+  } catch (e) {
+    if (e.status === 401) return go('#/login');
+    app.innerHTML = `<div class="empty"><h3>เกิดข้อผิดพลาด</h3><p class="muted">${esc(e.message)}</p><a class="btn" style="margin-top:12px" href="#/">กลับหน้าแรก</a></div>`;
+    renderChrome();
+  }
+}
+
+window.addEventListener('hashchange', route);
+
+/* ---------- App Initialization ---------- */
+(async function init() {
+  try { state.config = await api('GET', '/api/config'); } catch { /* defaults */ }
+  try { state.user = (await api('GET', '/api/me')).user; } catch { /* guest */ }
+  await loadCart();
+  route();
+})();
