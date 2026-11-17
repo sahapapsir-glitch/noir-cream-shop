@@ -26,8 +26,8 @@ function getGitHubTokenInfo() {
       fileTok = fs.readFileSync(TOKEN_FILE_PATH, 'utf8').trim();
     }
   } catch {}
-  if (fileTok) return { token: fileTok, source: 'file' };
   if (envTok) return { token: envTok, source: 'env' };
+  if (fileTok) return { token: fileTok, source: 'file' };
   return { token: '', source: 'none' };
 }
 
@@ -632,18 +632,30 @@ async function restoreFromGitHubIfNewer(db, force = false) {
     }
 
     const token = getGitHubToken();
-    const headers = {
+    const apiHeaders = {
       'User-Agent': 'NoirCreamShop-Sync/1.0',
-      'Cache-Control': 'no-cache'
+      'Cache-Control': 'no-cache',
+      'Accept': 'application/vnd.github.v3.raw',
+      'X-GitHub-Api-Version': '2022-11-28'
     };
-    let url = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/db-snapshot.json?t=${Date.now()}`;
     if (token) {
-      url = `https://api.github.com/repos/${GITHUB_REPO}/contents/db-snapshot.json?ref=${GITHUB_BRANCH}`;
-      headers['Authorization'] = `Bearer ${token}`;
-      headers['Accept'] = 'application/vnd.github.v3.raw';
+      apiHeaders['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    let res = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/contents/db-snapshot.json?ref=${GITHUB_BRANCH}&t=${Date.now()}`,
+      { headers: apiHeaders, signal: AbortSignal.timeout(8000) }
+    ).catch(() => null);
+
+    if (!res || !res.ok) {
+      res = await fetch(
+        `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/db-snapshot.json?t=${Date.now()}`,
+        {
+          headers: { 'User-Agent': 'NoirCreamShop-Sync/1.0', 'Cache-Control': 'no-cache' },
+          signal: AbortSignal.timeout(8000)
+        }
+      );
+    }
     if (!res.ok) return { restored: false, status: res.status };
 
     const remoteSnap = await res.json();
@@ -959,6 +971,10 @@ function createRealtimeSqlManager(db) {
   let pendingGhReason = null;
 
   async function syncToGitHubNow(reason = 'manual') {
+    if (ghSyncTimer) {
+      clearTimeout(ghSyncTimer);
+      ghSyncTimer = null;
+    }
     refreshGitHubCapability();
     if (githubStatus.syncing) {
       pendingGhReason = reason;
@@ -1019,10 +1035,12 @@ function createRealtimeSqlManager(db) {
     refreshGitHubCapability();
     if (!githubStatus.connected) return;
     if (ghSyncTimer) clearTimeout(ghSyncTimer);
+    const isDeleteOrClear = /\b(DELETE|clear)\b/i.test(String(reason || ''));
+    const delayMs = isDeleteOrClear ? 50 : 250;
     ghSyncTimer = setTimeout(() => {
       ghSyncTimer = null;
       syncToGitHubNow(reason).catch(() => {});
-    }, 1500);
+    }, delayMs);
   }
 
   function notifyChange(reason = 'manual', source = 'web') {

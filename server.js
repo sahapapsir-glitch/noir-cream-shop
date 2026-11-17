@@ -27,9 +27,9 @@ const tx = (fn) => {
 };
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 const bad = (msg, status = 400) => { throw new HttpError(status, msg); };
-const wrap = (fn) => (req, res) => {
+const wrap = (fn) => async (req, res) => {
   try {
-    const out = fn(req, res) ?? { ok: true };
+    const out = (await fn(req, res)) ?? { ok: true };
     if (
       ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) &&
       !req.path.startsWith('/api/coupon/check') &&
@@ -37,6 +37,12 @@ const wrap = (fn) => (req, res) => {
       !req.path.startsWith('/api/logout')
     ) {
       sqlSync.notifyChange(`${req.method} ${req.path}`, 'web');
+      if (req.path.startsWith('/api/admin/') && sqlSync.getGitHubStatus().connected) {
+        await Promise.race([
+          sqlSync.syncToGitHubNow(`${req.method} ${req.path}`).catch(() => null),
+          new Promise((r) => setTimeout(r, 4500))
+        ]);
+      }
     }
     res.json(out);
   } catch (e) {
@@ -593,6 +599,10 @@ app.delete('/api/admin/products/:id', wrap((req) => {
     return { ok: true, message: 'เปลี่ยนสถานะเป็นซ่อนแล้วเนื่องจากมีประวัติคำสั่งซื้อ' };
   }
   tx(() => {
+    db.prepare('DELETE FROM cart_item WHERE product_id=? OR variant_id IN (SELECT variant_id FROM product_variant WHERE product_id=?)').run(pid, pid);
+    db.prepare('UPDATE "order" SET product_id=NULL WHERE product_id=?').run(pid);
+    db.prepare('UPDATE shipment SET product_id=NULL WHERE product_id=?').run(pid);
+    db.prepare('UPDATE order_item SET product_id=NULL WHERE product_id=?').run(pid);
     db.prepare('DELETE FROM product_variant WHERE product_id=?').run(pid);
     db.prepare('DELETE FROM wishlist WHERE product_id=?').run(pid);
     db.prepare('DELETE FROM review WHERE product_id=?').run(pid);
