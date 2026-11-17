@@ -1,8 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const fs = require('fs');
 const path = require('path');
 const db = require('./db');
+const { createRealtimeSqlManager } = require('./mssql-sync');
+
+const sqlSync = createRealtimeSqlManager(db);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,7 +15,7 @@ const FREE_SHIPPING_MIN = 1000;
 const SHIPPING_FEE = 50;
 const PAY_METHODS = ['โอนผ่านธนาคาร', 'PromptPay', 'บัตรเครดิต/เดบิต', 'เก็บเงินปลายทาง'];
 
-app.use(express.json({ limit: '200kb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const ALLOWED_CATEGORIES = ['เสื้อยืด', 'เสื้อโปโล', 'เสื้อแขนยาว', 'กางเกง'];
@@ -24,8 +28,18 @@ const tx = (fn) => {
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 const bad = (msg, status = 400) => { throw new HttpError(status, msg); };
 const wrap = (fn) => (req, res) => {
-  try { res.json(fn(req, res) ?? { ok: true }); }
-  catch (e) {
+  try {
+    const out = fn(req, res) ?? { ok: true };
+    if (
+      ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) &&
+      !req.path.startsWith('/api/coupon/check') &&
+      !req.path.startsWith('/api/login') &&
+      !req.path.startsWith('/api/logout')
+    ) {
+      sqlSync.notifyChange(`${req.method} ${req.path}`, 'web');
+    }
+    res.json(out);
+  } catch (e) {
     if (e instanceof HttpError) return res.status(e.status).json({ error: e.message });
     console.error(e); res.status(500).json({ error: 'เกิดข้อผิดพลาดในระบบ' });
   }
@@ -755,5 +769,140 @@ app.delete('/api/admin/employees/:id', wrap((req) => {
   return { ok: true };
 }));
 
+/* ---------- Realtime SQL Server (SSMS .\SQLEXPRESS01) Integration ---------- */
+app.get('/api/sql/status', (req, res) => {
+  res.json({
+    status: sqlSync.getStatus(),
+    snapshot: sqlSync.getSnapshot()
+  });
+});
+
+app.get('/api/sql/snapshot', (req, res) => {
+  if (req.query.instance) {
+    sqlSync.registerBridgeHeartbeat({
+      instance: str(req.query.instance, 120),
+      database: str(req.query.database, 80) || 'NoirCreamShop'
+    });
+  }
+  const snap = sqlSync.getSnapshot();
+  // ถอด password_hash ออกจาก response หากไม่ได้ใช้เพื่อซิงค์ภายใน
+  res.json({
+    ...snap,
+    status: sqlSync.getStatus()
+  });
+});
+
+app.get('/api/sql/script', (req, res) => {
+  const script = sqlSync.generateSqlServerScript();
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  if (req.query.download) {
+    res.setHeader('Content-Disposition', 'attachment; filename="NoirCreamShop_SQLServer.sql"');
+  }
+  res.send(script);
+});
+
+app.get('/api/sql/bridge.ps1', (req, res) => {
+  const psPath = path.join(__dirname, 'sync-ssms-realtime.ps1');
+  const raw = fs.existsSync(psPath) ? fs.readFileSync(psPath, 'utf8') : '';
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.send(raw);
+});
+
+app.post('/api/sql/push', (req, res) => {
+  try {
+    const b = req.body || {};
+    if (!b.tables || typeof b.tables !== 'object') {
+      return res.status(400).json({ error: 'ไม่พบข้อมูลตารางสำหรับซิงค์' });
+    }
+    sqlSync.registerBridgeHeartbeat({
+      instance: str(b.instance, 120) || '.\\SQLEXPRESS01',
+      database: str(b.database, 80) || 'NoirCreamShop'
+    });
+    sqlSync.applySnapshotToSqlite(b.tables);
+    // ซิงค์ยอดสต็อกและที่อยู่ลูกค้าให้ตรงกันเสมอ
+    for (const p of db.prepare('SELECT product_id FROM product').all()) {
+      syncStock(p.product_id);
+    }
+    for (const c of db.prepare('SELECT customer_id FROM customer').all()) {
+      syncCustomerAddress(c.customer_id);
+    }
+    const snap = sqlSync.notifyChange('SSMS Push (2-Way Sync)', 'ssms');
+    res.json({
+      ok: true,
+      checksum: snap?.checksum,
+      counts: snap?.counts,
+      status: sqlSync.getStatus()
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message || 'ซิงค์ข้อมูลจาก SSMS ไม่สำเร็จ' });
+  }
+});
+
+app.post('/api/sql/query', (req, res) => {
+  try {
+    needAdmin(req);
+    const rawSql = String(req.body?.sql || '').trim();
+    if (!rawSql) bad('กรุณากรอกคำสั่ง SQL');
+    const translated = sqlSync.translateTSqlToSqlite(rawSql);
+    if (!translated) bad('คำสั่ง SQL ไม่ถูกต้อง');
+
+    const t0 = performance.now();
+    const isSelect = /^\s*(SELECT|PRAGMA|WITH|EXPLAIN)\b/i.test(translated);
+    let rows = [], columns = [], changes = 0;
+
+    if (isSelect) {
+      const stmt = db.prepare(translated);
+      rows = stmt.all();
+      columns = rows.length ? Object.keys(rows[0]) : [];
+    } else {
+      const stmt = db.prepare(translated);
+      const r = stmt.run();
+      changes = Number(r.changes || 0);
+      for (const p of db.prepare('SELECT product_id FROM product').all()) {
+        syncStock(p.product_id);
+      }
+      sqlSync.notifyChange(`SQL Execute: ${rawSql.slice(0, 60)}`, 'sql-console');
+    }
+    const durationMs = Number((performance.now() - t0).toFixed(2));
+    res.json({
+      ok: true,
+      isSelect,
+      rows,
+      columns,
+      changes,
+      durationMs,
+      snapshot: sqlSync.getSnapshot(),
+      status: sqlSync.getStatus()
+    });
+  } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json({ error: e.message });
+    res.status(400).json({ error: e.message || 'รันคำสั่ง SQL ไม่สำเร็จ' });
+  }
+});
+
+app.get('/api/sql/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const snap = sqlSync.getSnapshot();
+  const initPayload = {
+    checksum: snap.checksum,
+    timestamp: snap.timestamp,
+    counts: snap.counts,
+    ssmsStatus: sqlSync.getStatus()
+  };
+  res.write(`event: init\ndata: ${JSON.stringify(initPayload)}\n\n`);
+  sqlSync.addSseClient(res);
+
+  const keepAlive = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch { clearInterval(keepAlive); }
+  }, 20000);
+  res.on('close', () => clearInterval(keepAlive));
+});
+
 app.use('/api', (req, res) => res.status(404).json({ error: 'ไม่พบ API นี้' }));
-app.listen(PORT, () => console.log(`ร้านเปิดแล้วที่ http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`ร้านเปิดแล้วที่ http://localhost:${PORT} (พร้อมระบบเชื่อม SQL Server Realtime: .\\SQLEXPRESS01)`));
+

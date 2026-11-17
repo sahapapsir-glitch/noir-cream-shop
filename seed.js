@@ -95,6 +95,9 @@ if (withSamples) {
   console.log('สต็อกเริ่มต้นว่าง พร้อมให้คุณเพิ่มสินค้าเองผ่านหน้าจัดการร้าน');
 }
 
+const { createRealtimeSqlManager } = require('./mssql-sync');
+createRealtimeSqlManager(db).notifyChange('seed', 'seed');
+
 console.log('ระบบพร้อมใช้งาน:');
 console.log('หมวดหมู่ที่จำหน่าย: เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว, กางเกง');
 console.log('แอดมินทั้ง 5 บัญชี (รหัสผ่าน: admin1234):');

@@ -6,7 +6,9 @@
   "scripts": {
     "seed": "node --disable-warning=ExperimentalWarning seed.js",
     "start": "node --disable-warning=ExperimentalWarning server.js",
-    "setup": "npm run seed && npm start"
+    "setup": "npm run seed && npm start",
+    "sql:realtime": "powershell -NoProfile -ExecutionPolicy Bypass -File sync-ssms-realtime.ps1",
+    "sql:once": "powershell -NoProfile -ExecutionPolicy Bypass -File sync-ssms-realtime.ps1 -Once"
   },
   "keywords": [],
   "author": "",

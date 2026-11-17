@@ -1113,8 +1113,17 @@ pages.account = async () => {
   `;
 };
 
-/* ---------- Admin Panel (พร้อมระบบเพิ่มสินค้าและไซส์แบบด่วน) ---------- */
+/* ---------- Admin Panel (พร้อมระบบเพิ่มสินค้าและไซส์แบบด่วน & SQL Server Realtime) ---------- */
 let adminTab = 'dash';
+let activeSqlTable = 'product';
+let lastSqlSnapshot = null;
+
+pages.sql = async () => {
+  if (state.user?.role !== 'admin') { go('#/login'); return; }
+  adminTab = 'sql';
+  go('#/admin');
+};
+
 pages.admin = async () => {
   if (state.user?.role !== 'admin') { go('#/login'); return; }
   const tabs = [
@@ -1122,11 +1131,18 @@ pages.admin = async () => {
     ['products', '📦 สินค้า/สต็อก'],
     ['orders', '📑 คำสั่งซื้อ'],
     ['customers', '👥 ลูกค้า'],
-    ['suppliers', '🏭 ซัพพลายเออร์/พนักงาน']
+    ['suppliers', '🏭 ซัพพลายเออร์/พนักงาน'],
+    ['sql', '🗄️ SQL Server (Realtime)']
   ];
   app.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <h2>ระบบจัดการร้านค้า (Admin)</h2>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
+        <button type="button" class="sql-live-pill" id="sqlHeaderPill" onclick="A.tab('sql')" title="คลิกเพื่อเปิดหน้า SQL Server Realtime Studio">
+          <span class="sql-pulse-dot"></span>
+          <span>SQL Realtime: <b>.\\SQLEXPRESS01</b> / <code>NoirCreamShop</code></span>
+        </button>
+      </div>
       <button class="btn danger sm" onclick="A.clearAllStock()">⚠️ ล้างสต็อกสินค้าทั้งหมด</button>
     </div>
     <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
@@ -1456,6 +1472,196 @@ adminTabs.suppliers = async () => {
       </form>
     </div>
   `;
+};
+
+const SQL_TABLE_META = [
+  ['product', 'dbo.product', 'สินค้า'],
+  ['product_variant', 'dbo.product_variant', 'ไซส์/สี/สต็อก'],
+  ['order', 'dbo.[order]', 'คำสั่งซื้อ'],
+  ['order_item', 'dbo.order_item', 'รายการสั่งซื้อ'],
+  ['payment', 'dbo.payment', 'การชำระเงิน'],
+  ['shipment', 'dbo.shipment', 'การจัดส่งพัสดุ'],
+  ['customer', 'dbo.customer', 'ลูกค้า'],
+  ['address', 'dbo.address', 'ที่อยู่ลูกค้า'],
+  ['admin', 'dbo.admin', 'ผู้ดูแลระบบ'],
+  ['employee', 'dbo.employee', 'พนักงาน'],
+  ['supplier', 'dbo.supplier', 'ซัพพลายเออร์'],
+  ['coupon', 'dbo.coupon', 'คูปองส่วนลด'],
+  ['cart_item', 'dbo.cart_item', 'ตะกร้าสินค้า'],
+  ['review', 'dbo.review', 'รีวิวสินค้า'],
+  ['wishlist', 'dbo.wishlist', 'รายการโปรด'],
+  ['review_like', 'dbo.review_like', 'ถูกใจรีวิว'],
+  ['VIEW:Orders', 'dbo.Orders (VIEW)', 'View: Orders'],
+  ['VIEW:Order_Detail', 'dbo.Order_Detail (VIEW)', 'View: Order_Detail']
+];
+
+function renderSqlGridHtml(rows, title = '') {
+  if (!rows || !rows.length) {
+    return `<div class="muted" style="padding:20px;text-align:center;background:var(--cream);border-radius:var(--radius)">ไม่มีข้อมูลในตาราง ${esc(title)} (0 แถว)</div>`;
+  }
+  const cols = Object.keys(rows[0]);
+  return `
+    <div class="table-wrap sql-grid-wrap">
+      <table class="sql-data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            ${cols.map((c) => `<th>${esc(c)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((r, idx) => `
+            <tr>
+              <td class="muted">${idx + 1}</td>
+              ${cols.map((c) => {
+                const v = r[c];
+                if (v === null || v === undefined) return '<td class="sql-null">NULL</td>';
+                if (c === 'password_hash') return `<td><code style="font-size:11px">${esc(String(v).slice(0, 18))}…</code></td>`;
+                if (c === 'image_url' && String(v).length > 36) return `<td title="${esc(String(v))}"><code style="font-size:11px">${esc(String(v).slice(0, 36))}…</code></td>`;
+                return `<td>${esc(String(v))}</td>`;
+              }).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function updateLiveSqlExplorerDom(snap) {
+  if (!snap) return;
+  lastSqlSnapshot = snap;
+  const pillBox = $('#sqlTablePills');
+  const gridBox = $('#sqlTableGrid');
+  const metaTitle = $('#sqlActiveTableTitle');
+  const chkEl = $('#sqlLiveChecksum');
+  const timeEl = $('#sqlLiveTime');
+
+  if (chkEl) chkEl.textContent = snap.checksum || '-';
+  if (timeEl) timeEl.textContent = dt(snap.timestamp);
+
+  if (pillBox) {
+    pillBox.innerHTML = SQL_TABLE_META.map(([key, sqlName, thLabel]) => {
+      const isView = key.startsWith('VIEW:');
+      const vName = isView ? key.slice(5) : key;
+      const count = isView ? (snap.views?.[vName]?.length || 0) : (snap.counts?.[key] || 0);
+      return `
+        <button type="button" class="sql-obj-btn ${activeSqlTable === key ? 'on' : ''}" onclick="A.selectSqlTable('${key}')">
+          <span><b>${esc(sqlName)}</b> <small class="muted">(${esc(thLabel)})</small></span>
+          <span class="sql-count-badge">${count}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  if (gridBox) {
+    const isView = activeSqlTable.startsWith('VIEW:');
+    const vName = isView ? activeSqlTable.slice(5) : activeSqlTable;
+    const rows = isView ? (snap.views?.[vName] || []) : (snap.tables?.[activeSqlTable] || []);
+    const found = SQL_TABLE_META.find((m) => m[0] === activeSqlTable);
+    const label = found ? `${found[1]} — ${found[2]}` : activeSqlTable;
+    if (metaTitle) metaTitle.innerHTML = `ตารางปัจจุบัน: <b>${esc(label)}</b> <span class="muted">(${rows.length} แถว)</span>`;
+    gridBox.innerHTML = renderSqlGridHtml(rows, label);
+  }
+}
+
+adminTabs.sql = async () => {
+  const { status, snapshot } = await api('GET', '/api/sql/status');
+  lastSqlSnapshot = snapshot;
+  const presets = [
+    ['ดูสินค้าทั้งหมด', 'SELECT * FROM dbo.product;'],
+    ['ดูไซส์และสต็อก', 'SELECT * FROM dbo.product_variant;'],
+    ['ดูคำสั่งซื้อล่าสุด', 'SELECT * FROM dbo.[order] ORDER BY order_id DESC;'],
+    ['ดูรายการในคำสั่งซื้อ', 'SELECT * FROM dbo.order_item;'],
+    ['ดูการชำระเงิน', 'SELECT * FROM dbo.payment;'],
+    ['ดูการจัดส่งพัสดุ', 'SELECT * FROM dbo.shipment;'],
+    ['ดูแอดมินทั้ง 5 บัญชี', 'SELECT admin_id, name, email, phone FROM dbo.admin;'],
+    ['ดูลูกค้าทั้งหมด', 'SELECT customer_id, first_name, last_name, email, phone, address, admin_id FROM dbo.customer;'],
+    ['ดู View: Orders', 'SELECT * FROM dbo.Orders;'],
+    ['ดู View: Order_Detail', 'SELECT * FROM dbo.Order_Detail;']
+  ];
+
+  $('#tab').innerHTML = `
+    <div class="panel sql-studio-banner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="sql-status-badge on"><span class="sql-pulse-dot"></span> LIVE REALTIME SYNC</span>
+            <h3 style="margin:0">Microsoft SQL Server Management Studio (SSMS) — Realtime Connector</h3>
+          </div>
+          <p class="muted" style="margin:6px 0 0;font-size:13.5px">
+            Instance: <b><code>${esc(snapshot.instance || '.\\SQLEXPRESS01')}</code></b> ·
+            Database: <b><code>[${esc(snapshot.database || 'NoirCreamShop')}]</code></b> ·
+            Checksum: <code id="sqlLiveChecksum">${esc(snapshot.checksum)}</code> ·
+            อัปเดตล่าสุด: <span id="sqlLiveTime">${dt(snapshot.timestamp)}</span>
+          </p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn sm" onclick="A.copyPowerShellRealtime()">⚡ คัดลอกคำสั่งเชื่อม .\\SQLEXPRESS01 อัตโนมัติ</button>
+          <button type="button" class="btn ghost sm" onclick="A.copySqlScript()">📋 คัดลอกโค้ด SQL ทั้งหมด</button>
+          <button type="button" class="btn ghost sm" onclick="A.downloadSqlScript()">⬇️ ดาวน์โหลดไฟล์ .sql</button>
+        </div>
+      </div>
+
+      <div class="sql-connect-guide">
+        <div style="margin-bottom:8px">
+          <b>🚀 วิธีเชื่อมต่อเข้าโปรแกรม SSMS (<code>.\\SQLEXPRESS01</code>) ในเครื่องคอมพิวเตอร์แบบ Realtime ทันที:</b>
+        </div>
+        <div class="sql-guide-steps">
+          <div class="sql-step">
+            <b>วิธีที่ 1: เชื่อมต่อแบบ 2-Way Realtime อัตโนมัติ (แนะนำ)</b>
+            <p class="muted" style="margin:4px 0 8px;font-size:12.5px">
+              กดปุ่ม <b>"⚡ คัดลอกคำสั่งเชื่อม .\\SQLEXPRESS01 อัตโนมัติ"</b> ด้านบน แล้วนำไปวาง (Paste) ในโปรแกรม <b>Windows PowerShell</b> บนเครื่องของคุณ (หรือดับเบิลคลิกไฟล์ <code>Connect_SSMS_Realtime.bat</code> ในโฟลเดอร์โปรเจกต์) ระบบจะสร้างฐานข้อมูล <code>NoirCreamShop</code> พร้อมตารางทั้ง 16 ตารางเข้าสู่ <code>.\\SQLEXPRESS01</code> ทันที และซิงค์ข้อมูล Realtime ตลอดเวลา!
+            </p>
+          </div>
+          <div class="sql-step">
+            <b>วิธีที่ 2: รันในหน้าต่าง New Query ของ SSMS</b>
+            <p class="muted" style="margin:4px 0 8px;font-size:12.5px">
+              ในโปรแกรม SSMS ของคุณ กดปุ่ม <b>New Query</b> ด้านบน -> กดปุ่ม <b>"📋 คัดลอกโค้ด SQL ทั้งหมด"</b> จากหน้านี้ไปวาง -> กด <b>Execute (F5)</b> จากนั้นคลิกขวาที่โฟลเดอร์ <b>Databases -> Refresh</b> จะพบฐานข้อมูล <code>NoirCreamShop</code> ทันที
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive SQL Query Console -->
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <h3 style="margin:0">💻 New Query — รันคำสั่ง SQL แบบ Realtime (รองรับ T-SQL / SSMS)</h3>
+        <span class="muted" style="font-size:12.5px">เมื่อรัน INSERT / UPDATE / DELETE ข้อมูลจะอัปเดตทั้งหน้าเว็บและไฟล์ SQL Server ทันที</span>
+      </div>
+      <div class="chips" style="margin-bottom:10px">
+        ${presets.map(([label, sql]) => `
+          <button type="button" class="chip" onclick="A.setSqlQuery(${JSON.stringify(sql).replace(/"/g, '&quot;')})">${esc(label)}</button>
+        `).join('')}
+      </div>
+      <form onsubmit="return A.runSqlQuery(event)">
+        <textarea id="sqlQueryInput" class="sql-editor" rows="3" placeholder="SELECT * FROM dbo.product;">SELECT * FROM dbo.[order] ORDER BY order_id DESC;</textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:10px">
+          <button class="btn sm">▶ Execute (รันคำสั่ง SQL)</button>
+          <span id="sqlQueryMeta" class="muted" style="font-size:13px">พร้อมทำงาน</span>
+        </div>
+      </form>
+      <div id="sqlQueryResult" style="margin-top:14px"></div>
+    </div>
+
+    <!-- Live Object Explorer & Table Data Grid -->
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <h3 style="margin:0">📂 Object Explorer — ตารางฐานข้อมูล <code>[NoirCreamShop]</code> แบบ Realtime (16 ตาราง + 2 Views)</h3>
+        <button type="button" class="btn ghost sm" onclick="A.refreshSqlSnapshot()">🔄 รีเฟรชข้อมูลทันที</button>
+      </div>
+      <div class="sql-explorer-layout">
+        <div id="sqlTablePills" class="sql-obj-list"></div>
+        <div class="sql-obj-content">
+          <div id="sqlActiveTableTitle" style="margin-bottom:10px;font-size:14px"></div>
+          <div id="sqlTableGrid"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  updateLiveSqlExplorerDom(snapshot);
 };
 
 /* ---------- Actions & Handlers ---------- */
@@ -1860,8 +2066,116 @@ const A = window.A = {
         refresh();
       });
     }
+  },
+
+  /* ---------- SQL Server Realtime Studio Actions ---------- */
+  selectSqlTable(name) {
+    activeSqlTable = name;
+    if (lastSqlSnapshot) {
+      updateLiveSqlExplorerDom(lastSqlSnapshot);
+    } else {
+      A.refreshSqlSnapshot();
+    }
+  },
+
+  async refreshSqlSnapshot() {
+    try {
+      const { snapshot } = await api('GET', '/api/sql/status');
+      updateLiveSqlExplorerDom(snapshot);
+      toast('อัปเดตข้อมูลตาราง SQL Server ล่าสุดแล้ว');
+    } catch (e) {
+      toast(e.message || 'ไม่สามารถดึงข้อมูล SQL ได้', true);
+    }
+  },
+
+  setSqlQuery(sql) {
+    const el = $('#sqlQueryInput');
+    if (el) {
+      el.value = sql;
+      el.focus();
+    }
+  },
+
+  runSqlQuery(e) {
+    e.preventDefault();
+    const sql = $('#sqlQueryInput')?.value || '';
+    const meta = $('#sqlQueryMeta');
+    const out = $('#sqlQueryResult');
+    if (!sql.trim()) return toast('กรุณากรอกคำสั่ง SQL', true);
+    if (meta) meta.textContent = '⏳ กำลังรันคำสั่ง SQL...';
+
+    safe(async () => {
+      const r = await api('POST', '/api/sql/query', { sql });
+      if (r.snapshot) updateLiveSqlExplorerDom(r.snapshot);
+      if (r.isSelect) {
+        if (meta) meta.innerHTML = `✅ สำเร็จ (${r.rows.length} แถว · ${r.durationMs} ms)`;
+        if (out) out.innerHTML = renderSqlGridHtml(r.rows, 'ผลลัพธ์คำสั่ง SELECT');
+      } else {
+        if (meta) meta.innerHTML = `✅ อัปเดตสำเร็จ (${r.changes} แถวที่เปลี่ยนแปลง · ${r.durationMs} ms · ซิงค์เข้า SQL Server แล้ว)`;
+        if (out) out.innerHTML = `<div class="panel" style="background:var(--cream);margin:0"><b>ดำเนินการสำเร็จ:</b> กระทบข้อมูล ${r.changes} แถว และอัปเดตสคริปต์ <code>NoirCreamShop_SQLServer.sql</code> แบบ Realtime เรียบร้อยแล้ว</div>`;
+        toast(`รันคำสั่ง SQL สำเร็จ (${r.changes} แถว)`);
+      }
+    });
+    return false;
+  },
+
+  async copyPowerShellRealtime() {
+    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm 'https://raw.githubusercontent.com/sahapapsir-glitch/noir-cream-shop/main/sync-ssms-realtime.ps1' | iex"`;
+    try {
+      await navigator.clipboard.writeText(cmd);
+      toast('คัดลอกคำสั่งเชื่อมต่อ .\\SQLEXPRESS01 แบบ Realtime แล้ว! นำไปวางใน PowerShell ได้เลย');
+    } catch {
+      prompt('คัดลอกคำสั่งด้านล่างไปวางในโปรแกรม Windows PowerShell:', cmd);
+    }
+  },
+
+  async copySqlScript() {
+    try {
+      const res = await fetch('/api/sql/script');
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      toast('คัดลอกโค้ด SQL Server (ข้อมูลสดล่าสุด) เรียบร้อยแล้ว! นำไปวางใน New Query ของ SSMS ได้เลย');
+    } catch (e) {
+      toast('ไม่สามารถคัดลอกโค้ด SQL ได้ กรุณากดปุ่มดาวน์โหลดไฟล์ .sql แทน', true);
+    }
+  },
+
+  downloadSqlScript() {
+    window.open('/api/sql/script?download=1', '_blank');
+    toast('กำลังดาวน์โหลดไฟล์ NoirCreamShop_SQLServer.sql ข้อมูลล่าสุด');
   }
 };
+
+/* ---------- Realtime SQL Server SSE Stream ---------- */
+let sqlEventSource = null;
+
+function initRealtimeSqlStream() {
+  if (typeof EventSource === 'undefined' || sqlEventSource) return;
+  try {
+    sqlEventSource = new EventSource('/api/sql/stream');
+    sqlEventSource.addEventListener('db_change', async (ev) => {
+      try {
+        const data = JSON.parse(ev.data || '{}');
+        const pill = $('#sqlHeaderPill');
+        if (pill) {
+          pill.classList.remove('flash');
+          void pill.offsetWidth;
+          pill.classList.add('flash');
+        }
+        // หากเปิดหน้า SQL Server (Realtime) อยู่ ให้ดึง Snapshot ใหม่มาแสดงผลทันทีโดยไม่ต้องรีเฟรชหน้า
+        if (location.hash.startsWith('#/admin') && adminTab === 'sql') {
+          const { snapshot } = await api('GET', '/api/sql/status');
+          updateLiveSqlExplorerDom(snapshot);
+        } else if (data.source === 'ssms') {
+          // หากเป็นการแก้ไขมาจากโปรแกรม SSMS บนเครื่อง ให้รีเฟรชหน้าเว็บอัตโนมัติ
+          await loadCart();
+          route();
+          toast('🔄 ซิงค์ข้อมูลล่าสุดจาก SQL Server (SSMS) แบบ Realtime แล้ว');
+        }
+      } catch { /* ignore parse error */ }
+    });
+  } catch { /* ignore SSE error */ }
+}
 
 /* ---------- Smooth Animations & Visual Effects Engine ---------- */
 let revealObserver = null;
@@ -2031,5 +2345,6 @@ window.addEventListener('hashchange', route);
   try { state.config = await api('GET', '/api/config'); } catch { /* defaults */ }
   try { state.user = (await api('GET', '/api/me')).user; } catch { /* guest */ }
   await loadCart();
+  initRealtimeSqlStream();
   route();
 })();
