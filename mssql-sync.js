@@ -12,18 +12,22 @@ const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const DEFAULT_INSTANCE = process.env.MSSQL_SERVER || '.\\SQLEXPRESS01';
 const DATABASE_NAME = process.env.MSSQL_DATABASE || 'NoirCreamShop';
 
+function cleanTokenString(raw) {
+  return String(raw || '').trim().replace(/^["']+|["']+$/g, '').trim();
+}
+
 function getGitHubTokenInfo() {
-  const envTok = (
+  const envTok = cleanTokenString(
     process.env.GITHUB_TOKEN ||
     process.env.github_token ||
     process.env.GH_TOKEN ||
     process.env.gh_token ||
     ''
-  ).trim();
+  );
   let fileTok = '';
   try {
     if (fs.existsSync(TOKEN_FILE_PATH)) {
-      fileTok = fs.readFileSync(TOKEN_FILE_PATH, 'utf8').trim();
+      fileTok = cleanTokenString(fs.readFileSync(TOKEN_FILE_PATH, 'utf8'));
     }
   } catch {}
   if (envTok) return { token: envTok, source: 'env' };
@@ -996,8 +1000,15 @@ function createRealtimeSqlManager(db) {
         try {
           result = await pushToGitHubViaApi(reason, token);
         } catch (apiErr) {
-          if (hasLocalGitRepo()) {
-            result = await pushToGitHubViaLocalGit(reason);
+          // กรณีเกิด 422/409 จากการอัปเดตพร้อมกัน ให้ลองใหม่อีก 1 ครั้ง
+          if (/GitHub API (409|422)/i.test(String(apiErr.message || ''))) {
+            result = await pushToGitHubViaApi(reason, token);
+          } else if (hasLocalGitRepo() && !isRenderEnvironment()) {
+            try {
+              result = await pushToGitHubViaLocalGit(reason);
+            } catch {
+              throw apiErr;
+            }
           } else {
             throw apiErr;
           }

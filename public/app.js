@@ -2171,6 +2171,8 @@ const A = window.A = {
       if (!txt || !gh) return;
       if (gh.syncing) {
         txt.innerHTML = '⏳ กำลังซิงค์ขึ้น GitHub...';
+      } else if (gh.lastError) {
+        txt.innerHTML = '⚠️ GitHub Sync ผิดพลาด (คลิกดู)';
       } else if (gh.lastCommitSha) {
         txt.innerHTML = `☁️ GitHub Synced (<code>${esc(gh.lastCommitSha)}</code>)`;
       } else if (gh.connected) {
@@ -2191,7 +2193,9 @@ const A = window.A = {
         toast(`ซิงค์ข้อมูล (สินค้า/สต็อก/ลูกค้า) ขึ้น GitHub สำเร็จ!${github.lastCommitSha ? ` [${github.lastCommitSha}]` : ''}`);
       } catch (err) {
         A.refreshGitHubHeader();
-        if (String(err.message || '').includes('GITHUB_TOKEN')) {
+        const msg = String(err.message || '');
+        if (msg.includes('GITHUB_TOKEN') || msg.includes('GitHub API 401') || msg.includes('GitHub API 403') || msg.includes('GitHub API 404')) {
+          toast(msg, true);
           A.setupGitHubToken();
         } else {
           throw err;
