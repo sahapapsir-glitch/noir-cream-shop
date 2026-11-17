@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 02e5d8f7ae945fd7 | Updated: 2026-11-17T16:23:49.443Z
+-- Checksum: 82002926cd27a6e6 | Updated: 2026-11-17T16:24:28.191Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -420,8 +420,8 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (194, 30, N'2XL', N'ดำ', N'#000000', 3299, 30, 30, N'SKU-30-2XL-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (195, 31, N'S', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (196, 31, N'M', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-M-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (197, 31, N'L', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-L-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (198, 31, N'XL', N'ดำ', N'#000000', 2600, 25, 25, N'SKU-31-XL-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (197, 31, N'L', N'ดำ', N'#000000', 3600, 25, 25, N'SKU-31-L-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (198, 31, N'XL', N'ดำ', N'#000000', 3699, 25, 25, N'SKU-31-XL-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (199, 32, N'S', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-S-ขาวชมพู');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (200, 32, N'M', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-M-ขาวชมพู');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (201, 32, N'L', N'ขาว ชมพู', N'#f7e2e7', 1190, 10, 10, N'SKU-32-L-ขาวชมพู');
