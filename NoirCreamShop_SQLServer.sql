@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 18dc565214df0da3 | Updated: 2026-11-17T16:24:52.418Z
+-- Checksum: acdcd1cc6866c267 | Updated: 2026-11-17T16:25:31.697Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -394,7 +394,7 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (34, N'Tshirt Nez Tout Rose 02 Ivory Pink F', N'เสื้อยืด', N'ประเทศเจ้าของแบรนด์ เกาหลีใต้
 เพศ  ผู้หญิง ขนาด  ฟรีไซส์', N'active', 40, 40, 1790, 3, 2, N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FCDS3203%2FMARDIMERCREDI-TSHIRTNEZTOUTROSE02IVORYPINKF-CDS32033793-1.webp&w=1080&q=75', 1, '2026-11-17 15:58:23');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (35, N'Polo Bear Fleece Sweatshirt', N'เสื้อแขนยาว', N'brand:Polo Ralph Lauren', N'active', 160, 160, 2400, 1, 1, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg', 0, '2026-11-17 16:01:36');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (36, N'Kids Kkotch T-Shirt in Black', N'เสื้อยืด', N'ลาย Anti Social Social Club ผสานกับภาพผีเสื้อและดอกไม้ ผ้าฝ้าย 100%', N'active', 100, 100, 593, 1, 2, N'https://www.childsplayclothing.com/cdn/shop/files/ASSA6002_BLACK_1.jpg?v=1779286536&width=2138', 1, '2026-11-17 16:06:39');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (36, N'Kids Kkotch T-Shirt in Black', N'เสื้อยืด', N'ลาย Anti Social Social Club ผสานกับภาพผีเสื้อและดอกไม้ ผ้าฝ้าย 100%', N'active', 100, 100, 593, 1, 2, N'https://www.childsplayclothing.com/cdn/shop/files/ASSA6002_BLACK_1.jpg?v=1779286536&width=2138', 0, '2026-11-17 16:06:39');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (37, N'Collegiate Sweatshirt', N'เสื้อแขนยาว', N'Malbon', N'active', 175, 175, 5600, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 0, '2026-11-17 16:09:34');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (38, N'Script Logo Skate Hoodie', N'เสื้อแขนยาว', N'brand:OFF-WHITE', N'active', 80, 80, 19999, NULL, 1, N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 0, '2026-11-17 16:12:23');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (39, N'Stripe Rugby Polo', N'เสื้อแขนยาว', N'Polo Ralph Lauren', N'active', 100, 100, 4800, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg', 0, '2026-11-17 16:18:00');
