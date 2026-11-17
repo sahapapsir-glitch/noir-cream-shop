@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:21:59.487Z",
-  "checksum": "8920b8dff7558272",
+  "timestamp": "2026-11-17T17:23:49.579Z",
+  "checksum": "5075b5f045094c10",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 30,
-    "product_variant": 128,
+    "product": 31,
+    "product_variant": 132,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -1131,6 +1131,21 @@
         "image_url": "https://is8.revolveassets.com/images/p4/n/uv/AGOF-MJ44_V1.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 17:21:59"
+      },
+      {
+        "product_id": 63,
+        "name": "Satin Polka Dots",
+        "category": "กางเกง",
+        "description": "ตัดเย็บจากผ้าซาติน",
+        "status": "active",
+        "stock": 60,
+        "quantity": 60,
+        "price": 2700,
+        "supplier_id": 2,
+        "employee_id": 1,
+        "image_url": "https://www.jdsports.co.th/cdn/shop/files/jd_810593_c.jpg?v=1790642291&width=1007",
+        "is_featured": 0,
+        "created_at": "2026-11-17 17:23:49"
       }
     ],
     "product_variant": [
@@ -2541,6 +2556,50 @@
         "stock": 20,
         "stock_quantity": 20,
         "sku": "SKU-62-36-สีส้มอิฐอมน้ำตาล/สีสนิม"
+      },
+      {
+        "variant_id": 328,
+        "product_id": 63,
+        "size": "28",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-63-28-ชมพูซาติน"
+      },
+      {
+        "variant_id": 329,
+        "product_id": 63,
+        "size": "30",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-63-30-ชมพูซาติน"
+      },
+      {
+        "variant_id": 330,
+        "product_id": 63,
+        "size": "32",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-63-32-ชมพูซาติน"
+      },
+      {
+        "variant_id": 331,
+        "product_id": 63,
+        "size": "34",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-63-34-ชมพูซาติน"
       }
     ],
     "cart_item": [],
