@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T14:44:51.035Z",
-  "checksum": "274e45a70fe48813",
+  "timestamp": "2026-11-17T14:46:29.044Z",
+  "checksum": "a81ad9115b9099a5",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 21,
     "address": 21,
-    "product": 0,
-    "product_variant": 0,
+    "product": 1,
+    "product_variant": 5,
     "cart_item": 0,
     "order": 0,
     "order_item": 0,
@@ -656,8 +656,80 @@
         "is_default": 1
       }
     ],
-    "product": [],
-    "product_variant": [],
+    "product": [
+      {
+        "product_id": 24,
+        "name": "Classic Fit Mesh Polo",
+        "category": "เสื้อโปโล",
+        "description": "brand:Polo Ralph Lauren",
+        "status": "active",
+        "stock": 150,
+        "quantity": 150,
+        "price": 2900,
+        "supplier_id": 3,
+        "employee_id": 2,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg",
+        "is_featured": 1,
+        "created_at": "2026-11-17 14:46:27"
+      }
+    ],
+    "product_variant": [
+      {
+        "variant_id": 165,
+        "product_id": 24,
+        "size": "S",
+        "color": "ดำ",
+        "color_hex": "#000000",
+        "price": 2900,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-24-S-ดำ"
+      },
+      {
+        "variant_id": 166,
+        "product_id": 24,
+        "size": "M",
+        "color": "ดำ",
+        "color_hex": "#000000",
+        "price": 2900,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-24-M-ดำ"
+      },
+      {
+        "variant_id": 167,
+        "product_id": 24,
+        "size": "L",
+        "color": "ดำ",
+        "color_hex": "#000000",
+        "price": 2900,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-24-L-ดำ"
+      },
+      {
+        "variant_id": 168,
+        "product_id": 24,
+        "size": "XL",
+        "color": "ดำ",
+        "color_hex": "#000000",
+        "price": 2900,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-24-XL-ดำ"
+      },
+      {
+        "variant_id": 169,
+        "product_id": 24,
+        "size": "2XL",
+        "color": "ดำ",
+        "color_hex": "#000000",
+        "price": 2900,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-24-2XL-ดำ"
+      }
+    ],
     "cart_item": [],
     "order": [],
     "order_item": [],
