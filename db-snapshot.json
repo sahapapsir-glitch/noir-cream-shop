@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:24:34.589Z",
-  "checksum": "3cab9473d72f3931",
+  "timestamp": "2026-11-17T16:24:52.418Z",
+  "checksum": "18dc565214df0da3",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -769,7 +769,7 @@
         "supplier_id": 3,
         "employee_id": 1,
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/FALF-MK59_V1.jpg",
-        "is_featured": 0,
+        "is_featured": 1,
         "created_at": "2026-11-17 15:56:30"
       },
       {
