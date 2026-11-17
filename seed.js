@@ -3,11 +3,28 @@ const db = require('./db');
 
 const hash = (p) => bcrypt.hashSync(p, 10);
 
-// ผู้ดูแลระบบ (สร้างก่อนเพื่อให้มี admin_id อ้างอิงใน supplier และ customer ตาม ER)
-if (!db.prepare('SELECT 1 FROM admin WHERE email=?').get('admin@shop.com')) {
-  db.prepare('INSERT INTO admin (name,email,phone,password_hash) VALUES (?,?,?,?)')
-    .run('ผู้ดูแลระบบ', 'admin@shop.com', '080-000-0000', hash('admin1234'));
+// ผู้ดูแลระบบ 5 บัญชี (สร้างก่อนเพื่อให้มี admin_id อ้างอิงใน supplier และ customer ตาม ER)
+const ADMINS = [
+  { id: 1, name: 'ภูวมินทร์ วัฒนสาร', email: 'phuwamin@shop.com', phone: '081-000-0001' },
+  { id: 2, name: 'ธนกร อิ่มเพ็ง', email: 'thanakorn@shop.com', phone: '081-000-0002' },
+  { id: 3, name: 'ธนดล สมจิตต์', email: 'thanadon@shop.com', phone: '081-000-0003' },
+  { id: 4, name: 'สหภาพ ศิริพร', email: 'sahapap@shop.com', phone: '081-000-0004' },
+  { id: 5, name: 'ปวริศา โสมี', email: 'pawarisa@shop.com', phone: '081-000-0005' },
+];
+
+db.exec('PRAGMA foreign_keys = OFF;');
+db.prepare("DELETE FROM admin WHERE email='admin@shop.com' OR name='ผู้ดูแลระบบ'").run();
+for (const a of ADMINS) {
+  const existing = db.prepare('SELECT admin_id FROM admin WHERE admin_id=? OR email=?').get(a.id, a.email);
+  if (existing) {
+    db.prepare('UPDATE admin SET name=?, email=?, phone=?, password_hash=? WHERE admin_id=?')
+      .run(a.name, a.email, a.phone, hash('admin1234'), existing.admin_id);
+  } else {
+    db.prepare('INSERT INTO admin (admin_id,name,email,phone,password_hash) VALUES (?,?,?,?,?)')
+      .run(a.id, a.name, a.email, a.phone, hash('admin1234'));
+  }
 }
+db.exec('PRAGMA foreign_keys = ON;');
 const defaultAdminId = db.prepare('SELECT admin_id FROM admin ORDER BY admin_id LIMIT 1').get()?.admin_id || 1;
 
 // พนักงาน / ซัพพลายเออร์ (สร้างหากยังไม่มี)
@@ -80,5 +97,8 @@ if (withSamples) {
 
 console.log('ระบบพร้อมใช้งาน:');
 console.log('หมวดหมู่ที่จำหน่าย: เสื้อยืด, เสื้อโปโล, เสื้อแขนยาว, กางเกง');
-console.log('แอดมิน:  admin@shop.com / admin1234');
+console.log('แอดมินทั้ง 5 บัญชี (รหัสผ่าน: admin1234):');
+for (const a of ADMINS) {
+  console.log(`  #${a.id} ${a.name} — ${a.email}`);
+}
 console.log('ลูกค้า:   demo@shop.com / demo1234');

@@ -103,12 +103,13 @@ app.post('/api/register', wrap((req, res) => {
 }));
 
 app.post('/api/login', wrap((req, res) => {
-  const email = str(req.body?.email, 120).toLowerCase();
+  const rawInput = str(req.body?.email, 120);
+  const email = rawInput.toLowerCase();
   const pw = typeof req.body?.password === 'string' ? req.body.password : '';
   const key = req.ip + '|' + email;
   if (tooMany(key)) bad('ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 10 นาที', 429);
   let role = 'customer', row = db.prepare('SELECT customer_id id,password_hash h FROM customer WHERE email=?').get(email);
-  if (!row) { role = 'admin'; row = db.prepare('SELECT admin_id id,password_hash h FROM admin WHERE email=?').get(email); }
+  if (!row) { role = 'admin'; row = db.prepare("SELECT admin_id id,password_hash h FROM admin WHERE LOWER(email)=? OR name=? OR name LIKE ? || ' %'").get(email, rawInput, rawInput); }
   if (!row || !bcrypt.compareSync(pw, row.h)) { fail(key); bad('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 401); }
   attempts.delete(key);
   startSession(res, role, row.id);
@@ -708,6 +709,7 @@ app.get('/api/admin/customers', wrap((req) => {
 app.get('/api/admin/suppliers', wrap((req) => {
   needAdmin(req);
   return {
+    admins: db.prepare('SELECT admin_id, name, email, phone FROM admin ORDER BY admin_id').all(),
     suppliers: db.prepare(`
       SELECT s.*, e.first_name||' '||e.last_name employee_name, a.name admin_name
       FROM supplier s

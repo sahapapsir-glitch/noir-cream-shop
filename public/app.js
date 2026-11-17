@@ -800,18 +800,40 @@ pages.help = async () => {
 
 /* ---------- Auth & Cart & Checkout Pages ---------- */
 pages.login = async () => {
+  const adminAccounts = [
+    ['ภูวมินทร์ วัฒนสาร', 'phuwamin@shop.com'],
+    ['ธนกร อิ่มเพ็ง', 'thanakorn@shop.com'],
+    ['ธนดล สมจิตต์', 'thanadon@shop.com'],
+    ['สหภาพ ศิริพร', 'sahapap@shop.com'],
+    ['ปวริศา โสมี', 'pawarisa@shop.com']
+  ];
   app.innerHTML = `<div class="auth">
     <div class="auth-head">
       <span class="auth-eyebrow">NOIR &amp; CREAM</span>
       <h2>เข้าสู่ระบบ</h2>
-      <p class="muted">กรอกอีเมลและรหัสผ่านเพื่อเข้าใช้งานบัญชีของคุณ</p>
+      <p class="muted">กรอกอีเมล (หรือชื่อแอดมิน) และรหัสผ่านเพื่อเข้าใช้งาน</p>
     </div>
     <div class="err" id="err"></div>
     <form onsubmit="return A.login(event)">
-      <div class="field"><label for="email">อีเมล</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="name@example.com"></div>
+      <div class="field"><label for="email">อีเมล หรือ ชื่อผู้ดูแลระบบ</label><input id="email" name="email" type="text" autocomplete="username" required placeholder="name@example.com หรือ ชื่อแอดมิน"></div>
       <div class="field"><label for="pw">รหัสผ่าน</label><input id="pw" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
       <button class="btn block" style="margin-top:20px">เข้าสู่ระบบ</button>
     </form>
+    <div style="font-size:13px;background:var(--cream);padding:12px 14px;border-radius:var(--radius);margin-top:16px;border:1px solid var(--line)">
+      <b>บัญชีผู้ดูแลระบบ (Admin) — รหัสผ่าน: <code>admin1234</code></b>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
+        ${adminAccounts.map(([name, email], idx) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <span>#${idx + 1} <b>${esc(name)}</b> <span class="muted">(${esc(email)})</span></span>
+            <button type="button" class="link" style="font-size:12px" onclick="document.getElementById('email').value='${email}';document.getElementById('pw').value='admin1234'">เลือก</button>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <span><b>ลูกค้าตัวอย่าง:</b> demo@shop.com / <code>demo1234</code></span>
+        <button type="button" class="link" style="font-size:12px" onclick="document.getElementById('email').value='demo@shop.com';document.getElementById('pw').value='demo1234'">เลือก</button>
+      </div>
+    </div>
     <div class="auth-foot">ยังไม่มีบัญชี? <a class="link" href="#/register">สมัครสมาชิก</a></div>
   </div>`;
 };
@@ -1379,8 +1401,24 @@ adminTabs.customers = async () => {
 };
 
 adminTabs.suppliers = async () => {
-  const { suppliers, employees } = await api('GET', '/api/admin/suppliers');
+  const { admins = [], suppliers, employees } = await api('GET', '/api/admin/suppliers');
   $('#tab').innerHTML = `
+    <div class="panel">
+      <h3>ผู้ดูแลระบบ (Admin)</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th># (Admin_ID)</th><th>ชื่อ-นามสกุล</th><th>อีเมล</th><th>เบอร์โทรศัพท์</th></tr>
+          ${admins.map((a) => `
+            <tr>
+              <td><b>#${a.admin_id}</b></td>
+              <td><b>${esc(a.name)}</b></td>
+              <td>${esc(a.email)}</td>
+              <td>${esc(a.phone || '-')}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    </div>
     <div class="panel">
       <h3>ซัพพลายเออร์</h3>
       <div class="table-wrap">
