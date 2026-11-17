@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:20:21.809Z",
-  "checksum": "3efff95b338b60dd",
+  "timestamp": "2026-11-17T17:21:35.081Z",
+  "checksum": "c17131989c487db3",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 28,
-    "product_variant": 119,
+    "product": 29,
+    "product_variant": 123,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -1101,6 +1101,21 @@
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/AGOF-MJ39_V1.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 17:19:08"
+      },
+      {
+        "product_id": 61,
+        "name": "Satin Polka Dots",
+        "category": "กางเกง",
+        "description": "ตัดเย็บจากผ้าซาติน",
+        "status": "active",
+        "stock": 60,
+        "quantity": 60,
+        "price": 2700,
+        "supplier_id": 2,
+        "employee_id": 1,
+        "image_url": "https://www.jdsports.co.th/cdn/shop/files/jd_810593_b.jpg?v=1790642279&width=1007",
+        "is_featured": 0,
+        "created_at": "2026-11-17 17:21:35"
       }
     ],
     "product_variant": [
@@ -2412,6 +2427,50 @@
         "stock": 30,
         "stock_quantity": 30,
         "sku": "SKU-59-36-สีดำฟอก/สีเทาดำ"
+      },
+      {
+        "variant_id": 319,
+        "product_id": 61,
+        "size": "28",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-61-28-ชมพูซาติน"
+      },
+      {
+        "variant_id": 320,
+        "product_id": 61,
+        "size": "30",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-61-30-ชมพูซาติน"
+      },
+      {
+        "variant_id": 321,
+        "product_id": 61,
+        "size": "32",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-61-32-ชมพูซาติน"
+      },
+      {
+        "variant_id": 322,
+        "product_id": 61,
+        "size": "34",
+        "color": "ชมพูซาติน",
+        "color_hex": "#dfc4c9",
+        "price": 2700,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-61-34-ชมพูซาติน"
       }
     ],
     "cart_item": [],
