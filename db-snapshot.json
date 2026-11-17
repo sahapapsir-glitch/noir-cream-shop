@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T17:13:05.989Z",
-  "checksum": "46536a8eb172a9a2",
+  "timestamp": "2026-11-17T17:13:30.780Z",
+  "checksum": "469c1359829848c0",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1054,7 +1054,7 @@
         "supplier_id": 2,
         "employee_id": 1,
         "image_url": "https://www.jdsports.co.th/cdn/shop/files/jd_641663-48_a.jpg?v=1793785118&width=1007",
-        "is_featured": 0,
+        "is_featured": 1,
         "created_at": "2026-11-17 17:09:02"
       },
       {
