@@ -800,38 +800,45 @@ pages.help = async () => {
 
 /* ---------- Auth & Cart & Checkout Pages ---------- */
 pages.login = async () => {
-  app.innerHTML = `<div class="auth"><h2>เข้าสู่ระบบ</h2>
+  app.innerHTML = `<div class="auth">
+    <div class="auth-head">
+      <span class="auth-eyebrow">NOIR &amp; CREAM</span>
+      <h2>เข้าสู่ระบบ</h2>
+      <p class="muted">กรอกอีเมลและรหัสผ่านเพื่อเข้าใช้งานบัญชีของคุณ</p>
+    </div>
     <div class="err" id="err"></div>
     <form onsubmit="return A.login(event)">
       <div class="field"><label for="email">อีเมล</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="name@example.com"></div>
       <div class="field"><label for="pw">รหัสผ่าน</label><input id="pw" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
-      <button class="btn block" style="margin-top:16px">เข้าสู่ระบบ</button>
+      <button class="btn block" style="margin-top:20px">เข้าสู่ระบบ</button>
     </form>
-    <div style="font-size:13px;background:var(--cream);padding:12px;border-radius:var(--radius);margin-top:16px;border:1px solid var(--line)">
-      <b>บัญชีทดลอง:</b><br>
-      • แอดมิน: admin@shop.com / admin1234<br>
-      • ลูกค้า: demo@shop.com / demo1234
-    </div>
-    <p style="text-align:center;margin:18px 0 0">ยังไม่มีบัญชี? <a class="link" href="#/register">สมัครสมาชิก</a></p></div>`;
+    <div class="auth-foot">ยังไม่มีบัญชี? <a class="link" href="#/register">สมัครสมาชิก</a></div>
+  </div>`;
 };
 
 pages.register = async () => {
-  app.innerHTML = `<div class="auth"><h2>สมัครสมาชิก</h2>
+  app.innerHTML = `<div class="auth">
+    <div class="auth-head">
+      <span class="auth-eyebrow">NOIR &amp; CREAM</span>
+      <h2>สมัครสมาชิก</h2>
+      <p class="muted">สร้างบัญชีสมาชิกเพื่อสั่งซื้อและติดตามสถานะพัสดุ</p>
+    </div>
     <div class="err" id="err"></div>
     <form onsubmit="return A.register(event)">
       <div class="row2">
         <div class="field"><label for="fn">ชื่อ</label><input id="fn" name="first_name" autocomplete="given-name" required maxlength="60"></div>
         <div class="field"><label for="ln">นามสกุล</label><input id="ln" name="last_name" autocomplete="family-name" required maxlength="60"></div>
       </div>
-      <div class="field"><label for="em">อีเมล</label><input id="em" name="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="em">อีเมล</label><input id="em" name="email" type="email" autocomplete="email" required placeholder="name@example.com"></div>
       <div class="field"><label for="ph">เบอร์โทรศัพท์</label><input id="ph" name="phone" type="tel" autocomplete="tel" placeholder="08x-xxx-xxxx"></div>
       <div class="row2">
         <div class="field"><label for="p1">รหัสผ่าน (อย่างน้อย 8 ตัว)</label><input id="p1" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
         <div class="field"><label for="p2">ยืนยันรหัสผ่าน</label><input id="p2" name="confirm" type="password" minlength="8" autocomplete="new-password" required></div>
       </div>
-      <button class="btn block" style="margin-top:16px">สร้างบัญชี</button>
+      <button class="btn block" style="margin-top:20px">สร้างบัญชี</button>
     </form>
-    <p style="text-align:center;margin:18px 0 0">มีบัญชีแล้ว? <a class="link" href="#/login">เข้าสู่ระบบ</a></p></div>`;
+    <div class="auth-foot">มีบัญชีแล้ว? <a class="link" href="#/login">เข้าสู่ระบบ</a></div>
+  </div>`;
 };
 
 pages.cart = async () => {
