@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T15:58:23.053Z",
-  "checksum": "b68905ec0ef10b5d",
+  "timestamp": "2026-11-17T16:01:36.948Z",
+  "checksum": "0f1c7dffe7ca5958",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 21,
     "address": 21,
-    "product": 7,
-    "product_variant": 30,
+    "product": 8,
+    "product_variant": 34,
     "cart_item": 0,
     "order": 0,
     "order_item": 0,
@@ -761,6 +761,21 @@
         "image_url": "https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FCDS3203%2FMARDIMERCREDI-TSHIRTNEZTOUTROSE02IVORYPINKF-CDS32033793-1.webp&w=1080&q=75",
         "is_featured": 1,
         "created_at": "2026-11-17 15:58:23"
+      },
+      {
+        "product_id": 35,
+        "name": "Polo Bear Fleece Sweatshirt",
+        "category": "เสื้อแขนยาว",
+        "description": "brand:Polo Ralph Lauren",
+        "status": "active",
+        "stock": 160,
+        "quantity": 160,
+        "price": 2400,
+        "supplier_id": 1,
+        "employee_id": 1,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg",
+        "is_featured": 0,
+        "created_at": "2026-11-17 16:01:36"
       }
     ],
     "product_variant": [
@@ -1093,6 +1108,50 @@
         "stock": 10,
         "stock_quantity": 10,
         "sku": "SKU-34-XL-ไอวอรี่ชมพู)"
+      },
+      {
+        "variant_id": 211,
+        "product_id": 35,
+        "size": "S",
+        "color": "สีครีมอ่อน / สีเบจอ่อนอมเทา",
+        "color_hex": "#62749a",
+        "price": 2400,
+        "stock": 40,
+        "stock_quantity": 40,
+        "sku": "SKU-35-S-สีครีมอ่อน/สีเบจอ่อนอมเทา"
+      },
+      {
+        "variant_id": 212,
+        "product_id": 35,
+        "size": "M",
+        "color": "สีครีมอ่อน / สีเบจอ่อนอมเทา",
+        "color_hex": "#62749a",
+        "price": 2400,
+        "stock": 40,
+        "stock_quantity": 40,
+        "sku": "SKU-35-M-สีครีมอ่อน/สีเบจอ่อนอมเทา"
+      },
+      {
+        "variant_id": 213,
+        "product_id": 35,
+        "size": "L",
+        "color": "สีครีมอ่อน / สีเบจอ่อนอมเทา",
+        "color_hex": "#62749a",
+        "price": 2400,
+        "stock": 40,
+        "stock_quantity": 40,
+        "sku": "SKU-35-L-สีครีมอ่อน/สีเบจอ่อนอมเทา"
+      },
+      {
+        "variant_id": 214,
+        "product_id": 35,
+        "size": "XL",
+        "color": "สีครีมอ่อน / สีเบจอ่อนอมเทา",
+        "color_hex": "#62749a",
+        "price": 2400,
+        "stock": 40,
+        "stock_quantity": 40,
+        "sku": "SKU-35-XL-สีครีมอ่อน/สีเบจอ่อนอมเทา"
       }
     ],
     "cart_item": [],
