@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:19:03.501Z",
-  "checksum": "96e454f15b906b32",
+  "timestamp": "2026-11-17T16:21:43.698Z",
+  "checksum": "62bedff84b728b47",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 13,
-    "product_variant": 54,
+    "product": 14,
+    "product_variant": 58,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -876,6 +876,21 @@
         "image_url": "https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75",
         "is_featured": 0,
         "created_at": "2026-11-17 16:18:46"
+      },
+      {
+        "product_id": 41,
+        "name": "Signature Classic Half Zip Sweatshirt",
+        "category": "เสื้อแขนยาว",
+        "description": "brand:Fear of God ESSENTIALS",
+        "status": "active",
+        "stock": 120,
+        "quantity": 120,
+        "price": 5888,
+        "supplier_id": 1,
+        "employee_id": 2,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/z/FALF-MK136_V1.jpg",
+        "is_featured": 0,
+        "created_at": "2026-11-17 16:21:43"
       }
     ],
     "product_variant": [
@@ -1472,6 +1487,50 @@
         "stock": 25,
         "stock_quantity": 25,
         "sku": "SKU-40-L-ชมพูพาสเทล"
+      },
+      {
+        "variant_id": 235,
+        "product_id": 41,
+        "size": "S",
+        "color": "สีเทาชาร์โคล / สีเทาเข้มอมเขีย",
+        "color_hex": "#4a4a47",
+        "price": 5888,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-41-S-สีเทาชาร์โคล/สีเทาเข้มอมเขีย"
+      },
+      {
+        "variant_id": 236,
+        "product_id": 41,
+        "size": "M",
+        "color": "สีเทาชาร์โคล / สีเทาเข้มอมเขีย",
+        "color_hex": "#4a4a47",
+        "price": 5888,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-41-M-สีเทาชาร์โคล/สีเทาเข้มอมเขีย"
+      },
+      {
+        "variant_id": 237,
+        "product_id": 41,
+        "size": "L",
+        "color": "สีเทาชาร์โคล / สีเทาเข้มอมเขีย",
+        "color_hex": "#4a4a47",
+        "price": 5888,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-41-L-สีเทาชาร์โคล/สีเทาเข้มอมเขีย"
+      },
+      {
+        "variant_id": 238,
+        "product_id": 41,
+        "size": "XL",
+        "color": "สีเทาชาร์โคล / สีเทาเข้มอมเขีย",
+        "color_hex": "#4a4a47",
+        "price": 5888,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-41-XL-สีเทาชาร์โคล/สีเทาเข้มอมเขีย"
       }
     ],
     "cart_item": [],
