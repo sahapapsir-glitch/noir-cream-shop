@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:37:48.096Z",
-  "checksum": "93f3600112a088a2",
+  "timestamp": "2026-11-17T16:38:34.979Z",
+  "checksum": "a07ae32583abd437",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -934,7 +934,7 @@
         "supplier_id": 3,
         "employee_id": 2,
         "image_url": "https://cdn-images.farfetch-contents.com/37/52/60/23/37526023_70405666_1000.jpg",
-        "is_featured": 1,
+        "is_featured": 0,
         "created_at": "2026-11-17 16:37:26"
       }
     ],
