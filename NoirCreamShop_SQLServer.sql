@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: d1e19d69e521dd5a | Updated: 2026-11-17T16:14:37.657Z
+-- Checksum: 4e57f3231e391323 | Updated: 2026-11-17T16:14:56.668Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -448,6 +448,11 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', 19999, 20, 20, N'SKU-38-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (227, 38, N'XL', N'ดำ', N'#000000', 21000, 20, 20, N'SKU-38-XL-ดำ');
 SET IDENTITY_INSERT dbo.product_variant OFF;
+
+-- ตาราง dbo.cart_item (1 รายการ)
+SET IDENTITY_INSERT dbo.cart_item ON;
+INSERT INTO dbo.cart_item (cart_id, customer_id, variant_id, product_id, quantity, total_price) VALUES (9, 22, 183, 28, 2, 1580);
+SET IDENTITY_INSERT dbo.cart_item OFF;
 
 COMMIT TRANSACTION;
 SET NOCOUNT OFF;

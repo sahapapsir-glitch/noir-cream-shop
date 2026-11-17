@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:14:37.657Z",
-  "checksum": "d1e19d69e521dd5a",
+  "timestamp": "2026-11-17T16:14:56.668Z",
+  "checksum": "4e57f3231e391323",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,7 +12,7 @@
     "address": 21,
     "product": 11,
     "product_variant": 47,
-    "cart_item": 0,
+    "cart_item": 1,
     "order": 0,
     "order_item": 0,
     "payment": 0,
@@ -1353,7 +1353,16 @@
         "sku": "SKU-38-XL-ดำ"
       }
     ],
-    "cart_item": [],
+    "cart_item": [
+      {
+        "cart_id": 9,
+        "customer_id": 22,
+        "variant_id": 183,
+        "product_id": 28,
+        "quantity": 2,
+        "total_price": 1580
+      }
+    ],
     "order": [],
     "order_item": [],
     "payment": [],
