@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: e74126ae993d6765 | Updated: 2026-11-17T17:02:42.276Z
+-- Checksum: d795a88f0af16ece | Updated: 2026-11-17T17:03:37.065Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -383,7 +383,7 @@ INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, vi
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (64, 22, N'Jiraporn konsoi', N'0819551245', N'11', N'หมู่บ้านสัมกร', N'กรุงเทพกรีฑรา', N'ทับช้าง', N'สะพานสูง', N'กรุงเทพมหานคร', N'10250', 1);
 SET IDENTITY_INSERT dbo.address OFF;
 
--- ตาราง dbo.product (25 รายการ)
+-- ตาราง dbo.product (24 รายการ)
 SET IDENTITY_INSERT dbo.product ON;
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (24, N'Classic Fit Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 150, 150, 2900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 1, '2026-11-17 14:46:27');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (28, N'Ronron Pattern Logo Basic Fit T Shirt White Navy (Women''s)', N'เสื้อยืด', N'เนื้อผ้าคอตตอน', N'active', 58, 58, 790, 2, 1, N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 1, '2026-11-17 15:48:59');
@@ -394,7 +394,6 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (34, N'Tshirt Nez Tout Rose 02 Ivory Pink F', N'เสื้อยืด', N'ประเทศเจ้าของแบรนด์ เกาหลีใต้
 เพศ  ผู้หญิง ขนาด  ฟรีไซส์', N'active', 40, 40, 1790, 3, 2, N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FCDS3203%2FMARDIMERCREDI-TSHIRTNEZTOUTROSE02IVORYPINKF-CDS32033793-1.webp&w=1080&q=75', 1, '2026-11-17 15:58:23');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (35, N'Polo Bear Fleece Sweatshirt', N'เสื้อแขนยาว', N'brand:Polo Ralph Lauren', N'active', 160, 160, 2400, 1, 1, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg', 0, '2026-11-17 16:01:36');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (36, N'Kids Kkotch T-Shirt in Black', N'เสื้อยืด', N'ลาย Anti Social Social Club ผสานกับภาพผีเสื้อและดอกไม้ ผ้าฝ้าย 100%', N'active', 100, 100, 593, 1, 2, N'https://www.childsplayclothing.com/cdn/shop/files/ASSA6002_BLACK_1.jpg?v=1779286536&width=2138', 0, '2026-11-17 16:06:39');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (37, N'Collegiate Sweatshirt', N'เสื้อแขนยาว', N'Malbon', N'active', 175, 175, 5600, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 0, '2026-11-17 16:09:34');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (38, N'Script Logo Skate Hoodie', N'เสื้อแขนยาว', N'brand:OFF-WHITE', N'active', 80, 80, 19999, NULL, 1, N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 0, '2026-11-17 16:12:23');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (39, N'Stripe Rugby Polo', N'เสื้อแขนยาว', N'Polo Ralph Lauren', N'active', 100, 100, 4800, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg', 0, '2026-11-17 16:18:00');
@@ -414,7 +413,7 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (53, N'Prima Motion T7', N'เสื้อยืด', N'ผ้าไนลอน 100%', N'active', 120, 120, 2100, 2, 1, N'https://www.jdsports.co.th/cdn/shop/files/jd_641663-48_a.jpg?v=1793785118&width=1007', 0, '2026-11-17 17:02:42');
 SET IDENTITY_INSERT dbo.product OFF;
 
--- ตาราง dbo.product_variant (103 รายการ)
+-- ตาราง dbo.product_variant (99 รายการ)
 SET IDENTITY_INSERT dbo.product_variant ON;
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (165, 24, N'S', N'ดำ', N'#000000', 2900, 30, 30, N'SKU-24-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (166, 24, N'M', N'ดำ', N'#000000', 2900, 30, 30, N'SKU-24-M-ดำ');
@@ -450,10 +449,6 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (212, 35, N'M', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#62749a', 2400, 40, 40, N'SKU-35-M-สีครีมอ่อน/สีเบจอ่อนอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (213, 35, N'L', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#62749a', 2400, 40, 40, N'SKU-35-L-สีครีมอ่อน/สีเบจอ่อนอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (214, 35, N'XL', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#62749a', 2400, 40, 40, N'SKU-35-XL-สีครีมอ่อน/สีเบจอ่อนอมเทา');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (215, 36, N'S', N'ดำ', N'#000000', 593, 25, 25, N'SKU-36-S-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (216, 36, N'M', N'ดำ', N'#000000', 593, 25, 25, N'SKU-36-M-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (217, 36, N'L', N'ดำ', N'#000000', 593, 25, 25, N'SKU-36-L-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (218, 36, N'XL', N'ดำ', N'#000000', 593, 25, 25, N'SKU-36-XL-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (219, 37, N'S', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-S-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (220, 37, N'M', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-M-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (221, 37, N'L', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', 5600, 35, 35, N'SKU-37-L-สีขาวงาช้าง/สีครีมอ่อน');
