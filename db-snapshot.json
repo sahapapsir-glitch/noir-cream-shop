@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:38:34.979Z",
-  "checksum": "a07ae32583abd437",
+  "timestamp": "2026-11-17T16:40:08.963Z",
+  "checksum": "3a64c375b34bca60",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 17,
-    "product_variant": 68,
+    "product": 18,
+    "product_variant": 73,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -936,6 +936,21 @@
         "image_url": "https://cdn-images.farfetch-contents.com/37/52/60/23/37526023_70405666_1000.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 16:37:26"
+      },
+      {
+        "product_id": 46,
+        "name": "Short Sleeve Basic Mesh Litchfield Bear Polo",
+        "category": "เสื้อโปโล",
+        "description": "Polo Ralph Lauren",
+        "status": "active",
+        "stock": 125,
+        "quantity": 125,
+        "price": 4890,
+        "supplier_id": 1,
+        "employee_id": 2,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/z/PLAU-MS521_V1.jpg",
+        "is_featured": 0,
+        "created_at": "2026-11-17 16:40:08"
       }
     ],
     "product_variant": [
@@ -1686,6 +1701,61 @@
         "stock": 5,
         "stock_quantity": 5,
         "sku": "SKU-44-L-แดง"
+      },
+      {
+        "variant_id": 252,
+        "product_id": 46,
+        "size": "S",
+        "color": "สีน้ำตาล / สีน้ำตาลอิฐ",
+        "color_hex": "#8a6246",
+        "price": 4890,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-46-S-สีน้ำตาล/สีน้ำตาลอิฐ"
+      },
+      {
+        "variant_id": 253,
+        "product_id": 46,
+        "size": "M",
+        "color": "สีน้ำตาล / สีน้ำตาลอิฐ",
+        "color_hex": "#8a6246",
+        "price": 4890,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-46-M-สีน้ำตาล/สีน้ำตาลอิฐ"
+      },
+      {
+        "variant_id": 254,
+        "product_id": 46,
+        "size": "L",
+        "color": "สีน้ำตาล / สีน้ำตาลอิฐ",
+        "color_hex": "#8a6246",
+        "price": 4890,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-46-L-สีน้ำตาล/สีน้ำตาลอิฐ"
+      },
+      {
+        "variant_id": 255,
+        "product_id": 46,
+        "size": "XL",
+        "color": "สีน้ำตาล / สีน้ำตาลอิฐ",
+        "color_hex": "#8a6246",
+        "price": 4890,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-46-XL-สีน้ำตาล/สีน้ำตาลอิฐ"
+      },
+      {
+        "variant_id": 256,
+        "product_id": 46,
+        "size": "2XL",
+        "color": "สีน้ำตาล / สีน้ำตาลอิฐ",
+        "color_hex": "#8a6246",
+        "price": 4890,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-46-2XL-สีน้ำตาล/สีน้ำตาลอิฐ"
       }
     ],
     "cart_item": [],
