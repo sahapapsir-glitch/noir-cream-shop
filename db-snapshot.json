@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:45:09.663Z",
-  "checksum": "766d22b1151aa24f",
+  "timestamp": "2026-11-17T16:47:27.967Z",
+  "checksum": "ba0eed73d6c5993b",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 19,
-    "product_variant": 77,
+    "product": 20,
+    "product_variant": 81,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -966,6 +966,21 @@
         "image_url": "https://images.mcmworldwide.com/i/mcmworldwide/MHTGAMM01WT00L_01/-mars-dog-disco-white-l?$w1000$&fmt=auto&qlt=default",
         "is_featured": 0,
         "created_at": "2026-11-17 16:45:09"
+      },
+      {
+        "product_id": 48,
+        "name": "Classic Fit Long Sleeve Polo",
+        "category": "เสื้อโปโล",
+        "description": "",
+        "status": "active",
+        "stock": 120,
+        "quantity": 120,
+        "price": 4200,
+        "supplier_id": 1,
+        "employee_id": 2,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/uv/LACO-MS190_V1.jpg",
+        "is_featured": 0,
+        "created_at": "2026-11-17 16:47:27"
       }
     ],
     "product_variant": [
@@ -1815,6 +1830,50 @@
         "stock": 15,
         "stock_quantity": 15,
         "sku": "SKU-47-XL-ขาว"
+      },
+      {
+        "variant_id": 261,
+        "product_id": 48,
+        "size": "S",
+        "color": "ครีม",
+        "color_hex": "#222236",
+        "price": 4200,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-48-S-ครีม"
+      },
+      {
+        "variant_id": 262,
+        "product_id": 48,
+        "size": "M",
+        "color": "ครีม",
+        "color_hex": "#222236",
+        "price": 4200,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-48-M-ครีม"
+      },
+      {
+        "variant_id": 263,
+        "product_id": 48,
+        "size": "L",
+        "color": "ครีม",
+        "color_hex": "#222236",
+        "price": 4200,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-48-L-ครีม"
+      },
+      {
+        "variant_id": 264,
+        "product_id": 48,
+        "size": "XL",
+        "color": "ครีม",
+        "color_hex": "#222236",
+        "price": 4200,
+        "stock": 30,
+        "stock_quantity": 30,
+        "sku": "SKU-48-XL-ครีม"
       }
     ],
     "cart_item": [],
