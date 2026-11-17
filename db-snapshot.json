@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:26:11.600Z",
-  "checksum": "dfa43c9b1f06165a",
+  "timestamp": "2026-11-17T16:27:24.029Z",
+  "checksum": "e65d435b26ea50e8",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 14,
-    "product_variant": 58,
+    "product": 15,
+    "product_variant": 61,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -891,6 +891,21 @@
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/FALF-MK136_V1.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 16:21:43"
+      },
+      {
+        "product_id": 42,
+        "name": "maison mihara yasuhiro",
+        "category": "เสื้อยืด",
+        "description": "วัสดุ ผ้าฝ้าย 100% เสื้อยืดตัวนี้มีรายละเอียดเป็นลายพิมพ์กราฟิกแบบวาดเล่นของลีออน ซึ่งมีลักษณะเหมือนภาพวาดด้วยมือ",
+        "status": "active",
+        "stock": 15,
+        "quantity": 15,
+        "price": 11900,
+        "supplier_id": 2,
+        "employee_id": 1,
+        "image_url": "https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg",
+        "is_featured": 1,
+        "created_at": "2026-11-17 16:27:24"
       }
     ],
     "product_variant": [
@@ -1531,6 +1546,39 @@
         "stock": 30,
         "stock_quantity": 30,
         "sku": "SKU-41-XL-สีเทาชาร์โคล/สีเทาเข้มอมเขีย"
+      },
+      {
+        "variant_id": 239,
+        "product_id": 42,
+        "size": "M",
+        "color": "เทา",
+        "color_hex": "#b3b3b3",
+        "price": 11900,
+        "stock": 5,
+        "stock_quantity": 5,
+        "sku": "SKU-42-M-เทา"
+      },
+      {
+        "variant_id": 240,
+        "product_id": 42,
+        "size": "L",
+        "color": "เทา",
+        "color_hex": "#b3b3b3",
+        "price": 11900,
+        "stock": 5,
+        "stock_quantity": 5,
+        "sku": "SKU-42-L-เทา"
+      },
+      {
+        "variant_id": 241,
+        "product_id": 42,
+        "size": "XL",
+        "color": "เทา",
+        "color_hex": "#b3b3b3",
+        "price": 11900,
+        "stock": 5,
+        "stock_quantity": 5,
+        "sku": "SKU-42-XL-เทา"
       }
     ],
     "cart_item": [],
