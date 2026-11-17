@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:18:25.386Z",
-  "checksum": "989fe471140d9422",
+  "timestamp": "2026-11-17T16:18:46.193Z",
+  "checksum": "4e796cb2bc151a96",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 22,
     "address": 22,
-    "product": 12,
-    "product_variant": 51,
+    "product": 13,
+    "product_variant": 54,
     "cart_item": 0,
     "order": 1,
     "order_item": 1,
@@ -861,6 +861,21 @@
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 16:18:00"
+      },
+      {
+        "product_id": 40,
+        "name": "Lee ON THE GO Women’s T-Shirt Pink",
+        "category": "เสื้อยืด",
+        "description": "เสื้อยืดแขนสั้นผู้หญิง คอลเลคชั่น On The Go Boyfriend Fit สีชมพู ผลิตจาก คอตตอน 100% ระบายอากาศได้ดี สวมใส่สบาย ไม่ร้อน ให้สัมผัสที่นุ่มและสบาย เหมาะกับการสวมใส่ในชีวิตประจำวัน เนื้อผ้าให้ความรู้สึกเป็นธรรมชาติและระบายอากาศได้ดี",
+        "status": "active",
+        "stock": 75,
+        "quantity": 75,
+        "price": 690,
+        "supplier_id": 2,
+        "employee_id": 1,
+        "image_url": "https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75",
+        "is_featured": 0,
+        "created_at": "2026-11-17 16:18:46"
       }
     ],
     "product_variant": [
@@ -1424,6 +1439,39 @@
         "stock": 25,
         "stock_quantity": 25,
         "sku": "SKU-39-XL-สีกรมท่า/สีขาว"
+      },
+      {
+        "variant_id": 232,
+        "product_id": 40,
+        "size": "S",
+        "color": "ชมพูพาสเทล",
+        "color_hex": "#f4c5cd",
+        "price": 690,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-40-S-ชมพูพาสเทล"
+      },
+      {
+        "variant_id": 233,
+        "product_id": 40,
+        "size": "M",
+        "color": "ชมพูพาสเทล",
+        "color_hex": "#f4c5cd",
+        "price": 690,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-40-M-ชมพูพาสเทล"
+      },
+      {
+        "variant_id": 234,
+        "product_id": 40,
+        "size": "L",
+        "color": "ชมพูพาสเทล",
+        "color_hex": "#f4c5cd",
+        "price": 690,
+        "stock": 25,
+        "stock_quantity": 25,
+        "sku": "SKU-40-L-ชมพูพาสเทล"
       }
     ],
     "cart_item": [],
