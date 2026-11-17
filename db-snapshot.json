@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T15:56:30.717Z",
-  "checksum": "291bf8a29e6ea92a",
+  "timestamp": "2026-11-17T15:58:23.053Z",
+  "checksum": "b68905ec0ef10b5d",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -10,8 +10,8 @@
     "supplier": 3,
     "customer": 21,
     "address": 21,
-    "product": 6,
-    "product_variant": 26,
+    "product": 7,
+    "product_variant": 30,
     "cart_item": 0,
     "order": 0,
     "order_item": 0,
@@ -746,6 +746,21 @@
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/FALF-MK59_V1.jpg",
         "is_featured": 0,
         "created_at": "2026-11-17 15:56:30"
+      },
+      {
+        "product_id": 34,
+        "name": "Tshirt Nez Tout Rose 02 Ivory Pink F",
+        "category": "เสื้อยืด",
+        "description": "ประเทศเจ้าของแบรนด์ เกาหลีใต้\nเพศ  ผู้หญิง ขนาด  ฟรีไซส์",
+        "status": "active",
+        "stock": 40,
+        "quantity": 40,
+        "price": 1790,
+        "supplier_id": 3,
+        "employee_id": 2,
+        "image_url": "https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FCDS3203%2FMARDIMERCREDI-TSHIRTNEZTOUTROSE02IVORYPINKF-CDS32033793-1.webp&w=1080&q=75",
+        "is_featured": 1,
+        "created_at": "2026-11-17 15:58:23"
       }
     ],
     "product_variant": [
@@ -1034,6 +1049,50 @@
         "stock": 25,
         "stock_quantity": 25,
         "sku": "SKU-33-XL-สีครีมอ่อน/สีเบจอ่อนอมเทา"
+      },
+      {
+        "variant_id": 207,
+        "product_id": 34,
+        "size": "S",
+        "color": "ไอวอรี่ชมพู)",
+        "color_hex": "#f5e8e4",
+        "price": 1790,
+        "stock": 10,
+        "stock_quantity": 10,
+        "sku": "SKU-34-S-ไอวอรี่ชมพู)"
+      },
+      {
+        "variant_id": 208,
+        "product_id": 34,
+        "size": "M",
+        "color": "ไอวอรี่ชมพู)",
+        "color_hex": "#f5e8e4",
+        "price": 1790,
+        "stock": 10,
+        "stock_quantity": 10,
+        "sku": "SKU-34-M-ไอวอรี่ชมพู)"
+      },
+      {
+        "variant_id": 209,
+        "product_id": 34,
+        "size": "L",
+        "color": "ไอวอรี่ชมพู)",
+        "color_hex": "#f5e8e4",
+        "price": 1790,
+        "stock": 10,
+        "stock_quantity": 10,
+        "sku": "SKU-34-L-ไอวอรี่ชมพู)"
+      },
+      {
+        "variant_id": 210,
+        "product_id": 34,
+        "size": "XL",
+        "color": "ไอวอรี่ชมพู)",
+        "color_hex": "#f5e8e4",
+        "price": 1790,
+        "stock": 10,
+        "stock_quantity": 10,
+        "sku": "SKU-34-XL-ไอวอรี่ชมพู)"
       }
     ],
     "cart_item": [],
