@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:23:22.300Z",
-  "checksum": "1f95540c8c894b56",
+  "timestamp": "2026-11-17T16:23:49.443Z",
+  "checksum": "02e5d8f7ae945fd7",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -844,7 +844,7 @@
         "supplier_id": null,
         "employee_id": 1,
         "image_url": "https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg",
-        "is_featured": 1,
+        "is_featured": 0,
         "created_at": "2026-11-17 16:12:23"
       },
       {
