@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: be0a5db364938b2d | Updated: 2026-11-17T16:29:11.535Z
+-- Checksum: 067e5d23669f087c | Updated: 2026-11-17T16:33:20.508Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -383,7 +383,7 @@ INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, vi
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (64, 22, N'Jiraporn konsoi', N'0819551245', N'11', N'หมู่บ้านสัมกร', N'กรุงเทพกรีฑรา', N'ทับช้าง', N'สะพานสูง', N'กรุงเทพมหานคร', N'10250', 1);
 SET IDENTITY_INSERT dbo.address OFF;
 
--- ตาราง dbo.product (15 รายการ)
+-- ตาราง dbo.product (16 รายการ)
 SET IDENTITY_INSERT dbo.product ON;
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (24, N'Classic Fit Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 150, 150, 2900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 1, '2026-11-17 14:46:27');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (28, N'Ronron Pattern Logo Basic Fit T Shirt White Navy (Women''s)', N'เสื้อยืด', N'เนื้อผ้าคอตตอน', N'active', 58, 58, 790, 2, 1, N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 1, '2026-11-17 15:48:59');
@@ -401,9 +401,10 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (40, N'Lee ON THE GO Women’s T-Shirt Pink', N'เสื้อยืด', N'เสื้อยืดแขนสั้นผู้หญิง คอลเลคชั่น On The Go Boyfriend Fit สีชมพู ผลิตจาก คอตตอน 100% ระบายอากาศได้ดี สวมใส่สบาย ไม่ร้อน ให้สัมผัสที่นุ่มและสบาย เหมาะกับการสวมใส่ในชีวิตประจำวัน เนื้อผ้าให้ความรู้สึกเป็นธรรมชาติและระบายอากาศได้ดี', N'active', 75, 75, 690, 2, 1, N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75', 1, '2026-11-17 16:18:46');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (41, N'Signature Classic Half Zip Sweatshirt', N'เสื้อแขนยาว', N'brand:Fear of God ESSENTIALS', N'active', 120, 120, 5888, 1, 2, N'https://is8.revolveassets.com/images/p4/n/z/FALF-MK136_V1.jpg', 0, '2026-11-17 16:21:43');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (42, N'maison mihara yasuhiro', N'เสื้อยืด', N'วัสดุ ผ้าฝ้าย 100% เสื้อยืดตัวนี้มีรายละเอียดเป็นลายพิมพ์กราฟิกแบบวาดเล่นของลีออน ซึ่งมีลักษณะเหมือนภาพวาดด้วยมือ', N'active', 15, 15, 11900, 2, 1, N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 0, '2026-11-17 16:27:24');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (43, N'Short Sleeve Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 180, 180, 3900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS263_V1.jpg', 1, '2026-11-17 16:33:20');
 SET IDENTITY_INSERT dbo.product OFF;
 
--- ตาราง dbo.product_variant (61 รายการ)
+-- ตาราง dbo.product_variant (65 รายการ)
 SET IDENTITY_INSERT dbo.product_variant ON;
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (165, 24, N'S', N'ดำ', N'#000000', 2900, 30, 30, N'SKU-24-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (166, 24, N'M', N'ดำ', N'#000000', 2900, 30, 30, N'SKU-24-M-ดำ');
@@ -466,6 +467,10 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (239, 42, N'M', N'เทา', N'#b3b3b3', 11900, 5, 5, N'SKU-42-M-เทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (240, 42, N'L', N'เทา', N'#b3b3b3', 11900, 5, 5, N'SKU-42-L-เทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (241, 42, N'XL', N'เทา', N'#b3b3b3', 11900, 5, 5, N'SKU-42-XL-เทา');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (242, 43, N'S', N'สีกรม', N'#262335', 3900, 45, 45, N'SKU-43-S-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (243, 43, N'M', N'สีกรม', N'#262335', 3900, 45, 45, N'SKU-43-M-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (244, 43, N'L', N'สีกรม', N'#262335', 3900, 45, 45, N'SKU-43-L-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (245, 43, N'XL', N'สีกรม', N'#262335', 3900, 45, 45, N'SKU-43-XL-สีกรม');
 SET IDENTITY_INSERT dbo.product_variant OFF;
 
 -- ตาราง dbo.[order] (1 รายการ)
