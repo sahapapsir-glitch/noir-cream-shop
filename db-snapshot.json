@@ -1,14 +1,14 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-17T16:13:23.376Z",
-  "checksum": "233fb6fc03caff6d",
+  "timestamp": "2026-11-17T16:14:37.657Z",
+  "checksum": "d1e19d69e521dd5a",
   "counts": {
     "admin": 5,
     "employee": 2,
     "coupon": 2,
     "supplier": 3,
-    "customer": 21,
+    "customer": 22,
     "address": 21,
     "product": 11,
     "product_variant": 47,
@@ -358,6 +358,17 @@
         "admin_id": 5,
         "password_hash": "$2b$10$sj3AYZjrckAowLUgHJQ70uAuGAzqlIfhpT9CoxsZnnxFMMIPqpqQq",
         "created_at": "2026-11-17 13:38:37"
+      },
+      {
+        "customer_id": 22,
+        "first_name": "จิราภรณ์",
+        "last_name": "ธาราสืบ",
+        "phone": "0819551264",
+        "email": "jiraporn4956@gmail.com",
+        "address": null,
+        "admin_id": 1,
+        "password_hash": "$2b$10$Oy5mmGdeSFfWeX3Z3Cz6w.BnKheY.OowM4DhDUGEX74A/Y8/gSHHu",
+        "created_at": "2026-11-17 16:14:37"
       }
     ],
     "address": [
