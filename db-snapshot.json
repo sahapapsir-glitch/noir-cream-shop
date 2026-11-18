@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T07:10:45.492Z",
-  "checksum": "6b9e6953e6931fe3",
+  "timestamp": "2026-11-18T07:10:53.730Z",
+  "checksum": "088f4affb284189f",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2804,7 +2804,7 @@
         "customer_id": 23,
         "product_id": 24,
         "order_date": "2026-11-18 07:10:30",
-        "status": "shipped",
+        "status": "completed",
         "subtotal": 5800,
         "discount": 580,
         "shipping_fee": 0,
@@ -2895,12 +2895,12 @@
       },
       {
         "shipment_id": 7,
-        "tracking_no": "TH261118010380C7D",
+        "tracking_no": "KEX999888777",
         "payment_id": 10,
         "order_id": 10,
         "product_id": 24,
-        "carrier": "Flash Express",
-        "status": "shipped",
+        "carrier": "Kerry Express",
+        "status": "delivered",
         "shipping_address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120",
         "shipped_at": "2026-11-18 07:10:44"
       }
@@ -2966,7 +2966,7 @@
         "customer_id": 23,
         "order_date": "2026-11-18 07:10:30",
         "total_amount": 5220,
-        "order_status": "shipped"
+        "order_status": "completed"
       }
     ],
     "Order_Detail": [
