@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 8def372dad6f668d | Updated: 2026-11-18T07:10:12.367Z
+-- Checksum: c9d7b4c82e9a042a | Updated: 2026-11-18T07:10:21.423Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -438,10 +438,10 @@ INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, addr
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (20, N'นภัสสร', N'กิตติคุณ', N'099-012-3456', N'napatsorn.k@fake.com', N'เลขที่ 310/25 ซอย 18 ซอยย่อยมัณฑนา 4 หมู่บ้านมัณฑนา วงแหวน-บางแค โครงการ 1 ซอยเพชรเกษม 63 แยก 8 ถนนกาญจนาภิเษก บางแค บางแค กรุงเทพมหานคร 10160', 4, N'$2b$10$tG110zb2O9s0BvYul.sNNOR9HBuoDziQMoH12nSspO1DTvrWpEgRG', '2026-11-17 13:38:37');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (21, N'ชานนท์', N'วิมลศิลป์', N'080-123-4567', N'chanon.w@fake.com', N'เลขที่ 42/158 ซอยพัฒนาอุดร 6 เฟสการ์เดน 2 หมู่บ้านสิทธาการ์เด้นท์ โฮม อุดรธานีการ์เดน หมู่ 5 ซอยบ้านหนองขาม 12 ถนนรอบเมืองสายเหนือ หมากแข้ง เมืองอุดรธานี อุดรธานี 41000', 5, N'$2b$10$sj3AYZjrckAowLUgHJQ70uAuGAzqlIfhpT9CoxsZnnxFMMIPqpqQq', '2026-11-17 13:38:37');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (22, N'จิราภรณ์', N'ธาราสืบ', N'0819551264', N'jiraporn4956@gmail.com', N'11 หมู่บ้านสัมกร กรุงเทพกรีฑรา ทับช้าง สะพานสูง กรุงเทพมหานคร 10250', 1, N'$2b$10$Oy5mmGdeSFfWeX3Z3Cz6w.BnKheY.OowM4DhDUGEX74A/Y8/gSHHu', '2026-11-17 16:14:37');
-INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (23, N'ทดสอบ', N'ระบบ', N'0891112233', N'e2e_1794985812222@test.com', NULL, 1, N'$2b$10$spStM7IbOVXVB5FdKBy8ue0FFcaJAGxGVgiovjkTUP07bwTvpd0Le', '2026-11-18 07:10:12');
+INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (23, N'ทดสอบ', N'ระบบ', N'0891112233', N'e2e_1794985812222@test.com', N'เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120', 1, N'$2b$10$spStM7IbOVXVB5FdKBy8ue0FFcaJAGxGVgiovjkTUP07bwTvpd0Le', '2026-11-18 07:10:12');
 SET IDENTITY_INSERT dbo.customer OFF;
 
--- ตาราง dbo.address (22 รายการ)
+-- ตาราง dbo.address (23 รายการ)
 SET IDENTITY_INSERT dbo.address ON;
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (43, 1, N'สมชาย ทดสอบ', N'089-999-9999', N'เลขที่ 99/148 ชั้น 19 ห้อง 1908', N'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7', N'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12', N'บางพลีใหญ่', N'บางพลี', N'สมุทรปราการ', N'10540', 1);
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (44, 2, N'ณัฐพร กิจเจริญ', N'081-234-5678', N'เลขที่ 128/45 ชั้น 14 ห้อง 1402', N'อาคารพาร์ควิว เอ็กเซ็กคิวทีฟ เรสซิเดนซ์', N'ซอยสุขุมวิท 55 (ทองหล่อ 13) ถนนสุขุมวิท', N'คลองตันเหนือ', N'วัฒนา', N'กรุงเทพมหานคร', N'10110', 1);
@@ -465,6 +465,7 @@ INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, vi
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (62, 20, N'นภัสสร กิตติคุณ', N'099-012-3456', N'เลขที่ 310/25 ซอย 18 ซอยย่อยมัณฑนา 4', N'หมู่บ้านมัณฑนา วงแหวน-บางแค โครงการ 1', N'ซอยเพชรเกษม 63 แยก 8 ถนนกาญจนาภิเษก', N'บางแค', N'บางแค', N'กรุงเทพมหานคร', N'10160', 1);
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (63, 21, N'ชานนท์ วิมลศิลป์', N'080-123-4567', N'เลขที่ 42/158 ซอยพัฒนาอุดร 6 เฟสการ์เดน 2', N'หมู่บ้านสิทธาการ์เด้นท์ โฮม อุดรธานีการ์เดน หมู่ 5', N'ซอยบ้านหนองขาม 12 ถนนรอบเมืองสายเหนือ', N'หมากแข้ง', N'เมืองอุดรธานี', N'อุดรธานี', N'41000', 1);
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (64, 22, N'Jiraporn konsoi', N'0819551245', N'11', N'หมู่บ้านสัมกร', N'กรุงเทพกรีฑรา', N'ทับช้าง', N'สะพานสูง', N'กรุงเทพมหานคร', N'10250', 1);
+INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (65, 23, N'ทดสอบ ระบบ', N'0891112233', N'เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว)', N'หมู่บ้านทดสอบแกรนด์วิลล์', N'ถนนแจ้งวัฒนะ', N'บางพูด', N'ปากเกร็ด', N'นนทบุรี', N'11120', 1);
 SET IDENTITY_INSERT dbo.address OFF;
 
 -- ตาราง dbo.product (33 รายการ)
@@ -681,9 +682,10 @@ SET IDENTITY_INSERT dbo.review ON;
 INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (5, 22, 28, N'จิราภรณ์', N'ธาราสืบ', 5, N'👍👍เสื้อสวย', N'2026-11-17', '2026-11-17 16:19:03');
 SET IDENTITY_INSERT dbo.review OFF;
 
--- ตาราง dbo.wishlist (2 รายการ)
+-- ตาราง dbo.wishlist (3 รายการ)
 INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (1, 33);
 INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (1, 34);
+INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (23, 24);
 
 COMMIT TRANSACTION;
 SET NOCOUNT OFF;

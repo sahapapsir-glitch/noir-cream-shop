@@ -1,15 +1,15 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T07:10:12.367Z",
-  "checksum": "8def372dad6f668d",
+  "timestamp": "2026-11-18T07:10:21.423Z",
+  "checksum": "c9d7b4c82e9a042a",
   "counts": {
     "admin": 5,
     "employee": 2,
     "coupon": 2,
     "supplier": 3,
     "customer": 23,
-    "address": 22,
+    "address": 23,
     "product": 33,
     "product_variant": 142,
     "cart_item": 0,
@@ -18,7 +18,7 @@
     "payment": 2,
     "shipment": 2,
     "review": 1,
-    "wishlist": 2,
+    "wishlist": 3,
     "review_like": 0
   },
   "tables": {
@@ -376,7 +376,7 @@
         "last_name": "ระบบ",
         "phone": "0891112233",
         "email": "e2e_1794985812222@test.com",
-        "address": null,
+        "address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120",
         "admin_id": 1,
         "password_hash": "$2b$10$spStM7IbOVXVB5FdKBy8ue0FFcaJAGxGVgiovjkTUP07bwTvpd0Le",
         "created_at": "2026-11-18 07:10:12"
@@ -689,6 +689,20 @@
         "district": "สะพานสูง",
         "province": "กรุงเทพมหานคร",
         "postal_code": "10250",
+        "is_default": 1
+      },
+      {
+        "address_id": 65,
+        "customer_id": 23,
+        "recipient": "ทดสอบ ระบบ",
+        "phone": "0891112233",
+        "house_no": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว)",
+        "village": "หมู่บ้านทดสอบแกรนด์วิลล์",
+        "road": "ถนนแจ้งวัฒนะ",
+        "subdistrict": "บางพูด",
+        "district": "ปากเกร็ด",
+        "province": "นนทบุรี",
+        "postal_code": "11120",
         "is_default": 1
       }
     ],
@@ -2869,6 +2883,10 @@
       {
         "customer_id": 1,
         "product_id": 34
+      },
+      {
+        "customer_id": 23,
+        "product_id": 24
       }
     ],
     "review_like": []
