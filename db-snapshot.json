@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T07:10:37.002Z",
-  "checksum": "7711bd8b00e33225",
+  "timestamp": "2026-11-18T07:10:45.492Z",
+  "checksum": "6b9e6953e6931fe3",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -16,8 +16,8 @@
     "order": 3,
     "order_item": 3,
     "payment": 3,
-    "shipment": 2,
-    "review": 1,
+    "shipment": 3,
+    "review": 2,
     "wishlist": 3,
     "review_like": 0
   },
@@ -2804,7 +2804,7 @@
         "customer_id": 23,
         "product_id": 24,
         "order_date": "2026-11-18 07:10:30",
-        "status": "paid",
+        "status": "shipped",
         "subtotal": 5800,
         "discount": 580,
         "shipping_fee": 0,
@@ -2892,6 +2892,17 @@
         "status": "shipped",
         "shipping_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540",
         "shipped_at": "2026-11-18 06:51:52"
+      },
+      {
+        "shipment_id": 7,
+        "tracking_no": "TH261118010380C7D",
+        "payment_id": 10,
+        "order_id": 10,
+        "product_id": 24,
+        "carrier": "Flash Express",
+        "status": "shipped",
+        "shipping_address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120",
+        "shipped_at": "2026-11-18 07:10:44"
       }
     ],
     "review": [
@@ -2905,6 +2916,17 @@
         "comment": "👍👍เสื้อสวย",
         "review_date": "2026-11-17",
         "created_at": "2026-11-17 16:19:03"
+      },
+      {
+        "review_id": 6,
+        "customer_id": 23,
+        "product_id": 24,
+        "first_name": "ทดสอบ",
+        "last_name": "ระบบ",
+        "rating": 5,
+        "comment": "ผ้าดีมาก ส่งไวสุดๆ",
+        "review_date": "2026-11-18",
+        "created_at": "2026-11-18 07:10:39"
       }
     ],
     "wishlist": [
@@ -2944,7 +2966,7 @@
         "customer_id": 23,
         "order_date": "2026-11-18 07:10:30",
         "total_amount": 5220,
-        "order_status": "paid"
+        "order_status": "shipped"
       }
     ],
     "Order_Detail": [
