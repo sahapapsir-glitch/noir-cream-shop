@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 334f6579e788e327 | Updated: 2026-11-18T06:49:12.576Z
+-- Checksum: 123eccabf525dc41 | Updated: 2026-11-18T06:49:16.178Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -676,7 +676,8 @@ SET IDENTITY_INSERT dbo.review ON;
 INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (5, 22, 28, N'จิราภรณ์', N'ธาราสืบ', 5, N'👍👍เสื้อสวย', N'2026-11-17', '2026-11-17 16:19:03');
 SET IDENTITY_INSERT dbo.review OFF;
 
--- ตาราง dbo.wishlist (1 รายการ)
+-- ตาราง dbo.wishlist (2 รายการ)
+INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (1, 33);
 INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (1, 34);
 
 COMMIT TRANSACTION;
