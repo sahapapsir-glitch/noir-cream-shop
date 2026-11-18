@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 57b960d1d75e2e1b | Updated: 2026-11-18T06:03:19.063Z
+-- Checksum: 57b960d1d75e2e1b | Updated: 2026-11-18T06:03:29.636Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
