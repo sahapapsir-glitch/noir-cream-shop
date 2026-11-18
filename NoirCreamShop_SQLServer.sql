@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 57b960d1d75e2e1b | Updated: 2026-11-18T06:03:29.636Z
+-- Checksum: 57b960d1d75e2e1b | Updated: 2026-11-18T06:41:26.005Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -24,12 +24,12 @@ IF OBJECT_ID('dbo.employee', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.employee (
         employee_id INT IDENTITY(1,1) PRIMARY KEY,
-        first_name  NVARCHAR(60) NOT NULL,
-        last_name   NVARCHAR(60) NOT NULL,
-        email       NVARCHAR(120),
-        phone       NVARCHAR(20),
-        position    NVARCHAR(80),
-        address     NVARCHAR(300)
+        first_name  NVARCHAR(100) NOT NULL,
+        last_name   NVARCHAR(100) NOT NULL,
+        email       NVARCHAR(150),
+        phone       NVARCHAR(40),
+        position    NVARCHAR(120),
+        address     NVARCHAR(600)
     );
 END
 GO
@@ -38,9 +38,9 @@ IF OBJECT_ID('dbo.admin', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.admin (
         admin_id      INT IDENTITY(1,1) PRIMARY KEY,
-        name          NVARCHAR(100) NOT NULL,
-        email         NVARCHAR(120) NOT NULL UNIQUE,
-        phone         NVARCHAR(20),
+        name          NVARCHAR(150) NOT NULL,
+        email         NVARCHAR(150) NOT NULL UNIQUE,
+        phone         NVARCHAR(40),
         password_hash NVARCHAR(255) NOT NULL
     );
 END
@@ -50,11 +50,11 @@ IF OBJECT_ID('dbo.supplier', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.supplier (
         supplier_id  INT IDENTITY(1,1) PRIMARY KEY,
-        name         NVARCHAR(120) NOT NULL,
-        contact_name NVARCHAR(80),
-        phone        NVARCHAR(20),
-        email        NVARCHAR(120),
-        address      NVARCHAR(300),
+        name         NVARCHAR(150) NOT NULL,
+        contact_name NVARCHAR(120),
+        phone        NVARCHAR(40),
+        email        NVARCHAR(150),
+        address      NVARCHAR(600),
         employee_id  INT NULL FOREIGN KEY REFERENCES dbo.employee(employee_id),
         admin_id     INT NULL FOREIGN KEY REFERENCES dbo.admin(admin_id)
     );
@@ -65,16 +65,16 @@ IF OBJECT_ID('dbo.product', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.product (
         product_id  INT IDENTITY(1,1) PRIMARY KEY,
-        name        NVARCHAR(150) NOT NULL,
-        category    NVARCHAR(60) NOT NULL,
+        name        NVARCHAR(250) NOT NULL,
+        category    NVARCHAR(100) NOT NULL,
         description NVARCHAR(MAX),
-        status      NVARCHAR(20) NOT NULL DEFAULT 'active',
+        status      NVARCHAR(30) NOT NULL DEFAULT 'active',
         stock       INT NOT NULL DEFAULT 0,
         quantity    INT NOT NULL DEFAULT 0,
         price       DECIMAL(10,2) NOT NULL DEFAULT 0,
         supplier_id INT NULL FOREIGN KEY REFERENCES dbo.supplier(supplier_id),
         employee_id INT NULL FOREIGN KEY REFERENCES dbo.employee(employee_id),
-        image_url   NVARCHAR(500),
+        image_url   NVARCHAR(MAX),
         is_featured BIT NOT NULL DEFAULT 0,
         created_at  DATETIME2 NOT NULL DEFAULT GETDATE()
     );
@@ -86,13 +86,13 @@ BEGIN
     CREATE TABLE dbo.product_variant (
         variant_id     INT IDENTITY(1,1) PRIMARY KEY,
         product_id     INT NOT NULL FOREIGN KEY REFERENCES dbo.product(product_id) ON DELETE CASCADE,
-        size           NVARCHAR(20) NOT NULL,
-        color          NVARCHAR(40) NOT NULL,
-        color_hex      NVARCHAR(20),
+        size           NVARCHAR(40) NOT NULL,
+        color          NVARCHAR(80) NOT NULL,
+        color_hex      NVARCHAR(30),
         price          DECIMAL(10,2) NOT NULL,
         stock          INT NOT NULL DEFAULT 0,
         stock_quantity INT NOT NULL DEFAULT 0,
-        sku            NVARCHAR(60) UNIQUE
+        sku            NVARCHAR(80) UNIQUE
     );
 END
 GO
@@ -101,11 +101,11 @@ IF OBJECT_ID('dbo.customer', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.customer (
         customer_id   INT IDENTITY(1,1) PRIMARY KEY,
-        first_name    NVARCHAR(60) NOT NULL,
-        last_name     NVARCHAR(60) NOT NULL,
-        phone         NVARCHAR(20),
-        email         NVARCHAR(120) NOT NULL UNIQUE,
-        address       NVARCHAR(500),
+        first_name    NVARCHAR(100) NOT NULL,
+        last_name     NVARCHAR(100) NOT NULL,
+        phone         NVARCHAR(40),
+        email         NVARCHAR(150) NOT NULL UNIQUE,
+        address       NVARCHAR(600),
         admin_id      INT NULL FOREIGN KEY REFERENCES dbo.admin(admin_id),
         password_hash NVARCHAR(255) NOT NULL,
         created_at    DATETIME2 NOT NULL DEFAULT GETDATE()
@@ -118,15 +118,15 @@ BEGIN
     CREATE TABLE dbo.address (
         address_id  INT IDENTITY(1,1) PRIMARY KEY,
         customer_id INT NOT NULL FOREIGN KEY REFERENCES dbo.customer(customer_id) ON DELETE CASCADE,
-        recipient   NVARCHAR(100),
-        phone       NVARCHAR(20),
-        house_no    NVARCHAR(100),
-        village     NVARCHAR(150),
-        road        NVARCHAR(150),
-        subdistrict NVARCHAR(100),
-        district    NVARCHAR(100),
-        province    NVARCHAR(100),
-        postal_code NVARCHAR(10),
+        recipient   NVARCHAR(150),
+        phone       NVARCHAR(40),
+        house_no    NVARCHAR(250),
+        village     NVARCHAR(250),
+        road        NVARCHAR(250),
+        subdistrict NVARCHAR(120),
+        district    NVARCHAR(120),
+        province    NVARCHAR(120),
+        postal_code NVARCHAR(20),
         is_default  BIT NOT NULL DEFAULT 0
     );
 END
@@ -149,7 +149,7 @@ GO
 IF OBJECT_ID('dbo.coupon', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.coupon (
-        code      NVARCHAR(30) PRIMARY KEY,
+        code      NVARCHAR(50) PRIMARY KEY,
         type      NVARCHAR(20) NOT NULL,
         value     DECIMAL(10,2) NOT NULL,
         min_total DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -165,15 +165,15 @@ BEGIN
         customer_id  INT NOT NULL FOREIGN KEY REFERENCES dbo.customer(customer_id),
         product_id   INT NULL FOREIGN KEY REFERENCES dbo.product(product_id),
         order_date   DATETIME2 NOT NULL DEFAULT GETDATE(),
-        status       NVARCHAR(30) NOT NULL DEFAULT 'pending',
+        status       NVARCHAR(40) NOT NULL DEFAULT 'pending',
         subtotal     DECIMAL(10,2) NOT NULL DEFAULT 0,
         discount     DECIMAL(10,2) NOT NULL DEFAULT 0,
         shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
         total_price  DECIMAL(10,2) NOT NULL DEFAULT 0,
-        coupon_code  NVARCHAR(30),
-        ship_name    NVARCHAR(80),
-        ship_phone   NVARCHAR(20),
-        ship_address NVARCHAR(300)
+        coupon_code  NVARCHAR(50),
+        ship_name    NVARCHAR(150),
+        ship_phone   NVARCHAR(40),
+        ship_address NVARCHAR(600)
     );
 END
 GO
@@ -197,8 +197,8 @@ BEGIN
     CREATE TABLE dbo.payment (
         payment_id INT IDENTITY(1,1) PRIMARY KEY,
         order_id   INT NOT NULL FOREIGN KEY REFERENCES dbo.[order](order_id) ON DELETE CASCADE,
-        method     NVARCHAR(60) NOT NULL,
-        status     NVARCHAR(30) NOT NULL DEFAULT 'pending',
+        method     NVARCHAR(80) NOT NULL,
+        status     NVARCHAR(40) NOT NULL DEFAULT 'pending',
         amount     DECIMAL(10,2) NOT NULL,
         paid_at    DATETIME2 NULL
     );
@@ -209,13 +209,13 @@ IF OBJECT_ID('dbo.shipment', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.shipment (
         shipment_id      INT IDENTITY(1,1) PRIMARY KEY,
-        tracking_no      NVARCHAR(60),
+        tracking_no      NVARCHAR(80),
         payment_id       INT NOT NULL FOREIGN KEY REFERENCES dbo.payment(payment_id) ON DELETE CASCADE,
         order_id         INT NOT NULL FOREIGN KEY REFERENCES dbo.[order](order_id),
         product_id       INT NULL FOREIGN KEY REFERENCES dbo.product(product_id),
-        carrier          NVARCHAR(60),
-        status           NVARCHAR(30) NOT NULL DEFAULT 'preparing',
-        shipping_address NVARCHAR(300),
+        carrier          NVARCHAR(80),
+        status           NVARCHAR(40) NOT NULL DEFAULT 'preparing',
+        shipping_address NVARCHAR(600),
         shipped_at       DATETIME2 NULL
     );
 END
@@ -227,11 +227,11 @@ BEGIN
         review_id   INT IDENTITY(1,1) PRIMARY KEY,
         customer_id INT NOT NULL FOREIGN KEY REFERENCES dbo.customer(customer_id) ON DELETE CASCADE,
         product_id  INT NOT NULL FOREIGN KEY REFERENCES dbo.product(product_id) ON DELETE CASCADE,
-        first_name  NVARCHAR(60),
-        last_name   NVARCHAR(60),
+        first_name  NVARCHAR(100),
+        last_name   NVARCHAR(100),
         rating      INT NOT NULL CHECK(rating BETWEEN 1 AND 5),
         comment     NVARCHAR(MAX),
-        review_date NVARCHAR(20) DEFAULT '',
+        review_date NVARCHAR(40) DEFAULT '',
         created_at  DATETIME2 NOT NULL DEFAULT GETDATE(),
         CONSTRAINT UQ_Review_Customer_Product UNIQUE(customer_id, product_id)
     );
@@ -257,6 +257,89 @@ BEGIN
         PRIMARY KEY (customer_id, review_id)
     );
 END
+GO
+
+-- ============================================================================
+-- 1B. AUTO-WIDEN COLUMNS ON EXISTING SQL SERVER DATABASES (PREVENT TRUNCATION)
+-- ============================================================================
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.employee') AND name = 'first_name' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.employee ALTER COLUMN first_name NVARCHAR(100) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.employee') AND name = 'last_name' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.employee ALTER COLUMN last_name NVARCHAR(100) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.employee') AND name = 'email' AND max_length > 0 AND max_length < 300)
+    ALTER TABLE dbo.employee ALTER COLUMN email NVARCHAR(150) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.employee') AND name = 'phone' AND max_length > 0 AND max_length < 80)
+    ALTER TABLE dbo.employee ALTER COLUMN phone NVARCHAR(40) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.employee') AND name = 'position' AND max_length > 0 AND max_length < 240)
+    ALTER TABLE dbo.employee ALTER COLUMN position NVARCHAR(120) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.employee') AND name = 'address' AND max_length > 0 AND max_length < 1200)
+    ALTER TABLE dbo.employee ALTER COLUMN address NVARCHAR(600) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.supplier') AND name = 'name' AND max_length > 0 AND max_length < 300)
+    ALTER TABLE dbo.supplier ALTER COLUMN name NVARCHAR(150) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.supplier') AND name = 'contact_name' AND max_length > 0 AND max_length < 240)
+    ALTER TABLE dbo.supplier ALTER COLUMN contact_name NVARCHAR(120) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.supplier') AND name = 'phone' AND max_length > 0 AND max_length < 80)
+    ALTER TABLE dbo.supplier ALTER COLUMN phone NVARCHAR(40) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.supplier') AND name = 'email' AND max_length > 0 AND max_length < 300)
+    ALTER TABLE dbo.supplier ALTER COLUMN email NVARCHAR(150) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.supplier') AND name = 'address' AND max_length > 0 AND max_length < 1200)
+    ALTER TABLE dbo.supplier ALTER COLUMN address NVARCHAR(600) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.product') AND name = 'name' AND max_length > 0 AND max_length < 500)
+    ALTER TABLE dbo.product ALTER COLUMN name NVARCHAR(250) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.product') AND name = 'category' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.product ALTER COLUMN category NVARCHAR(100) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.product') AND name = 'image_url' AND max_length <> -1)
+    ALTER TABLE dbo.product ALTER COLUMN image_url NVARCHAR(MAX) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.product_variant') AND name = 'size' AND max_length > 0 AND max_length < 80)
+    ALTER TABLE dbo.product_variant ALTER COLUMN size NVARCHAR(40) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.product_variant') AND name = 'color' AND max_length > 0 AND max_length < 160)
+    ALTER TABLE dbo.product_variant ALTER COLUMN color NVARCHAR(80) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.product_variant') AND name = 'color_hex' AND max_length > 0 AND max_length < 60)
+    ALTER TABLE dbo.product_variant ALTER COLUMN color_hex NVARCHAR(30) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.customer') AND name = 'first_name' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.customer ALTER COLUMN first_name NVARCHAR(100) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.customer') AND name = 'last_name' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.customer ALTER COLUMN last_name NVARCHAR(100) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.customer') AND name = 'phone' AND max_length > 0 AND max_length < 80)
+    ALTER TABLE dbo.customer ALTER COLUMN phone NVARCHAR(40) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.customer') AND name = 'address' AND max_length > 0 AND max_length < 1200)
+    ALTER TABLE dbo.customer ALTER COLUMN address NVARCHAR(600) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'recipient' AND max_length > 0 AND max_length < 300)
+    ALTER TABLE dbo.address ALTER COLUMN recipient NVARCHAR(150) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'phone' AND max_length > 0 AND max_length < 80)
+    ALTER TABLE dbo.address ALTER COLUMN phone NVARCHAR(40) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'house_no' AND max_length > 0 AND max_length < 500)
+    ALTER TABLE dbo.address ALTER COLUMN house_no NVARCHAR(250) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'village' AND max_length > 0 AND max_length < 500)
+    ALTER TABLE dbo.address ALTER COLUMN village NVARCHAR(250) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'road' AND max_length > 0 AND max_length < 500)
+    ALTER TABLE dbo.address ALTER COLUMN road NVARCHAR(250) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'subdistrict' AND max_length > 0 AND max_length < 240)
+    ALTER TABLE dbo.address ALTER COLUMN subdistrict NVARCHAR(120) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'district' AND max_length > 0 AND max_length < 240)
+    ALTER TABLE dbo.address ALTER COLUMN district NVARCHAR(120) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'province' AND max_length > 0 AND max_length < 240)
+    ALTER TABLE dbo.address ALTER COLUMN province NVARCHAR(120) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.address') AND name = 'postal_code' AND max_length > 0 AND max_length < 40)
+    ALTER TABLE dbo.address ALTER COLUMN postal_code NVARCHAR(20) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.[order]') AND name = 'coupon_code' AND max_length > 0 AND max_length < 100)
+    ALTER TABLE dbo.[order] ALTER COLUMN coupon_code NVARCHAR(50) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.[order]') AND name = 'ship_name' AND max_length > 0 AND max_length < 300)
+    ALTER TABLE dbo.[order] ALTER COLUMN ship_name NVARCHAR(150) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.[order]') AND name = 'ship_phone' AND max_length > 0 AND max_length < 80)
+    ALTER TABLE dbo.[order] ALTER COLUMN ship_phone NVARCHAR(40) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.[order]') AND name = 'ship_address' AND max_length > 0 AND max_length < 1200)
+    ALTER TABLE dbo.[order] ALTER COLUMN ship_address NVARCHAR(600) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.shipment') AND name = 'tracking_no' AND max_length > 0 AND max_length < 160)
+    ALTER TABLE dbo.shipment ALTER COLUMN tracking_no NVARCHAR(80) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.shipment') AND name = 'carrier' AND max_length > 0 AND max_length < 160)
+    ALTER TABLE dbo.shipment ALTER COLUMN carrier NVARCHAR(80) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.shipment') AND name = 'shipping_address' AND max_length > 0 AND max_length < 1200)
+    ALTER TABLE dbo.shipment ALTER COLUMN shipping_address NVARCHAR(600) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.review') AND name = 'first_name' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.review ALTER COLUMN first_name NVARCHAR(100) NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.review') AND name = 'last_name' AND max_length > 0 AND max_length < 200)
+    ALTER TABLE dbo.review ALTER COLUMN last_name NVARCHAR(100) NULL;
 GO
 
 -- ============================================================================
