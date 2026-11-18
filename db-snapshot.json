@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T07:10:28.799Z",
-  "checksum": "b82ba5751284c47c",
+  "timestamp": "2026-11-18T07:10:37.002Z",
+  "checksum": "7711bd8b00e33225",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,10 +12,10 @@
     "address": 23,
     "product": 33,
     "product_variant": 142,
-    "cart_item": 1,
-    "order": 2,
-    "order_item": 2,
-    "payment": 2,
+    "cart_item": 0,
+    "order": 3,
+    "order_item": 3,
+    "payment": 3,
     "shipment": 2,
     "review": 1,
     "wishlist": 3,
@@ -713,8 +713,8 @@
         "category": "เสื้อโปโล",
         "description": "brand:Polo Ralph Lauren",
         "status": "active",
-        "stock": 150,
-        "quantity": 150,
+        "stock": 148,
+        "quantity": 148,
         "price": 2900,
         "supplier_id": 3,
         "employee_id": 2,
@@ -1211,8 +1211,8 @@
         "color": "ดำ",
         "color_hex": "#000000",
         "price": 2900,
-        "stock": 30,
-        "stock_quantity": 30,
+        "stock": 28,
+        "stock_quantity": 28,
         "sku": "SKU-24-S-ดำ"
       },
       {
@@ -2767,16 +2767,7 @@
         "sku": "SKU-66-2XL-เทาเข้ม"
       }
     ],
-    "cart_item": [
-      {
-        "cart_id": 10,
-        "customer_id": 23,
-        "variant_id": 165,
-        "product_id": 24,
-        "quantity": 2,
-        "total_price": 5800
-      }
-    ],
+    "cart_item": [],
     "order": [
       {
         "order_id": 8,
@@ -2807,6 +2798,21 @@
         "ship_name": "สมชาย ทดสอบ",
         "ship_phone": "089-999-9999",
         "ship_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540"
+      },
+      {
+        "order_id": 10,
+        "customer_id": 23,
+        "product_id": 24,
+        "order_date": "2026-11-18 07:10:30",
+        "status": "paid",
+        "subtotal": 5800,
+        "discount": 580,
+        "shipping_fee": 0,
+        "total_price": 5220,
+        "coupon_code": "WELCOME10",
+        "ship_name": "ทดสอบ ระบบ",
+        "ship_phone": "0891112233",
+        "ship_address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120"
       }
     ],
     "order_item": [
@@ -2827,6 +2833,15 @@
         "quantity": 1,
         "unit_price": 3299,
         "total_price": 3299
+      },
+      {
+        "order_item_id": 11,
+        "order_id": 10,
+        "variant_id": 165,
+        "product_id": 24,
+        "quantity": 2,
+        "unit_price": 2900,
+        "total_price": 5800
       }
     ],
     "payment": [
@@ -2845,6 +2860,14 @@
         "status": "paid",
         "amount": 3299,
         "paid_at": "2026-11-18 06:50:27"
+      },
+      {
+        "payment_id": 10,
+        "order_id": 10,
+        "method": "PromptPay",
+        "status": "paid",
+        "amount": 5220,
+        "paid_at": "2026-11-18 07:10:34"
       }
     ],
     "shipment": [
@@ -2915,6 +2938,13 @@
         "order_date": "2026-11-18 06:50:22",
         "total_amount": 3299,
         "order_status": "shipped"
+      },
+      {
+        "order_id": 10,
+        "customer_id": 23,
+        "order_date": "2026-11-18 07:10:30",
+        "total_amount": 5220,
+        "order_status": "paid"
       }
     ],
     "Order_Detail": [
@@ -2931,6 +2961,13 @@
         "product_id": 30,
         "quantity": 1,
         "unit_price": 3299
+      },
+      {
+        "order_detail_id": 11,
+        "order_id": 10,
+        "product_id": 24,
+        "quantity": 2,
+        "unit_price": 2900
       }
     ]
   }
