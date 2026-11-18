@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 9572e8bab3445707 | Updated: 2026-11-18T07:00:56.257Z
+-- Checksum: 8def372dad6f668d | Updated: 2026-11-18T07:10:12.367Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -414,7 +414,7 @@ INSERT INTO dbo.supplier (supplier_id, name, contact_name, phone, email, address
 INSERT INTO dbo.supplier (supplier_id, name, contact_name, phone, email, address, employee_id, admin_id) VALUES (3, N'Denim House', N'คุณก้อง', N'038-555-666', N'order@denimhouse.example', N'ชลบุรี', 1, 1);
 SET IDENTITY_INSERT dbo.supplier OFF;
 
--- ตาราง dbo.customer (22 รายการ)
+-- ตาราง dbo.customer (23 รายการ)
 SET IDENTITY_INSERT dbo.customer ON;
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (1, N'สมชาย', N'ทดสอบ', N'089-999-9999', N'demo@shop.com', N'เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540', 1, N'$2b$10$ZOb/yCkPVuDXc9kPaJHQreOI7VIqIIV7hJ.SH2jDhB6YA7na.5yvq', '2026-11-10 07:35:51');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (2, N'ณัฐพร', N'กิจเจริญ', N'081-234-5678', N'nattaporn.k@fake.com', N'เลขที่ 128/45 ชั้น 14 ห้อง 1402 อาคารพาร์ควิว เอ็กเซ็กคิวทีฟ เรสซิเดนซ์ ซอยสุขุมวิท 55 (ทองหล่อ 13) ถนนสุขุมวิท คลองตันเหนือ วัฒนา กรุงเทพมหานคร 10110', 1, N'$2b$10$eAH3aJTMiA0cB4p2zDcID.UmTVp48JrXU5l6IdnuhfnuflWWgNU7y', '2026-11-17 13:38:36');
@@ -438,6 +438,7 @@ INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, addr
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (20, N'นภัสสร', N'กิตติคุณ', N'099-012-3456', N'napatsorn.k@fake.com', N'เลขที่ 310/25 ซอย 18 ซอยย่อยมัณฑนา 4 หมู่บ้านมัณฑนา วงแหวน-บางแค โครงการ 1 ซอยเพชรเกษม 63 แยก 8 ถนนกาญจนาภิเษก บางแค บางแค กรุงเทพมหานคร 10160', 4, N'$2b$10$tG110zb2O9s0BvYul.sNNOR9HBuoDziQMoH12nSspO1DTvrWpEgRG', '2026-11-17 13:38:37');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (21, N'ชานนท์', N'วิมลศิลป์', N'080-123-4567', N'chanon.w@fake.com', N'เลขที่ 42/158 ซอยพัฒนาอุดร 6 เฟสการ์เดน 2 หมู่บ้านสิทธาการ์เด้นท์ โฮม อุดรธานีการ์เดน หมู่ 5 ซอยบ้านหนองขาม 12 ถนนรอบเมืองสายเหนือ หมากแข้ง เมืองอุดรธานี อุดรธานี 41000', 5, N'$2b$10$sj3AYZjrckAowLUgHJQ70uAuGAzqlIfhpT9CoxsZnnxFMMIPqpqQq', '2026-11-17 13:38:37');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (22, N'จิราภรณ์', N'ธาราสืบ', N'0819551264', N'jiraporn4956@gmail.com', N'11 หมู่บ้านสัมกร กรุงเทพกรีฑรา ทับช้าง สะพานสูง กรุงเทพมหานคร 10250', 1, N'$2b$10$Oy5mmGdeSFfWeX3Z3Cz6w.BnKheY.OowM4DhDUGEX74A/Y8/gSHHu', '2026-11-17 16:14:37');
+INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (23, N'ทดสอบ', N'ระบบ', N'0891112233', N'e2e_1794985812222@test.com', NULL, 1, N'$2b$10$spStM7IbOVXVB5FdKBy8ue0FFcaJAGxGVgiovjkTUP07bwTvpd0Le', '2026-11-18 07:10:12');
 SET IDENTITY_INSERT dbo.customer OFF;
 
 -- ตาราง dbo.address (22 รายการ)

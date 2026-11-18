@@ -1,14 +1,14 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T07:00:56.257Z",
-  "checksum": "9572e8bab3445707",
+  "timestamp": "2026-11-18T07:10:12.367Z",
+  "checksum": "8def372dad6f668d",
   "counts": {
     "admin": 5,
     "employee": 2,
     "coupon": 2,
     "supplier": 3,
-    "customer": 22,
+    "customer": 23,
     "address": 22,
     "product": 33,
     "product_variant": 142,
@@ -369,6 +369,17 @@
         "admin_id": 1,
         "password_hash": "$2b$10$Oy5mmGdeSFfWeX3Z3Cz6w.BnKheY.OowM4DhDUGEX74A/Y8/gSHHu",
         "created_at": "2026-11-17 16:14:37"
+      },
+      {
+        "customer_id": 23,
+        "first_name": "ทดสอบ",
+        "last_name": "ระบบ",
+        "phone": "0891112233",
+        "email": "e2e_1794985812222@test.com",
+        "address": null,
+        "admin_id": 1,
+        "password_hash": "$2b$10$spStM7IbOVXVB5FdKBy8ue0FFcaJAGxGVgiovjkTUP07bwTvpd0Le",
+        "created_at": "2026-11-18 07:10:12"
       }
     ],
     "address": [
