@@ -251,12 +251,12 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.employee (`);
   lines.push(`        employee_id INT IDENTITY(1,1) PRIMARY KEY,`);
-  lines.push(`        first_name  NVARCHAR(60) NOT NULL,`);
-  lines.push(`        last_name   NVARCHAR(60) NOT NULL,`);
-  lines.push(`        email       NVARCHAR(120),`);
-  lines.push(`        phone       NVARCHAR(20),`);
-  lines.push(`        position    NVARCHAR(80),`);
-  lines.push(`        address     NVARCHAR(300)`);
+  lines.push(`        first_name  NVARCHAR(100) NOT NULL,`);
+  lines.push(`        last_name   NVARCHAR(100) NOT NULL,`);
+  lines.push(`        email       NVARCHAR(150),`);
+  lines.push(`        phone       NVARCHAR(40),`);
+  lines.push(`        position    NVARCHAR(120),`);
+  lines.push(`        address     NVARCHAR(600)`);
   lines.push(`    );`);
   lines.push(`END`);
   lines.push(`GO`);
@@ -265,9 +265,9 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.admin (`);
   lines.push(`        admin_id      INT IDENTITY(1,1) PRIMARY KEY,`);
-  lines.push(`        name          NVARCHAR(100) NOT NULL,`);
-  lines.push(`        email         NVARCHAR(120) NOT NULL UNIQUE,`);
-  lines.push(`        phone         NVARCHAR(20),`);
+  lines.push(`        name          NVARCHAR(150) NOT NULL,`);
+  lines.push(`        email         NVARCHAR(150) NOT NULL UNIQUE,`);
+  lines.push(`        phone         NVARCHAR(40),`);
   lines.push(`        password_hash NVARCHAR(255) NOT NULL`);
   lines.push(`    );`);
   lines.push(`END`);
@@ -277,11 +277,11 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.supplier (`);
   lines.push(`        supplier_id  INT IDENTITY(1,1) PRIMARY KEY,`);
-  lines.push(`        name         NVARCHAR(120) NOT NULL,`);
-  lines.push(`        contact_name NVARCHAR(80),`);
-  lines.push(`        phone        NVARCHAR(20),`);
-  lines.push(`        email        NVARCHAR(120),`);
-  lines.push(`        address      NVARCHAR(300),`);
+  lines.push(`        name         NVARCHAR(150) NOT NULL,`);
+  lines.push(`        contact_name NVARCHAR(120),`);
+  lines.push(`        phone        NVARCHAR(40),`);
+  lines.push(`        email        NVARCHAR(150),`);
+  lines.push(`        address      NVARCHAR(600),`);
   lines.push(`        employee_id  INT NULL FOREIGN KEY REFERENCES dbo.employee(employee_id),`);
   lines.push(`        admin_id     INT NULL FOREIGN KEY REFERENCES dbo.admin(admin_id)`);
   lines.push(`    );`);
@@ -292,16 +292,16 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.product (`);
   lines.push(`        product_id  INT IDENTITY(1,1) PRIMARY KEY,`);
-  lines.push(`        name        NVARCHAR(150) NOT NULL,`);
-  lines.push(`        category    NVARCHAR(60) NOT NULL,`);
+  lines.push(`        name        NVARCHAR(250) NOT NULL,`);
+  lines.push(`        category    NVARCHAR(100) NOT NULL,`);
   lines.push(`        description NVARCHAR(MAX),`);
-  lines.push(`        status      NVARCHAR(20) NOT NULL DEFAULT 'active',`);
+  lines.push(`        status      NVARCHAR(30) NOT NULL DEFAULT 'active',`);
   lines.push(`        stock       INT NOT NULL DEFAULT 0,`);
   lines.push(`        quantity    INT NOT NULL DEFAULT 0,`);
   lines.push(`        price       DECIMAL(10,2) NOT NULL DEFAULT 0,`);
   lines.push(`        supplier_id INT NULL FOREIGN KEY REFERENCES dbo.supplier(supplier_id),`);
   lines.push(`        employee_id INT NULL FOREIGN KEY REFERENCES dbo.employee(employee_id),`);
-  lines.push(`        image_url   NVARCHAR(500),`);
+  lines.push(`        image_url   NVARCHAR(MAX),`);
   lines.push(`        is_featured BIT NOT NULL DEFAULT 0,`);
   lines.push(`        created_at  DATETIME2 NOT NULL DEFAULT GETDATE()`);
   lines.push(`    );`);
@@ -313,13 +313,13 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`    CREATE TABLE dbo.product_variant (`);
   lines.push(`        variant_id     INT IDENTITY(1,1) PRIMARY KEY,`);
   lines.push(`        product_id     INT NOT NULL FOREIGN KEY REFERENCES dbo.product(product_id) ON DELETE CASCADE,`);
-  lines.push(`        size           NVARCHAR(20) NOT NULL,`);
-  lines.push(`        color          NVARCHAR(40) NOT NULL,`);
-  lines.push(`        color_hex      NVARCHAR(20),`);
+  lines.push(`        size           NVARCHAR(40) NOT NULL,`);
+  lines.push(`        color          NVARCHAR(80) NOT NULL,`);
+  lines.push(`        color_hex      NVARCHAR(30),`);
   lines.push(`        price          DECIMAL(10,2) NOT NULL,`);
   lines.push(`        stock          INT NOT NULL DEFAULT 0,`);
   lines.push(`        stock_quantity INT NOT NULL DEFAULT 0,`);
-  lines.push(`        sku            NVARCHAR(60) UNIQUE`);
+  lines.push(`        sku            NVARCHAR(80) UNIQUE`);
   lines.push(`    );`);
   lines.push(`END`);
   lines.push(`GO`);
@@ -328,11 +328,11 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.customer (`);
   lines.push(`        customer_id   INT IDENTITY(1,1) PRIMARY KEY,`);
-  lines.push(`        first_name    NVARCHAR(60) NOT NULL,`);
-  lines.push(`        last_name     NVARCHAR(60) NOT NULL,`);
-  lines.push(`        phone         NVARCHAR(20),`);
-  lines.push(`        email         NVARCHAR(120) NOT NULL UNIQUE,`);
-  lines.push(`        address       NVARCHAR(500),`);
+  lines.push(`        first_name    NVARCHAR(100) NOT NULL,`);
+  lines.push(`        last_name     NVARCHAR(100) NOT NULL,`);
+  lines.push(`        phone         NVARCHAR(40),`);
+  lines.push(`        email         NVARCHAR(150) NOT NULL UNIQUE,`);
+  lines.push(`        address       NVARCHAR(600),`);
   lines.push(`        admin_id      INT NULL FOREIGN KEY REFERENCES dbo.admin(admin_id),`);
   lines.push(`        password_hash NVARCHAR(255) NOT NULL,`);
   lines.push(`        created_at    DATETIME2 NOT NULL DEFAULT GETDATE()`);
@@ -345,15 +345,15 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`    CREATE TABLE dbo.address (`);
   lines.push(`        address_id  INT IDENTITY(1,1) PRIMARY KEY,`);
   lines.push(`        customer_id INT NOT NULL FOREIGN KEY REFERENCES dbo.customer(customer_id) ON DELETE CASCADE,`);
-  lines.push(`        recipient   NVARCHAR(100),`);
-  lines.push(`        phone       NVARCHAR(20),`);
-  lines.push(`        house_no    NVARCHAR(100),`);
-  lines.push(`        village     NVARCHAR(150),`);
-  lines.push(`        road        NVARCHAR(150),`);
-  lines.push(`        subdistrict NVARCHAR(100),`);
-  lines.push(`        district    NVARCHAR(100),`);
-  lines.push(`        province    NVARCHAR(100),`);
-  lines.push(`        postal_code NVARCHAR(10),`);
+  lines.push(`        recipient   NVARCHAR(150),`);
+  lines.push(`        phone       NVARCHAR(40),`);
+  lines.push(`        house_no    NVARCHAR(250),`);
+  lines.push(`        village     NVARCHAR(250),`);
+  lines.push(`        road        NVARCHAR(250),`);
+  lines.push(`        subdistrict NVARCHAR(120),`);
+  lines.push(`        district    NVARCHAR(120),`);
+  lines.push(`        province    NVARCHAR(120),`);
+  lines.push(`        postal_code NVARCHAR(20),`);
   lines.push(`        is_default  BIT NOT NULL DEFAULT 0`);
   lines.push(`    );`);
   lines.push(`END`);
@@ -376,7 +376,7 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`IF OBJECT_ID('dbo.coupon', 'U') IS NULL`);
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.coupon (`);
-  lines.push(`        code      NVARCHAR(30) PRIMARY KEY,`);
+  lines.push(`        code      NVARCHAR(50) PRIMARY KEY,`);
   lines.push(`        type      NVARCHAR(20) NOT NULL,`);
   lines.push(`        value     DECIMAL(10,2) NOT NULL,`);
   lines.push(`        min_total DECIMAL(10,2) NOT NULL DEFAULT 0,`);
@@ -392,15 +392,15 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`        customer_id  INT NOT NULL FOREIGN KEY REFERENCES dbo.customer(customer_id),`);
   lines.push(`        product_id   INT NULL FOREIGN KEY REFERENCES dbo.product(product_id),`);
   lines.push(`        order_date   DATETIME2 NOT NULL DEFAULT GETDATE(),`);
-  lines.push(`        status       NVARCHAR(30) NOT NULL DEFAULT 'pending',`);
+  lines.push(`        status       NVARCHAR(40) NOT NULL DEFAULT 'pending',`);
   lines.push(`        subtotal     DECIMAL(10,2) NOT NULL DEFAULT 0,`);
   lines.push(`        discount     DECIMAL(10,2) NOT NULL DEFAULT 0,`);
   lines.push(`        shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 0,`);
   lines.push(`        total_price  DECIMAL(10,2) NOT NULL DEFAULT 0,`);
-  lines.push(`        coupon_code  NVARCHAR(30),`);
-  lines.push(`        ship_name    NVARCHAR(80),`);
-  lines.push(`        ship_phone   NVARCHAR(20),`);
-  lines.push(`        ship_address NVARCHAR(300)`);
+  lines.push(`        coupon_code  NVARCHAR(50),`);
+  lines.push(`        ship_name    NVARCHAR(150),`);
+  lines.push(`        ship_phone   NVARCHAR(40),`);
+  lines.push(`        ship_address NVARCHAR(600)`);
   lines.push(`    );`);
   lines.push(`END`);
   lines.push(`GO`);
@@ -424,8 +424,8 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`    CREATE TABLE dbo.payment (`);
   lines.push(`        payment_id INT IDENTITY(1,1) PRIMARY KEY,`);
   lines.push(`        order_id   INT NOT NULL FOREIGN KEY REFERENCES dbo.[order](order_id) ON DELETE CASCADE,`);
-  lines.push(`        method     NVARCHAR(60) NOT NULL,`);
-  lines.push(`        status     NVARCHAR(30) NOT NULL DEFAULT 'pending',`);
+  lines.push(`        method     NVARCHAR(80) NOT NULL,`);
+  lines.push(`        status     NVARCHAR(40) NOT NULL DEFAULT 'pending',`);
   lines.push(`        amount     DECIMAL(10,2) NOT NULL,`);
   lines.push(`        paid_at    DATETIME2 NULL`);
   lines.push(`    );`);
@@ -436,13 +436,13 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`BEGIN`);
   lines.push(`    CREATE TABLE dbo.shipment (`);
   lines.push(`        shipment_id      INT IDENTITY(1,1) PRIMARY KEY,`);
-  lines.push(`        tracking_no      NVARCHAR(60),`);
+  lines.push(`        tracking_no      NVARCHAR(80),`);
   lines.push(`        payment_id       INT NOT NULL FOREIGN KEY REFERENCES dbo.payment(payment_id) ON DELETE CASCADE,`);
   lines.push(`        order_id         INT NOT NULL FOREIGN KEY REFERENCES dbo.[order](order_id),`);
   lines.push(`        product_id       INT NULL FOREIGN KEY REFERENCES dbo.product(product_id),`);
-  lines.push(`        carrier          NVARCHAR(60),`);
-  lines.push(`        status           NVARCHAR(30) NOT NULL DEFAULT 'preparing',`);
-  lines.push(`        shipping_address NVARCHAR(300),`);
+  lines.push(`        carrier          NVARCHAR(80),`);
+  lines.push(`        status           NVARCHAR(40) NOT NULL DEFAULT 'preparing',`);
+  lines.push(`        shipping_address NVARCHAR(600),`);
   lines.push(`        shipped_at       DATETIME2 NULL`);
   lines.push(`    );`);
   lines.push(`END`);
@@ -454,11 +454,11 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`        review_id   INT IDENTITY(1,1) PRIMARY KEY,`);
   lines.push(`        customer_id INT NOT NULL FOREIGN KEY REFERENCES dbo.customer(customer_id) ON DELETE CASCADE,`);
   lines.push(`        product_id  INT NOT NULL FOREIGN KEY REFERENCES dbo.product(product_id) ON DELETE CASCADE,`);
-  lines.push(`        first_name  NVARCHAR(60),`);
-  lines.push(`        last_name   NVARCHAR(60),`);
+  lines.push(`        first_name  NVARCHAR(100),`);
+  lines.push(`        last_name   NVARCHAR(100),`);
   lines.push(`        rating      INT NOT NULL CHECK(rating BETWEEN 1 AND 5),`);
   lines.push(`        comment     NVARCHAR(MAX),`);
-  lines.push(`        review_date NVARCHAR(20) DEFAULT '',`);
+  lines.push(`        review_date NVARCHAR(40) DEFAULT '',`);
   lines.push(`        created_at  DATETIME2 NOT NULL DEFAULT GETDATE(),`);
   lines.push(`        CONSTRAINT UQ_Review_Customer_Product UNIQUE(customer_id, product_id)`);
   lines.push(`    );`);
@@ -484,6 +484,59 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`        PRIMARY KEY (customer_id, review_id)`);
   lines.push(`    );`);
   lines.push(`END`);
+  lines.push(`GO`);
+  lines.push(``);
+  lines.push(`-- ============================================================================`);
+  lines.push(`-- 1B. AUTO-WIDEN COLUMNS ON EXISTING SQL SERVER DATABASES (PREVENT TRUNCATION)`);
+  lines.push(`-- ============================================================================`);
+  const widenRules = [
+    ['dbo.employee', 'first_name', 'NVARCHAR(100) NOT NULL', 200],
+    ['dbo.employee', 'last_name', 'NVARCHAR(100) NOT NULL', 200],
+    ['dbo.employee', 'email', 'NVARCHAR(150) NULL', 300],
+    ['dbo.employee', 'phone', 'NVARCHAR(40) NULL', 80],
+    ['dbo.employee', 'position', 'NVARCHAR(120) NULL', 240],
+    ['dbo.employee', 'address', 'NVARCHAR(600) NULL', 1200],
+    ['dbo.supplier', 'name', 'NVARCHAR(150) NOT NULL', 300],
+    ['dbo.supplier', 'contact_name', 'NVARCHAR(120) NULL', 240],
+    ['dbo.supplier', 'phone', 'NVARCHAR(40) NULL', 80],
+    ['dbo.supplier', 'email', 'NVARCHAR(150) NULL', 300],
+    ['dbo.supplier', 'address', 'NVARCHAR(600) NULL', 1200],
+    ['dbo.product', 'name', 'NVARCHAR(250) NOT NULL', 500],
+    ['dbo.product', 'category', 'NVARCHAR(100) NOT NULL', 200],
+    ['dbo.product', 'image_url', 'NVARCHAR(MAX) NULL', -1],
+    ['dbo.product_variant', 'size', 'NVARCHAR(40) NOT NULL', 80],
+    ['dbo.product_variant', 'color', 'NVARCHAR(80) NOT NULL', 160],
+    ['dbo.product_variant', 'color_hex', 'NVARCHAR(30) NULL', 60],
+    ['dbo.customer', 'first_name', 'NVARCHAR(100) NOT NULL', 200],
+    ['dbo.customer', 'last_name', 'NVARCHAR(100) NOT NULL', 200],
+    ['dbo.customer', 'phone', 'NVARCHAR(40) NULL', 80],
+    ['dbo.customer', 'address', 'NVARCHAR(600) NULL', 1200],
+    ['dbo.address', 'recipient', 'NVARCHAR(150) NULL', 300],
+    ['dbo.address', 'phone', 'NVARCHAR(40) NULL', 80],
+    ['dbo.address', 'house_no', 'NVARCHAR(250) NULL', 500],
+    ['dbo.address', 'village', 'NVARCHAR(250) NULL', 500],
+    ['dbo.address', 'road', 'NVARCHAR(250) NULL', 500],
+    ['dbo.address', 'subdistrict', 'NVARCHAR(120) NULL', 240],
+    ['dbo.address', 'district', 'NVARCHAR(120) NULL', 240],
+    ['dbo.address', 'province', 'NVARCHAR(120) NULL', 240],
+    ['dbo.address', 'postal_code', 'NVARCHAR(20) NULL', 40],
+    ['dbo.[order]', 'coupon_code', 'NVARCHAR(50) NULL', 100],
+    ['dbo.[order]', 'ship_name', 'NVARCHAR(150) NULL', 300],
+    ['dbo.[order]', 'ship_phone', 'NVARCHAR(40) NULL', 80],
+    ['dbo.[order]', 'ship_address', 'NVARCHAR(600) NULL', 1200],
+    ['dbo.shipment', 'tracking_no', 'NVARCHAR(80) NULL', 160],
+    ['dbo.shipment', 'carrier', 'NVARCHAR(80) NULL', 160],
+    ['dbo.shipment', 'shipping_address', 'NVARCHAR(600) NULL', 1200],
+    ['dbo.review', 'first_name', 'NVARCHAR(100) NULL', 200],
+    ['dbo.review', 'last_name', 'NVARCHAR(100) NULL', 200]
+  ];
+  for (const [tbl, col, colDef, minBytes] of widenRules) {
+    const cond = minBytes === -1
+      ? `max_length <> -1`
+      : `max_length > 0 AND max_length < ${minBytes}`;
+    lines.push(`IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('${tbl}') AND name = '${col}' AND ${cond})`);
+    lines.push(`    ALTER TABLE ${tbl} ALTER COLUMN ${col} ${colDef};`);
+  }
   lines.push(`GO`);
   lines.push(``);
   lines.push(`-- ============================================================================`);

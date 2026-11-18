@@ -10,13 +10,23 @@ param(
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-$baseDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$cwd = (Get-Location).Path
+$baseDir = if ($PSScriptRoot) {
+    $PSScriptRoot
+} elseif (Test-Path (Join-Path $cwd "package.json")) {
+    $cwd
+} else {
+    $tmpSyncDir = Join-Path $env:TEMP "noir-cream-shop-sync"
+    if (-not (Test-Path $tmpSyncDir)) { New-Item -ItemType Directory -Path $tmpSyncDir -Force | Out-Null }
+    $tmpSyncDir
+}
 $localSqlFile = Join-Path $baseDir "NoirCreamShop_SQLServer.sql"
 $localSnapshotFile = Join-Path $baseDir "db-snapshot.json"
-$localTokenFile = Join-Path $baseDir ".github-token"
+$localTokenFile = if (Test-Path (Join-Path $baseDir ".github-token")) { Join-Path $baseDir ".github-token" } else { Join-Path $cwd ".github-token" }
 $githubRepo = "sahapapsir-glitch/noir-cream-shop"
 $githubBranch = "main"
 $githubRawSqlUrl = "https://raw.githubusercontent.com/$githubRepo/$githubBranch/NoirCreamShop_SQLServer.sql"
+$script:warnedNoGit = $false
 
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
@@ -250,7 +260,13 @@ function Push-DatabaseToGitHub {
             Write-Host "   ⚠️ [GitHub Sync API] Push ไม่สำเร็จ: $($_.Exception.Message)" -ForegroundColor Yellow
         }
     } elseif (-not (Test-Path $gitDir)) {
-        Write-Host "   ℹ️ ไม่พบ .git ในโฟลเดอร์นี้ — แนะนำ clone โปรเจกต์ผ่าน git clone หรือตั้งค่า .github-token เพื่อให้สคริปต์ Push ขึ้น GitHub ได้" -ForegroundColor DarkGray
+        if ($activeWebUrl -match '^https://') {
+            return
+        }
+        if (-not $script:warnedNoGit) {
+            $script:warnedNoGit = $true
+            Write-Host "   ℹ️ ไม่พบ .git ในโฟลเดอร์นี้ — แนะนำ clone โปรเจกต์ผ่าน git clone หรือตั้งค่า .github-token เพื่อให้สคริปต์ Push ขึ้น GitHub ได้" -ForegroundColor DarkGray
+        }
     }
 }
 
@@ -294,11 +310,16 @@ if ($activeWebUrl) {
 
 if ($activeInstance -and $initialScript) {
     Write-Host "⏳ กำลังซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance ..." -ForegroundColor Cyan
-    Invoke-SqlScriptBatches -ScriptText $initialScript
-    $ssmsState = Get-SsmsTablesState
-    $lastSsmsChecksum = $ssmsState.Checksum
-    Write-Host "🎉 ซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance สำเร็จเรียบร้อย!" -ForegroundColor Green
-    Write-Host "👉 ในโปรแกรม SSMS: คลิกขวาที่โฟลเดอร์ 'Databases' -> กด 'Refresh' จะพบฐานข้อมูล '$DatabaseName' ทันที" -ForegroundColor Yellow
+    try {
+        Invoke-SqlScriptBatches -ScriptText $initialScript
+        $ssmsState = Get-SsmsTablesState
+        $lastSsmsChecksum = $ssmsState.Checksum
+        Write-Host "🎉 ซิงค์ฐานข้อมูล [$DatabaseName] เข้าสู่ $activeInstance สำเร็จเรียบร้อย!" -ForegroundColor Green
+        Write-Host "👉 ในโปรแกรม SSMS: คลิกขวาที่โฟลเดอร์ 'Databases' -> กด 'Refresh' จะพบฐานข้อมูล '$DatabaseName' ทันที" -ForegroundColor Yellow
+    } catch {
+        $lastSsmsChecksum = ""
+        Write-Host "❌ ซิงค์เข้าสู่ SQL Server ไม่สำเร็จ: $($_.Exception.Message)" -ForegroundColor Red
+    }
 } else {
     $lastSsmsChecksum = ""
 }
