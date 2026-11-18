@@ -1354,9 +1354,17 @@ adminTabs.products = async () => {
 
 adminTabs.orders = async () => {
   const { orders } = await api('GET', '/api/admin/orders');
-  $('#tab').innerHTML = orders.length ? orders.map((o) => {
+  $('#tab').innerHTML = orders.length ? `
+    <datalist id="carrier-presets">
+      <option value="Flash Express">
+      <option value="Kerry Express">
+      <option value="J&T Express">
+      <option value="ไปรษณีย์ไทย (EMS)">
+    </datalist>
+    ${orders.map((o) => {
     const cod = o.payment.method === 'เก็บเงินปลายทาง';
     const canShip = o.status === 'paid' || (o.status === 'pending' && cod);
+    const defaultTrack = A.genTrackingNo('Flash Express', o.order_id);
     return `
       <div class="panel order">
         <div class="order-head">
@@ -1376,18 +1384,28 @@ adminTabs.orders = async () => {
         ${shipInfo(o)}
         ${canShip ? `
           <form class="inline-form" onsubmit="return A.ship(event, ${o.order_id})">
-            <input name="carrier" placeholder="ขนส่ง เช่น Flash Express, Kerry" required>
-            <input name="tracking_no" placeholder="หมายเลขพัสดุ เช่น TH12345678" required>
-            <button class="btn sm">บันทึกการจัดส่ง</button>
+            <input name="carrier" id="ship-carrier-${o.order_id}" list="carrier-presets" value="Flash Express" placeholder="ขนส่ง เช่น Flash Express, Kerry" required>
+            <input name="tracking_no" id="ship-track-${o.order_id}" value="${esc(defaultTrack)}" placeholder="เลขพัสดุ (ระบบสุ่มให้ หรือพิมพ์แก้เองได้)">
+            <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id})">🎲 สุ่มใหม่</button>
+            <button class="btn sm" style="flex:0 0 auto">บันทึกการจัดส่ง</button>
+          </form>
+        ` : ''}
+        ${o.status === 'shipped' && o.shipment ? `
+          <form id="edit-ship-form-${o.order_id}" class="inline-form" style="display:none" onsubmit="return A.updateShipment(event, ${o.order_id})">
+            <input name="carrier" id="edit-carrier-${o.order_id}" list="carrier-presets" value="${esc(o.shipment.carrier || 'Flash Express')}" placeholder="ผู้ให้บริการขนส่ง" required>
+            <input name="tracking_no" id="edit-track-${o.order_id}" value="${esc(o.shipment.tracking_no || '')}" placeholder="หมายเลขพัสดุ" required>
+            <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id}, true)">🎲 สุ่มใหม่</button>
+            <button class="btn sm" style="flex:0 0 auto">บันทึกการแก้ไข</button>
           </form>
         ` : ''}
         <div class="actions" style="margin-top:10px">
           ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
+          ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
           ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
         </div>
       </div>
     `;
-  }).join('') : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3></div>';
+  }).join('')}` : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3></div>';
 };
 
 adminTabs.customers = async () => {
@@ -2060,11 +2078,51 @@ const A = window.A = {
     return false;
   },
 
+  genTrackingNo(carrier, orderId) {
+    const c = String(carrier || '').toLowerCase();
+    const d = new Date();
+    const ymd = `${String(d.getFullYear()).slice(-2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const oid = String(orderId || 0).padStart(3, '0');
+    const chars = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const rand = (n) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    if (c.includes('kerry')) return `KEX${ymd}${oid}${rand(4)}`;
+    if (c.includes('j&t') || c.includes('jt')) return `JT${ymd}${oid}${rand(4)}`;
+    if (c.includes('ไปรษณีย์') || c.includes('ems') || c.includes('thailand post')) {
+      return `EF${Math.floor(100000000 + Math.random() * 900000000)}TH`;
+    }
+    if (c.includes('flash')) return `TH${ymd}${oid}${rand(5)}`;
+    return `NC${ymd}${oid}${rand(4)}`;
+  },
+
+  fillTracking(id, isEdit = false) {
+    const carrierEl = $(isEdit ? `#edit-carrier-${id}` : `#ship-carrier-${id}`);
+    const trackEl = $(isEdit ? `#edit-track-${id}` : `#ship-track-${id}`);
+    if (!trackEl) return;
+    trackEl.value = A.genTrackingNo(carrierEl?.value || 'Flash Express', id);
+    trackEl.focus();
+  },
+
+  toggleEditShip(id) {
+    const form = $(`#edit-ship-form-${id}`);
+    if (!form) return;
+    form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+  },
+
   ship(e, id) {
     const d = formData(e);
     safe(async () => {
-      await api('POST', `/api/admin/orders/${id}/ship`, d);
-      toast('บันทึกการจัดส่งและเลขพัสดุแล้ว');
+      const res = await api('POST', `/api/admin/orders/${id}/ship`, d);
+      toast(`บันทึกการจัดส่งแล้ว (${res.carrier}: ${res.tracking_no})`);
+      refresh();
+    });
+    return false;
+  },
+
+  updateShipment(e, id) {
+    const d = formData(e);
+    safe(async () => {
+      const res = await api('PUT', `/api/admin/orders/${id}/shipment`, d);
+      toast(`อัปเดตเลขพัสดุแล้ว (${res.carrier}: ${res.tracking_no})`);
       refresh();
     });
     return false;
