@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T06:49:16.178Z",
-  "checksum": "123eccabf525dc41",
+  "timestamp": "2026-11-18T06:49:55.290Z",
+  "checksum": "2d9357a1690aa89f",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,7 +12,7 @@
     "address": 22,
     "product": 33,
     "product_variant": 142,
-    "cart_item": 0,
+    "cart_item": 1,
     "order": 1,
     "order_item": 1,
     "payment": 1,
@@ -2742,7 +2742,16 @@
         "sku": "SKU-66-2XL-เทาเข้ม"
       }
     ],
-    "cart_item": [],
+    "cart_item": [
+      {
+        "cart_id": 9,
+        "customer_id": 1,
+        "variant_id": 194,
+        "product_id": 30,
+        "quantity": 1,
+        "total_price": 3299
+      }
+    ],
     "order": [
       {
         "order_id": 8,

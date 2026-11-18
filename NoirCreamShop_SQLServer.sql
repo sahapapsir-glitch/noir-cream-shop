@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 123eccabf525dc41 | Updated: 2026-11-18T06:49:16.178Z
+-- Checksum: 2d9357a1690aa89f | Updated: 2026-11-18T06:49:55.290Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -650,6 +650,11 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (344, 66, N'XL', N'เทาเข้ม', N'#555555', 1700, 15, 15, N'SKU-66-XL-เทาเข้ม');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (345, 66, N'2XL', N'เทาเข้ม', N'#555555', 1700, 15, 15, N'SKU-66-2XL-เทาเข้ม');
 SET IDENTITY_INSERT dbo.product_variant OFF;
+
+-- ตาราง dbo.cart_item (1 รายการ)
+SET IDENTITY_INSERT dbo.cart_item ON;
+INSERT INTO dbo.cart_item (cart_id, customer_id, variant_id, product_id, quantity, total_price) VALUES (9, 1, 194, 30, 1, 3299);
+SET IDENTITY_INSERT dbo.cart_item OFF;
 
 -- ตาราง dbo.[order] (1 รายการ)
 SET IDENTITY_INSERT dbo.[order] ON;
