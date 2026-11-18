@@ -1,24 +1,24 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T07:11:22.045Z",
-  "checksum": "088f4affb284189f",
+  "timestamp": "2026-11-18T07:12:02.012Z",
+  "checksum": "9572e8bab3445707",
   "counts": {
     "admin": 5,
     "employee": 2,
     "coupon": 2,
     "supplier": 3,
-    "customer": 23,
-    "address": 23,
+    "customer": 22,
+    "address": 22,
     "product": 33,
     "product_variant": 142,
     "cart_item": 0,
-    "order": 3,
-    "order_item": 3,
-    "payment": 3,
-    "shipment": 3,
-    "review": 2,
-    "wishlist": 3,
+    "order": 2,
+    "order_item": 2,
+    "payment": 2,
+    "shipment": 2,
+    "review": 1,
+    "wishlist": 2,
     "review_like": 0
   },
   "tables": {
@@ -369,17 +369,6 @@
         "admin_id": 1,
         "password_hash": "$2b$10$Oy5mmGdeSFfWeX3Z3Cz6w.BnKheY.OowM4DhDUGEX74A/Y8/gSHHu",
         "created_at": "2026-11-17 16:14:37"
-      },
-      {
-        "customer_id": 23,
-        "first_name": "ทดสอบ",
-        "last_name": "ระบบ",
-        "phone": "0891112233",
-        "email": "e2e_1794985812222@test.com",
-        "address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120",
-        "admin_id": 1,
-        "password_hash": "$2b$10$spStM7IbOVXVB5FdKBy8ue0FFcaJAGxGVgiovjkTUP07bwTvpd0Le",
-        "created_at": "2026-11-18 07:10:12"
       }
     ],
     "address": [
@@ -690,20 +679,6 @@
         "province": "กรุงเทพมหานคร",
         "postal_code": "10250",
         "is_default": 1
-      },
-      {
-        "address_id": 65,
-        "customer_id": 23,
-        "recipient": "ทดสอบ ระบบ",
-        "phone": "0891112233",
-        "house_no": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว)",
-        "village": "หมู่บ้านทดสอบแกรนด์วิลล์",
-        "road": "ถนนแจ้งวัฒนะ",
-        "subdistrict": "บางพูด",
-        "district": "ปากเกร็ด",
-        "province": "นนทบุรี",
-        "postal_code": "11120",
-        "is_default": 1
       }
     ],
     "product": [
@@ -713,8 +688,8 @@
         "category": "เสื้อโปโล",
         "description": "brand:Polo Ralph Lauren",
         "status": "active",
-        "stock": 148,
-        "quantity": 148,
+        "stock": 150,
+        "quantity": 150,
         "price": 2900,
         "supplier_id": 3,
         "employee_id": 2,
@@ -1211,8 +1186,8 @@
         "color": "ดำ",
         "color_hex": "#000000",
         "price": 2900,
-        "stock": 28,
-        "stock_quantity": 28,
+        "stock": 30,
+        "stock_quantity": 30,
         "sku": "SKU-24-S-ดำ"
       },
       {
@@ -2798,21 +2773,6 @@
         "ship_name": "สมชาย ทดสอบ",
         "ship_phone": "089-999-9999",
         "ship_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540"
-      },
-      {
-        "order_id": 10,
-        "customer_id": 23,
-        "product_id": 24,
-        "order_date": "2026-11-18 07:10:30",
-        "status": "completed",
-        "subtotal": 5800,
-        "discount": 580,
-        "shipping_fee": 0,
-        "total_price": 5220,
-        "coupon_code": "WELCOME10",
-        "ship_name": "ทดสอบ ระบบ",
-        "ship_phone": "0891112233",
-        "ship_address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120"
       }
     ],
     "order_item": [
@@ -2833,15 +2793,6 @@
         "quantity": 1,
         "unit_price": 3299,
         "total_price": 3299
-      },
-      {
-        "order_item_id": 11,
-        "order_id": 10,
-        "variant_id": 165,
-        "product_id": 24,
-        "quantity": 2,
-        "unit_price": 2900,
-        "total_price": 5800
       }
     ],
     "payment": [
@@ -2860,14 +2811,6 @@
         "status": "paid",
         "amount": 3299,
         "paid_at": "2026-11-18 06:50:27"
-      },
-      {
-        "payment_id": 10,
-        "order_id": 10,
-        "method": "PromptPay",
-        "status": "paid",
-        "amount": 5220,
-        "paid_at": "2026-11-18 07:10:34"
       }
     ],
     "shipment": [
@@ -2892,17 +2835,6 @@
         "status": "shipped",
         "shipping_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540",
         "shipped_at": "2026-11-18 06:51:52"
-      },
-      {
-        "shipment_id": 7,
-        "tracking_no": "KEX999888777",
-        "payment_id": 10,
-        "order_id": 10,
-        "product_id": 24,
-        "carrier": "Kerry Express",
-        "status": "delivered",
-        "shipping_address": "เลขที่ 55/182 ซอยแจ้งวัฒนะ-ปากเกร็ด 43 แยก 6 (ทดสอบชื่อยาว) หมู่บ้านทดสอบแกรนด์วิลล์ ถนนแจ้งวัฒนะ บางพูด ปากเกร็ด นนทบุรี 11120",
-        "shipped_at": "2026-11-18 07:10:44"
       }
     ],
     "review": [
@@ -2916,17 +2848,6 @@
         "comment": "👍👍เสื้อสวย",
         "review_date": "2026-11-17",
         "created_at": "2026-11-17 16:19:03"
-      },
-      {
-        "review_id": 6,
-        "customer_id": 23,
-        "product_id": 24,
-        "first_name": "ทดสอบ",
-        "last_name": "ระบบ",
-        "rating": 5,
-        "comment": "ผ้าดีมาก ส่งไวสุดๆ",
-        "review_date": "2026-11-18",
-        "created_at": "2026-11-18 07:10:39"
       }
     ],
     "wishlist": [
@@ -2937,10 +2858,6 @@
       {
         "customer_id": 1,
         "product_id": 34
-      },
-      {
-        "customer_id": 23,
-        "product_id": 24
       }
     ],
     "review_like": []
@@ -2960,13 +2877,6 @@
         "order_date": "2026-11-18 06:50:22",
         "total_amount": 3299,
         "order_status": "shipped"
-      },
-      {
-        "order_id": 10,
-        "customer_id": 23,
-        "order_date": "2026-11-18 07:10:30",
-        "total_amount": 5220,
-        "order_status": "completed"
       }
     ],
     "Order_Detail": [
@@ -2983,13 +2893,6 @@
         "product_id": 30,
         "quantity": 1,
         "unit_price": 3299
-      },
-      {
-        "order_detail_id": 11,
-        "order_id": 10,
-        "product_id": 24,
-        "quantity": 2,
-        "unit_price": 2900
       }
     ]
   }

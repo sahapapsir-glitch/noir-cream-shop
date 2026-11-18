@@ -27,6 +27,17 @@ const tx = (fn) => {
 };
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 const bad = (msg, status = 400) => { throw new HttpError(status, msg); };
+let startupRestoreDone = false;
+let resolveStartupRestoreReady = null;
+const startupRestorePromise = new Promise((r) => { resolveStartupRestoreReady = r; });
+
+app.use('/api', async (req, res, next) => {
+  if (!startupRestoreDone) {
+    await Promise.race([startupRestorePromise, new Promise((r) => setTimeout(r, 3500))]);
+  }
+  next();
+});
+
 const wrap = (fn) => async (req, res) => {
   try {
     const out = (await fn(req, res)) ?? { ok: true };
@@ -37,14 +48,7 @@ const wrap = (fn) => async (req, res) => {
       !req.path.startsWith('/api/logout')
     ) {
       sqlSync.notifyChange(`${req.method} ${req.path}`, 'web');
-      const shouldAwaitGitHub =
-        req.path.startsWith('/api/admin/') ||
-        req.path === '/api/register' ||
-        req.path === '/api/checkout' ||
-        req.path.startsWith('/api/addresses') ||
-        req.path.startsWith('/api/me') ||
-        req.path.startsWith('/api/orders/');
-      if (shouldAwaitGitHub && sqlSync.getGitHubStatus().connected) {
+      if (sqlSync.getGitHubStatus().connected) {
         await Promise.race([
           sqlSync.syncToGitHubNow(`${req.method} ${req.path}`).catch(() => null),
           new Promise((r) => setTimeout(r, 4500))
@@ -863,7 +867,7 @@ app.get('/api/sql/bridge.ps1', (req, res) => {
   res.send(raw);
 });
 
-app.post('/api/sql/push', (req, res) => {
+app.post('/api/sql/push', async (req, res) => {
   try {
     const b = req.body || {};
     if (!b.tables || typeof b.tables !== 'object') {
@@ -882,6 +886,12 @@ app.post('/api/sql/push', (req, res) => {
       syncCustomerAddress(c.customer_id);
     }
     const snap = sqlSync.notifyChange('SSMS Push (2-Way Sync)', 'ssms');
+    if (sqlSync.getGitHubStatus().connected) {
+      await Promise.race([
+        sqlSync.syncToGitHubNow('SSMS Push (2-Way Sync)').catch(() => null),
+        new Promise((r) => setTimeout(r, 4500))
+      ]);
+    }
     res.json({
       ok: true,
       checksum: snap?.checksum,
@@ -894,7 +904,7 @@ app.post('/api/sql/push', (req, res) => {
   }
 });
 
-app.post('/api/sql/query', (req, res) => {
+app.post('/api/sql/query', async (req, res) => {
   try {
     needAdmin(req);
     const rawSql = String(req.body?.sql || '').trim();
@@ -917,7 +927,17 @@ app.post('/api/sql/query', (req, res) => {
       for (const p of db.prepare('SELECT product_id FROM product').all()) {
         syncStock(p.product_id);
       }
-      sqlSync.notifyChange(`SQL Execute: ${rawSql.slice(0, 60)}`, 'sql-console');
+      for (const c of db.prepare('SELECT customer_id FROM customer').all()) {
+        syncCustomerAddress(c.customer_id);
+      }
+      const reason = `SQL Execute: ${rawSql.slice(0, 60)}`;
+      sqlSync.notifyChange(reason, 'sql-console');
+      if (sqlSync.getGitHubStatus().connected) {
+        await Promise.race([
+          sqlSync.syncToGitHubNow(reason).catch(() => null),
+          new Promise((r) => setTimeout(r, 4500))
+        ]);
+      }
     }
     const durationMs = Number((performance.now() - t0).toFixed(2));
     res.json({
@@ -1020,7 +1040,17 @@ app.listen(PORT, () => {
   console.log(`ร้านเปิดแล้วที่ http://localhost:${PORT} (พร้อมระบบเชื่อม SQL Server Realtime: .\\SQLEXPRESS01 และ GitHub Auto-Sync)`);
   sqlSync.restoreFromGitHub(false).then((r) => {
     if (r?.restored) {
+      for (const p of db.prepare('SELECT product_id FROM product').all()) {
+        syncStock(p.product_id);
+      }
+      for (const c of db.prepare('SELECT customer_id FROM customer').all()) {
+        syncCustomerAddress(c.customer_id);
+      }
+      sqlSync.notifyChange('GitHub Startup Restore', 'github');
       console.log(`☁️ กู้คืนข้อมูลล่าสุดจาก GitHub สำเร็จ (Checksum: ${r.checksum})`);
     }
-  }).catch(() => {});
+  }).catch(() => {}).finally(() => {
+    startupRestoreDone = true;
+    resolveStartupRestoreReady?.();
+  });
 });

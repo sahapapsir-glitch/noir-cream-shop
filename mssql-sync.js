@@ -1023,9 +1023,11 @@ function createRealtimeSqlManager(db) {
     });
   }
 
-  // ซิงค์ฐานข้อมูลขึ้น GitHub อัตโนมัติ (Debounce 1.5 วินาทีเพื่อรวมการแก้ไขต่อเนื่องเป็น Commit เดียว)
+  // ซิงค์ฐานข้อมูลขึ้น GitHub อัตโนมัติ (คิวแบบ Serialize เพื่อไม่ให้ชนกันเมื่อมีคำสั่งซ้อน)
   let ghSyncTimer = null;
-  let pendingGhReason = null;
+  let activeSyncPromise = null;
+  let queuedSyncPromise = null;
+  let queuedSyncReason = null;
 
   async function syncToGitHubNow(reason = 'manual') {
     if (ghSyncTimer) {
@@ -1033,66 +1035,75 @@ function createRealtimeSqlManager(db) {
       ghSyncTimer = null;
     }
     refreshGitHubCapability();
-    if (githubStatus.syncing) {
-      pendingGhReason = reason;
-      return githubStatus;
+    if (activeSyncPromise) {
+      queuedSyncReason = reason;
+      if (!queuedSyncPromise) {
+        queuedSyncPromise = activeSyncPromise.then(() => {
+          const nextR = queuedSyncReason || 'queued';
+          queuedSyncReason = null;
+          queuedSyncPromise = null;
+          return syncToGitHubNow(nextR);
+        });
+      }
+      return queuedSyncPromise;
     }
-    githubStatus.syncing = true;
-    broadcast('github_status', githubStatus);
 
-    try {
-      try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
-      const snap = getSnapshot(db);
-      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap, null, 2), 'utf8');
-      const script = generateSqlServerScript(db, snap);
-      fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
+    activeSyncPromise = (async () => {
+      githubStatus.syncing = true;
+      broadcast('github_status', githubStatus);
 
-      const token = getGitHubToken();
-      let result;
-      if (token) {
-        try {
-          result = await pushToGitHubViaApi(reason, token);
-        } catch (apiErr) {
-          // กรณีเกิด 422/409 จากการอัปเดตพร้อมกัน ให้ลองใหม่อีก 1 ครั้ง
-          if (/GitHub API (409|422)/i.test(String(apiErr.message || ''))) {
+      try {
+        try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
+        const snap = getSnapshot(db);
+        fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap, null, 2), 'utf8');
+        const script = generateSqlServerScript(db, snap);
+        fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
+
+        const token = getGitHubToken();
+        let result;
+        if (token) {
+          try {
             result = await pushToGitHubViaApi(reason, token);
-          } else if (hasLocalGitRepo() && !isRenderEnvironment()) {
-            try {
-              result = await pushToGitHubViaLocalGit(reason);
-            } catch {
+          } catch (apiErr) {
+            // กรณีเกิด 422/409 จากการอัปเดตพร้อมกัน ให้ลองใหม่อีก 1 ครั้ง
+            if (/GitHub API (409|422)/i.test(String(apiErr.message || ''))) {
+              result = await pushToGitHubViaApi(reason, token);
+            } else if (hasLocalGitRepo() && !isRenderEnvironment()) {
+              try {
+                result = await pushToGitHubViaLocalGit(reason);
+              } catch {
+                throw apiErr;
+              }
+            } else {
               throw apiErr;
             }
-          } else {
-            throw apiErr;
           }
+        } else if (hasLocalGitRepo() && !isRenderEnvironment()) {
+          result = await pushToGitHubViaLocalGit(reason);
+        } else {
+          throw new Error('กรุณาตั้งค่า GITHUB_TOKEN ในหน้าจัดการร้าน (ปุ่ม 🔑 ตั้งค่า GitHub Token) หรือรัน Connect_SSMS_Realtime.bat บนเครื่อง เพื่อซิงค์ขึ้น GitHub');
         }
-      } else if (hasLocalGitRepo() && !isRenderEnvironment()) {
-        result = await pushToGitHubViaLocalGit(reason);
-      } else {
-        throw new Error('กรุณาตั้งค่า GITHUB_TOKEN ในหน้าจัดการร้าน (ปุ่ม 🔑 ตั้งค่า GitHub Token) หรือรัน Connect_SSMS_Realtime.bat บนเครื่อง เพื่อซิงค์ขึ้น GitHub');
-      }
 
-      githubStatus.connected = true;
-      githubStatus.mode = result.mode;
-      githubStatus.lastSyncAt = new Date().toISOString();
-      githubStatus.lastCommitSha = result.commitSha || githubStatus.lastCommitSha;
-      githubStatus.lastError = null;
-      if (!result.skipped) githubStatus.syncCount++;
+        githubStatus.connected = true;
+        githubStatus.mode = result.mode;
+        githubStatus.lastSyncAt = new Date().toISOString();
+        githubStatus.lastCommitSha = result.commitSha || githubStatus.lastCommitSha;
+        githubStatus.lastError = null;
+        if (!result.skipped) githubStatus.syncCount++;
 
-      addLog('github', `[GITHUB] ซิงค์ฐานข้อมูลขึ้น GitHub (${GITHUB_REPO}@${GITHUB_BRANCH}) สำเร็จ [${result.commitSha || 'up-to-date'}] (${reason})`);
-    } catch (e) {
-      githubStatus.lastError = e.message;
-      addLog('error', `[GITHUB] ซิงค์ขึ้น GitHub ไม่สำเร็จ: ${e.message}`);
-    } finally {
-      githubStatus.syncing = false;
-      broadcast('github_status', githubStatus);
-      if (pendingGhReason) {
-        const nextR = pendingGhReason;
-        pendingGhReason = null;
-        scheduleGitHubPush(nextR);
+        addLog('github', `[GITHUB] ซิงค์ฐานข้อมูลขึ้น GitHub (${GITHUB_REPO}@${GITHUB_BRANCH}) สำเร็จ [${result.commitSha || 'up-to-date'}] (${reason})`);
+      } catch (e) {
+        githubStatus.lastError = e.message;
+        addLog('error', `[GITHUB] ซิงค์ขึ้น GitHub ไม่สำเร็จ: ${e.message}`);
+      } finally {
+        githubStatus.syncing = false;
+        activeSyncPromise = null;
+        broadcast('github_status', githubStatus);
       }
-    }
-    return githubStatus;
+      return githubStatus;
+    })();
+
+    return activeSyncPromise;
   }
 
   function scheduleGitHubPush(reason = 'auto') {
@@ -1117,7 +1128,7 @@ function createRealtimeSqlManager(db) {
       if (fs.existsSync(SNAPSHOT_FILE_PATH)) {
         try {
           const prev = JSON.parse(fs.readFileSync(SNAPSHOT_FILE_PATH, 'utf8'));
-          if (prev && prev.checksum === snap.checksum && prev.timestamp && reason !== 'force') {
+          if (prev && prev.timestamp && ((prev.checksum === snap.checksum && reason !== 'force') || reason === 'init')) {
             snap.timestamp = prev.timestamp;
           }
         } catch {}
