@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-19T21:59:51.004Z",
-  "checksum": "b4c16bb33df11479",
+  "timestamp": "2026-11-19T22:18:25.473Z",
+  "checksum": "cef5bd49ff301a95",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,7 +12,7 @@
     "address": 22,
     "product": 33,
     "product_variant": 142,
-    "cart_item": 1,
+    "cart_item": 2,
     "order": 4,
     "order_item": 5,
     "payment": 4,
@@ -2758,6 +2758,14 @@
         "cart_id": 10,
         "customer_id": 23,
         "variant_id": 165,
+        "product_id": 24,
+        "quantity": 1,
+        "total_price": 2900
+      },
+      {
+        "cart_id": 14,
+        "customer_id": 1,
+        "variant_id": 166,
         "product_id": 24,
         "quantity": 1,
         "total_price": 2900
