@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-19T22:20:06.226Z",
-  "checksum": "6e4bb774f6f97ccb",
+  "timestamp": "2026-11-19T22:20:10.780Z",
+  "checksum": "150b33349b2dbb2a",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2829,7 +2829,7 @@
         "customer_id": 1,
         "product_id": 24,
         "order_date": "2026-11-19 22:18:45",
-        "status": "shipped",
+        "status": "completed",
         "subtotal": 2900,
         "discount": 0,
         "shipping_fee": 0,
@@ -2990,7 +2990,7 @@
         "order_id": 12,
         "product_id": 24,
         "carrier": "Flash Express",
-        "status": "shipped",
+        "status": "delivered",
         "shipping_address": "12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540",
         "shipped_at": "2026-11-19 22:20:05"
       }
@@ -3055,7 +3055,7 @@
         "customer_id": 1,
         "order_date": "2026-11-19 22:18:45",
         "total_amount": 2900,
-        "order_status": "shipped"
+        "order_status": "completed"
       }
     ],
     "Order_Detail": [
