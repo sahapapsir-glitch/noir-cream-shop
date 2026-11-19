@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 16eb65bf036d10cf | Updated: 2026-11-19T04:09:35.415Z
+-- Checksum: 90760afbbd2036ee | Updated: 2026-11-19T04:12:33.344Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -416,7 +416,7 @@ SET IDENTITY_INSERT dbo.supplier OFF;
 
 -- ตาราง dbo.customer (23 รายการ)
 SET IDENTITY_INSERT dbo.customer ON;
-INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (1, N'สมชาย', N'ทดสอบ', N'089-999-9999', N'demo@shop.com', N'เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540', 1, N'$2b$10$ZOb/yCkPVuDXc9kPaJHQreOI7VIqIIV7hJ.SH2jDhB6YA7na.5yvq', '2026-11-10 07:35:51');
+INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (1, N'สมชาย', N'ทดสอบ', N'089-999-9999', N'demo@shop.com', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540', 1, N'$2b$10$ZOb/yCkPVuDXc9kPaJHQreOI7VIqIIV7hJ.SH2jDhB6YA7na.5yvq', '2026-11-10 07:35:51');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (2, N'ณัฐพร', N'กิจเจริญ', N'081-234-5678', N'nattaporn.k@fake.com', N'เลขที่ 128/45 ชั้น 14 ห้อง 1402 อาคารพาร์ควิว เอ็กเซ็กคิวทีฟ เรสซิเดนซ์ ซอยสุขุมวิท 55 (ทองหล่อ 13) ถนนสุขุมวิท คลองตันเหนือ วัฒนา กรุงเทพมหานคร 10110', 1, N'$2b$10$eAH3aJTMiA0cB4p2zDcID.UmTVp48JrXU5l6IdnuhfnuflWWgNU7y', '2026-11-17 13:38:36');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (3, N'กิตติศักดิ์', N'สุวรรณรัตน์', N'082-345-6789', N'kittisak.s@fake.com', N'เลขที่ 88/154 โซน C ซอย 9/2 หมู่บ้านพฤกษาวิลเลจ เดอะซีซัน คลอง 1 หมู่ 6 ซอยรังสิต-นครนายก 32 ถนนพหลโยธิน คลองหนึ่ง คลองหลวง ปทุมธานี 12120', 2, N'$2b$10$A2sDGNSozuLDXAJ4fqYam.2yJocSIELDARTJRyMdu159lFpBKfWRK', '2026-11-17 13:38:36');
 INSERT INTO dbo.customer (customer_id, first_name, last_name, phone, email, address, admin_id, password_hash, created_at) VALUES (4, N'ชลธิชา', N'วงศ์สว่าง', N'083-456-7890', N'chonthicha.w@fake.com', N'เลขที่ 45/92 ชั้น 8 อาคาร B ห้อง 815 คอนโดแอสปาย งามวงศ์วาน หมู่ 2 ซอยงามวงศ์วาน 18 (จุฬาเกษม) ถนนงามวงศ์วาน บางเขน เมืองนนทบุรี นนทบุรี 11000', 3, N'$2b$10$mf7ySYhQdt52kHFwrGCveOWylhmOh9OjPnjWT7Y1ZLG/y6T9WFoAS', '2026-11-17 13:38:36');
@@ -443,7 +443,7 @@ SET IDENTITY_INSERT dbo.customer OFF;
 
 -- ตาราง dbo.address (22 รายการ)
 SET IDENTITY_INSERT dbo.address ON;
-INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (43, 1, N'สมชาย ทดสอบ', N'089-999-9999', N'เลขที่ 99/148 ชั้น 19 ห้อง 1908', N'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7', N'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12', N'บางพลีใหญ่', N'บางพลี', N'สมุทรปราการ', N'10540', 1);
+INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (43, 1, N'สมชาย ทดสอบ', N'089-999-9999', N'12123', N'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7', N'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12', N'บางพลีใหญ่', N'บางพลี', N'สมุทรปราการ', N'10540', 1);
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (44, 2, N'ณัฐพร กิจเจริญ', N'081-234-5678', N'เลขที่ 128/45 ชั้น 14 ห้อง 1402', N'อาคารพาร์ควิว เอ็กเซ็กคิวทีฟ เรสซิเดนซ์', N'ซอยสุขุมวิท 55 (ทองหล่อ 13) ถนนสุขุมวิท', N'คลองตันเหนือ', N'วัฒนา', N'กรุงเทพมหานคร', N'10110', 1);
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (45, 3, N'กิตติศักดิ์ สุวรรณรัตน์', N'082-345-6789', N'เลขที่ 88/154 โซน C ซอย 9/2', N'หมู่บ้านพฤกษาวิลเลจ เดอะซีซัน คลอง 1 หมู่ 6', N'ซอยรังสิต-นครนายก 32 ถนนพหลโยธิน', N'คลองหนึ่ง', N'คลองหลวง', N'ปทุมธานี', N'12120', 1);
 INSERT INTO dbo.address (address_id, customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default) VALUES (46, 4, N'ชลธิชา วงศ์สว่าง', N'083-456-7890', N'เลขที่ 45/92 ชั้น 8 อาคาร B ห้อง 815', N'คอนโดแอสปาย งามวงศ์วาน หมู่ 2', N'ซอยงามวงศ์วาน 18 (จุฬาเกษม) ถนนงามวงศ์วาน', N'บางเขน', N'เมืองนนทบุรี', N'นนทบุรี', N'11000', 1);
