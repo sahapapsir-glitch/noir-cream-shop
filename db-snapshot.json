@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-18T13:49:20.964Z",
-  "checksum": "aa0ca35a2cf51e24",
+  "timestamp": "2026-11-19T01:25:23.741Z",
+  "checksum": "38cdb7d0999c9a7b",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2784,7 +2784,7 @@
         "customer_id": 1,
         "product_id": 30,
         "order_date": "2026-11-18 06:50:22",
-        "status": "shipped",
+        "status": "completed",
         "subtotal": 3299,
         "discount": 0,
         "shipping_fee": 0,
@@ -2852,7 +2852,7 @@
         "order_id": 9,
         "product_id": 30,
         "carrier": "Kerry",
-        "status": "shipped",
+        "status": "delivered",
         "shipping_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540",
         "shipped_at": "2026-11-18 06:51:52"
       }
@@ -2896,7 +2896,7 @@
         "customer_id": 1,
         "order_date": "2026-11-18 06:50:22",
         "total_amount": 3299,
-        "order_status": "shipped"
+        "order_status": "completed"
       }
     ],
     "Order_Detail": [
