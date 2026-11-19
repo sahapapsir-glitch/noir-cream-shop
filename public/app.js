@@ -185,10 +185,11 @@ function renderChrome() {
       <a class="icon-btn hide-mobile" href="#/orders">📦 <span class="lbl">คำสั่งซื้อ</span></a>
       <a class="icon-btn" href="#/account" aria-label="บัญชีของฉัน">👤 <span class="lbl">${esc(u.first_name)}</span></a>`;
   } else if (u?.role === 'admin') {
+    const shortName = String(u.name || '').trim().split(/\s+/)[0] || u.name;
     h += `<a class="icon-btn" href="#/admin" style="font-weight:500;background:var(--cream-2)">⚙️ <span class="lbl">จัดการร้าน</span></a>
-      <a class="icon-btn hide-mobile" href="#/wishlist" aria-label="รายการโปรด">♡ <span class="lbl">โปรด</span></a>
-      <a class="icon-btn hide-mobile" href="#/orders">📦 <span class="lbl">คำสั่งซื้อ</span></a>
-      <a class="icon-btn hide-mobile" href="#/account">👤 <span class="lbl">${esc(u.name)}</span></a>`;
+      <a class="icon-btn hide-mobile" href="#/wishlist" aria-label="รายการโปรด" title="รายการโปรด (ทดลองซื้อ)">♡</a>
+      <a class="icon-btn hide-mobile" href="#/orders" aria-label="คำสั่งซื้อ" title="คำสั่งซื้อ (โหมดทดลองซื้อ)">📦 <span class="lbl">ออเดอร์</span></a>
+      <a class="icon-btn hide-mobile" href="#/account" title="${esc(u.name)}">👤 <span class="lbl">${esc(shortName)}</span></a>`;
   } else {
     h += `<a class="icon-btn" href="#/login">👤 <span class="lbl">เข้าสู่ระบบ</span></a><a class="btn sm hide-mobile" href="#/register">สมัครสมาชิก</a>`;
   }
