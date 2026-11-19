@@ -2245,8 +2245,12 @@ const A = window.A = {
     const c = _adminCache.customers.find((x) => x.customer_id === id);
     const mb = $('#modalBox');
     if (!c || !mb) return;
+    const addr = c.default_address || {};
     const adminOpts = '<option value="">— ไม่ระบุ —</option>' +
       _adminCache.admins.map((a) => `<option value="${a.admin_id}" ${a.admin_id === c.admin_id ? 'selected' : ''}>#${a.admin_id} ${esc(a.name)}</option>`).join('');
+    const legacyHint = !c.default_address && c.address
+      ? `<div class="muted" style="font-size:12px;margin-bottom:10px">ข้อมูลที่อยู่เดิม (แบบรวมข้อความ): ${esc(c.address)}</div>`
+      : '';
     mb.innerHTML = `
       <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
       <h3 style="margin:0 0 6px">✏️ แก้ไขข้อมูลลูกค้า #${c.customer_id}</h3>
@@ -2260,7 +2264,27 @@ const A = window.A = {
           <div class="field"><label>อีเมล *</label><input name="email" type="email" value="${esc(c.email)}" required></div>
           <div class="field"><label>เบอร์โทรศัพท์</label><input name="phone" value="${esc(c.phone || '')}" placeholder="08x-xxx-xxxx"></div>
         </div>
-        <div class="field"><label>ที่อยู่หลัก</label><textarea name="address" rows="2" placeholder="ที่อยู่สำหรับติดต่อ / จัดส่ง">${esc(c.address || '')}</textarea></div>
+        <div style="border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;background:#fcfaf7">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <b style="font-size:13.5px">ที่อยู่หลัก (แยกตาม ER — ตาราง Address)</b>
+            <span class="muted" style="font-size:12px">${addr.address_id ? `Address_ID #${addr.address_id} · ` : ''}ซิงค์ลงตาราง <code>customer.address</code> ให้อัตโนมัติ</span>
+          </div>
+          ${legacyHint}
+          <div class="row3">
+            <div class="field"><label>บ้านเลขที่</label><input name="house_no" value="${esc(addr.house_no || '')}" placeholder="เช่น 99/12"></div>
+            <div class="field"><label>หมู่บ้าน/หมู่ที่</label><input name="village" value="${esc(addr.village || '')}" placeholder="เช่น หมู่ 4"></div>
+            <div class="field"><label>ถนน</label><input name="road" value="${esc(addr.road || '')}" placeholder="เช่น สุขุมวิท"></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label>ตำบล/แขวง</label><input name="subdistrict" value="${esc(addr.subdistrict || '')}" placeholder="เช่น คลองเตย"></div>
+            <div class="field"><label>อำเภอ/เขต</label><input name="district" value="${esc(addr.district || '')}" placeholder="เช่น คลองเตย"></div>
+            <div class="field"><label>จังหวัด</label><input name="province" value="${esc(addr.province || '')}" placeholder="เช่น กรุงเทพฯ"></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="margin-bottom:0"><label>รหัสไปรษณีย์</label><input name="postal_code" value="${esc(addr.postal_code || '')}" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="ตัวเลข 5 หลัก"></div>
+            <div style="display:flex;align-items:flex-end;font-size:12px" class="muted">เว้นว่างทั้งหมดได้หากลูกค้ายังไม่ได้ระบุที่อยู่</div>
+          </div>
+        </div>
         <div class="row2">
           <div class="field"><label>แอดมินดูแล (FK)</label><select name="admin_id">${adminOpts}</select></div>
           <div class="field"><label>รหัสผ่านใหม่ (ไม่บังคับ)</label><input name="new_password" type="password" minlength="8" autocomplete="new-password" placeholder="เว้นว่างหากไม่เปลี่ยน"></div>

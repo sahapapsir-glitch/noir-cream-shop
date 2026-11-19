@@ -786,15 +786,21 @@ app.post('/api/admin/orders/:id/cancel', wrap((req) => {
 
 app.get('/api/admin/customers', wrap((req) => {
   needAdmin(req);
+  const addrStmt = db.prepare(`SELECT address_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default
+    FROM address WHERE customer_id=? ORDER BY is_default DESC, address_id LIMIT 1`);
+  const customers = db.prepare(`SELECT c.customer_id,c.first_name,c.last_name,c.email,c.phone,c.address,c.admin_id,c.created_at,
+    a.name admin_name,
+    (SELECT COUNT(*) FROM "order" o WHERE o.customer_id=c.customer_id) orders,
+    (SELECT COALESCE(SUM(total_price),0) FROM "order" o WHERE o.customer_id=c.customer_id AND o.status IN ('paid','shipped','completed')) spent
+    FROM customer c
+    LEFT JOIN admin a USING(admin_id)
+    ORDER BY c.customer_id DESC`).all().map((c) => ({
+    ...c,
+    default_address: addrStmt.get(c.customer_id) || null
+  }));
   return {
     admins: db.prepare('SELECT admin_id, name FROM admin ORDER BY admin_id').all(),
-    customers: db.prepare(`SELECT c.customer_id,c.first_name,c.last_name,c.email,c.phone,c.address,c.admin_id,c.created_at,
-      a.name admin_name,
-      (SELECT COUNT(*) FROM "order" o WHERE o.customer_id=c.customer_id) orders,
-      (SELECT COALESCE(SUM(total_price),0) FROM "order" o WHERE o.customer_id=c.customer_id AND o.status IN ('paid','shipped','completed')) spent
-      FROM customer c
-      LEFT JOIN admin a USING(admin_id)
-      ORDER BY c.customer_id DESC`).all()
+    customers
   };
 }));
 app.put('/api/admin/customers/:id', wrap((req) => {
@@ -804,7 +810,6 @@ app.put('/api/admin/customers/:id', wrap((req) => {
   if (!existing) bad('ไม่พบข้อมูลลูกค้านี้', 404);
   const first = str(b.first_name, 60), last = str(b.last_name, 60);
   const email = str(b.email, 120).toLowerCase(), phone = str(b.phone, 30);
-  const address = str(b.address, 500);
   const adminId = b.admin_id ? int(b.admin_id) : null;
   if (!first || !last) bad('กรุณากรอกชื่อและนามสกุลลูกค้า');
   if (!emailRe.test(email)) bad('รูปแบบอีเมลไม่ถูกต้อง');
@@ -813,9 +818,45 @@ app.put('/api/admin/customers/:id', wrap((req) => {
   if (adminId && !db.prepare('SELECT 1 FROM admin WHERE admin_id=?').get(adminId)) bad('ไม่พบแอดมินที่เลือก');
   const newPw = typeof b.new_password === 'string' ? b.new_password : '';
   if (newPw && newPw.length < 8) bad('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร');
+
+  const erAddrKeys = ['house_no', 'village', 'road', 'subdistrict', 'district', 'province', 'postal_code'];
+  const hasStructuredAddr = erAddrKeys.some((k) => b[k] !== undefined);
+  const addrVals = Object.fromEntries(erAddrKeys.map((k) => [k, str(b[k], 120)]));
+  const hasAnyAddrVal = erAddrKeys.some((k) => addrVals[k].length > 0);
+  if (hasStructuredAddr && hasAnyAddrVal) {
+    if (!addrVals.house_no || !addrVals.subdistrict || !addrVals.district || !addrVals.province) {
+      bad('หากกรอกที่อยู่ กรุณากรอกบ้านเลขที่ ตำบล/แขวง อำเภอ/เขต และจังหวัดให้ครบ');
+    }
+    if (!/^\d{5}$/.test(addrVals.postal_code)) {
+      bad('รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก');
+    }
+  }
+
   tx(() => {
-    db.prepare('UPDATE customer SET first_name=?, last_name=?, email=?, phone=?, address=?, admin_id=? WHERE customer_id=?')
-      .run(first, last, email, phone, address || null, adminId, cid);
+    db.prepare('UPDATE customer SET first_name=?, last_name=?, email=?, phone=?, admin_id=? WHERE customer_id=?')
+      .run(first, last, email, phone, adminId, cid);
+    if (hasStructuredAddr) {
+      const defAddr = db.prepare('SELECT * FROM address WHERE customer_id=? ORDER BY is_default DESC, address_id LIMIT 1').get(cid);
+      if (hasAnyAddrVal) {
+        if (defAddr) {
+          db.prepare('UPDATE address SET house_no=?, village=?, road=?, subdistrict=?, district=?, province=?, postal_code=? WHERE address_id=?')
+            .run(addrVals.house_no, addrVals.village, addrVals.road, addrVals.subdistrict, addrVals.district, addrVals.province, addrVals.postal_code, defAddr.address_id);
+        } else {
+          const hasAnyRow = db.prepare('SELECT 1 FROM address WHERE customer_id=?').get(cid);
+          db.prepare(`INSERT INTO address (customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+            .run(cid, `${first} ${last}`.trim(), phone || '', addrVals.house_no, addrVals.village, addrVals.road, addrVals.subdistrict, addrVals.district, addrVals.province, addrVals.postal_code, hasAnyRow ? 0 : 1);
+        }
+        syncCustomerAddress(cid);
+      } else if (defAddr) {
+        db.prepare('DELETE FROM address WHERE address_id=?').run(defAddr.address_id);
+        syncCustomerAddress(cid);
+      } else if (b.clear_address) {
+        db.prepare('UPDATE customer SET address=NULL WHERE customer_id=?').run(cid);
+      }
+    } else if (b.address !== undefined) {
+      db.prepare('UPDATE customer SET address=? WHERE customer_id=?').run(str(b.address, 500) || null, cid);
+    }
     if (newPw) {
       db.prepare('UPDATE customer SET password_hash=? WHERE customer_id=?').run(bcrypt.hashSync(newPw, 10), cid);
     }
