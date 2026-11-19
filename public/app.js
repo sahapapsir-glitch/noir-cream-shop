@@ -185,13 +185,14 @@ function renderChrome() {
       <a class="icon-btn hide-mobile" href="#/orders">📦 <span class="lbl">คำสั่งซื้อ</span></a>
       <a class="icon-btn" href="#/account" aria-label="บัญชีของฉัน">👤 <span class="lbl">${esc(u.first_name)}</span></a>`;
   } else if (u?.role === 'admin') {
-    h += `<a class="icon-btn" href="#/admin" style="font-weight:500;background:var(--cream-2)">⚙️ <span class="lbl">จัดการร้าน</span></a><a class="icon-btn hide-mobile" href="#/account">👤 <span class="lbl">${esc(u.name)}</span></a>`;
+    h += `<a class="icon-btn" href="#/admin" style="font-weight:500;background:var(--cream-2)">⚙️ <span class="lbl">จัดการร้าน</span></a>
+      <a class="icon-btn hide-mobile" href="#/wishlist" aria-label="รายการโปรด">♡ <span class="lbl">โปรด</span></a>
+      <a class="icon-btn hide-mobile" href="#/orders">📦 <span class="lbl">คำสั่งซื้อ</span></a>
+      <a class="icon-btn hide-mobile" href="#/account">👤 <span class="lbl">${esc(u.name)}</span></a>`;
   } else {
     h += `<a class="icon-btn" href="#/login">👤 <span class="lbl">เข้าสู่ระบบ</span></a><a class="btn sm hide-mobile" href="#/register">สมัครสมาชิก</a>`;
   }
-  if (u?.role !== 'admin') {
-    h += `<a class="icon-btn" href="#/cart" aria-label="ตะกร้า">🛍️ <span class="lbl">ตะกร้า</span>${state.cart.count ? `<span class="badge">${state.cart.count}</span>` : ''}</a>`;
-  }
+  h += `<a class="icon-btn" href="#/cart" aria-label="ตะกร้า">🛍️ <span class="lbl">ตะกร้า</span>${state.cart.count ? `<span class="badge">${state.cart.count}</span>` : ''}</a>`;
   if (u) {
     h += `<button class="icon-btn hide-mobile" onclick="A.logout()" title="ออกจากระบบ">ออก</button>`;
   }
@@ -211,6 +212,9 @@ function renderChrome() {
       mobUser.innerHTML = `
         <a href="#/admin" onclick="A.toggleMobileMenu()">⚙️ ระบบจัดการร้านค้า (Admin)</a>
         <a href="#/account" onclick="A.toggleMobileMenu()">👤 บัญชีผู้ดูแล (${esc(u.name)})</a>
+        <a href="#/orders" onclick="A.toggleMobileMenu()">📦 คำสั่งซื้อ (ทดลองซื้อ)</a>
+        <a href="#/wishlist" onclick="A.toggleMobileMenu()">♡ รายการโปรด</a>
+        <a href="#/cart" onclick="A.toggleMobileMenu()">🛍️ ตะกร้าสินค้า (${state.cart.count} ชิ้น)</a>
         <button class="btn ghost sm block" style="margin-top:8px" onclick="A.toggleMobileMenu(); A.logout()">ออกจากระบบ</button>
       `;
     } else {
@@ -266,7 +270,7 @@ function renderChrome() {
 }
 
 async function loadCart() {
-  if (state.user?.role === 'customer') {
+  if (state.user) {
     try { state.cart = await api('GET', '/api/cart'); } catch { /* ignore */ }
   } else {
     state.cart = { items: [], count: 0, subtotal: 0 };
@@ -533,7 +537,6 @@ pages.product = async (params, id) => {
 
   A.addToCart = () => safe(async () => {
     if (!state.user) { go('#/login'); return toast('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า', true); }
-    if (state.user.role === 'admin') return toast('บัญชีผู้ดูแลไม่สามารถสั่งซื้อได้', true);
     const v = find();
     if (!v || v.stock === 0) return toast('กรุณาเลือกไซส์ที่มีสินค้าพร้อมส่ง', true);
     const addBtn = $('#pd-add');
@@ -598,7 +601,8 @@ pages.product = async (params, id) => {
       </div>
       ${reviewForm(p)}
       ${p.reviews && p.reviews.length ? p.reviews.map((r) => {
-        const isMyReview = state.user?.id === r.customer_id;
+        const myCid = state.user?.shop_customer_id || state.user?.id;
+        const isMyReview = myCid === r.customer_id;
         const isAdmin = state.user?.role === 'admin';
         return `
         <div class="review" id="review-${r.review_id}">
@@ -634,7 +638,7 @@ pages.product = async (params, id) => {
 };
 
 function reviewForm(p) {
-  if (!state.user || state.user.role !== 'customer') {
+  if (!state.user) {
     return '<p class="muted" style="font-size:13.5px">เข้าสู่ระบบเพื่อเขียนรีวิว (เฉพาะผู้ที่เคยสั่งซื้อสินค้านี้)</p>';
   }
   if (!p.can_review) {
@@ -842,13 +846,30 @@ pages.register = async () => {
   </div>`;
 };
 
+const adminTestBanner = () => {
+  if (state.user?.role !== 'admin') return '';
+  const cid = state.user.shop_customer_id || 1;
+  const cname = state.user.shop_customer_name || 'สมชาย ทดสอบ';
+  return `
+    <div class="panel" style="background:#fcfaf7;border:1px dashed var(--ink-3);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13.5px">
+        🧪 <b>โหมดทดลองซื้อสำหรับแอดมิน (Admin Test Mode)</b> · ระบบจำลองการสั่งซื้อผ่านบัญชีลูกค้าทดสอบ <b>#${cid} (${esc(cname)})</b> เพื่อทดสอบตะกร้า ชำระเงิน และตัดสต็อกจริง
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn ghost sm" href="#/shop">🛍️ เลือกสินค้าเพิ่ม</a>
+        <button type="button" class="btn sm" onclick="adminTab='orders';location.hash='#/admin'">⚙️ ไปจัดการคำสั่งซื้อ (Admin)</button>
+      </div>
+    </div>
+  `;
+};
+
 pages.cart = async () => {
   if (!state.user) return go('#/login');
-  if (state.user.role === 'admin') return go('#/admin');
   await loadCart();
   const c = state.cart;
   if (!c.items.length) {
     app.innerHTML = `
+      ${adminTestBanner()}
       <div class="empty">
         <div style="font-size:36px;margin-bottom:8px">🛒</div>
         <h3>ตะกร้าของคุณยังว่างอยู่</h3>
@@ -861,6 +882,7 @@ pages.cart = async () => {
   const ship = c.subtotal >= state.config.free_shipping_min ? 0 : state.config.shipping_fee;
   const pct = Math.min(100, (c.subtotal / state.config.free_shipping_min) * 100);
   app.innerHTML = `
+    ${adminTestBanner()}
     <h2>ตะกร้าสินค้า (${c.count} ชิ้น)</h2>
     <div class="two-col">
       <div class="panel">
@@ -902,7 +924,6 @@ pages.cart = async () => {
 
 pages.checkout = async () => {
   if (!state.user) return go('#/login');
-  if (state.user.role !== 'customer') return go('#/');
   await loadCart();
   if (!state.cart.items.length) return go('#/cart');
   const { addresses } = await api('GET', '/api/addresses');
@@ -947,6 +968,7 @@ pages.checkout = async () => {
   });
 
   app.innerHTML = `
+    ${adminTestBanner()}
     <h2>ชำระเงิน</h2>
     <div class="two-col">
       <div>
@@ -1014,11 +1036,11 @@ function addressForm(handler, v = {}, btnLabel = 'บันทึกที่อ
 
 pages.orders = async (params) => {
   if (!state.user) return go('#/login');
-  if (state.user.role !== 'customer') return go('#/admin');
   const { orders } = await api('GET', '/api/orders');
   const fresh = +params.get('new') || 0;
   app.innerHTML = `
-    <h2>คำสั่งซื้อของฉัน</h2>
+    ${adminTestBanner()}
+    <h2>${state.user.role === 'admin' ? 'คำสั่งซื้อ (โหมดทดลองซื้อ)' : 'คำสั่งซื้อของฉัน'}</h2>
     ${fresh ? `<div class="panel" style="background:var(--ink);color:var(--cream);margin-bottom:18px">🎉 ขอบคุณที่สั่งซื้อ! คำสั่งซื้อ #${fresh} ได้รับการบันทึกเรียบร้อยแล้ว</div>` : ''}
     ${orders.length ? orders.map(orderCard).join('') : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3><a class="btn" style="margin-top:12px" href="#/shop">เริ่มเลือกชมสินค้า</a></div>'}
   `;
@@ -1058,6 +1080,7 @@ function orderCard(o) {
           ${o.status === 'pending' ? `<button class="btn danger sm" onclick="A.cancelOrder(${o.order_id})">ยกเลิก</button>` : ''}
           ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.received(${o.order_id})">ได้รับสินค้าแล้ว</button>` : ''}
           ${['paid', 'shipped', 'completed'].includes(o.status) ? `<a class="btn ghost sm" href="#/product/${o.items[0].product_id}">เขียนรีวิว</a>` : ''}
+          ${state.user?.role === 'admin' ? `<button type="button" class="btn ghost sm" onclick="adminTab='orders';location.hash='#/admin'">⚙️ จัดการใน Admin</button>` : ''}
         </div>
       </div>
     </div>
@@ -1066,20 +1089,48 @@ function orderCard(o) {
 
 pages.wishlist = async () => {
   if (!state.user) return go('#/login');
-  if (state.user.role !== 'customer') return go('#/');
   const { products } = await api('GET', '/api/wishlist');
-  app.innerHTML = `<h2>รายการโปรด</h2>${products.length ? `<div class="grid">${products.map(card).join('')}</div>` : '<div class="empty"><h3>ยังไม่มีสินค้าที่ถูกใจ</h3><a class="btn" href="#/shop">ไปเลือกสินค้า</a></div>'}`;
+  app.innerHTML = `${adminTestBanner()}<h2>รายการโปรด</h2>${products.length ? `<div class="grid">${products.map(card).join('')}</div>` : '<div class="empty"><h3>ยังไม่มีสินค้าที่ถูกใจ</h3><a class="btn" href="#/shop">ไปเลือกสินค้า</a></div>'}`;
 };
 
 pages.account = async () => {
   if (!state.user) return go('#/login');
   const u = state.user;
-  if (u.role === 'admin') {
-    app.innerHTML = `<h2>บัญชีผู้ดูแลระบบ</h2><div class="panel"><p><span class="muted">รหัสแอดมิน (admin_id): <b>#${u.id}</b></span><br><b>${esc(u.name)}</b><br>${esc(u.email)}<br>${esc(u.phone || '')}</p><a class="btn" href="#/admin">ไปหน้าจัดการร้าน</a></div>`;
-    return;
-  }
   const { addresses } = await api('GET', '/api/addresses');
   _addrCache = addresses;
+  if (u.role === 'admin') {
+    app.innerHTML = `
+      <h2>บัญชีผู้ดูแลระบบ <span class="muted" style="font-size:16px;font-weight:400">(Admin_ID: #${u.id})</span></h2>
+      <div class="panel">
+        <p style="margin-top:0">
+          <span class="muted">รหัสแอดมิน (admin_id): <b>#${u.id}</b></span><br>
+          <b>${esc(u.name)}</b><br>
+          ${esc(u.email)}<br>
+          ${esc(u.phone || '')}
+        </p>
+        <div class="actions">
+          <a class="btn sm" href="#/admin">⚙️ ไปหน้าจัดการร้าน</a>
+          <a class="btn ghost sm" href="#/shop">🛍️ ทดลองเลือกซื้อสินค้า</a>
+          <a class="btn ghost sm" href="#/orders">📦 ดูคำสั่งซื้อที่ทดลองสั่ง</a>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>ที่อยู่จัดส่ง (สำหรับโหมดทดลองซื้อ · ลูกค้าทดสอบ #${u.shop_customer_id || 1})</h3>
+        ${addresses.map((a) => `
+          <div class="opt-card" style="cursor:default">
+            <div style="flex:1"><span class="muted" style="font-size:12px">#${a.address_id} · </span><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+            <div class="actions">
+              ${a.is_default ? '' : `<button type="button" class="btn ghost sm" onclick="A.defAddr(${a.address_id})">ตั้งเป็นหลัก</button>`}
+              <button type="button" class="btn ghost sm" onclick="A.openEditAddress(${a.address_id})">✏️ แก้ไข</button>
+              <button type="button" class="btn danger sm" onclick="A.delAddr(${a.address_id})">ลบ</button>
+            </div>
+          </div>
+        `).join('') || '<p class="muted">ยังไม่มีที่อยู่จัดส่ง</p>'}
+        <details><summary class="link">+ เพิ่มที่อยู่ใหม่</summary><div style="margin-top:14px">${addressForm('A.addAddress(event, false)')}</div></details>
+      </div>
+    `;
+    return;
+  }
   app.innerHTML = `
     <h2>บัญชีของฉัน <span class="muted" style="font-size:16px;font-weight:400">(Customer_ID: #${u.id})</span></h2>
     <div class="panel">
@@ -1147,6 +1198,10 @@ pages.admin = async () => {
   app.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn ghost sm" href="#/shop">🛍️ ทดลองซื้อสินค้า (Test Buy)</a>
+        <a class="btn ghost sm" href="#/orders">📦 คำสั่งซื้อที่ทดลองสั่ง</a>
+      </div>
     </div>
     <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
     <div id="tab"></div>
@@ -1436,6 +1491,7 @@ adminTabs.orders = async () => {
           </form>
         ` : ''}
         <div class="actions" style="margin-top:10px">
+          ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">💳 จำลองชำระเงิน</button>` : ''}
           ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
           ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
           ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
@@ -1898,7 +1954,7 @@ const A = window.A = {
 
   wish(id, btn) {
     safe(async () => {
-      if (state.user?.role !== 'customer') {
+      if (!state.user) {
         go('#/login');
         return toast('กรุณาเข้าสู่ระบบเพื่อบันทึกรายการโปรด', true);
       }

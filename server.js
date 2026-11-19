@@ -98,13 +98,71 @@ const startSession = (res, role, id) => {
     .run(token, role, id, Date.now() + SESSION_DAYS * 864e5);
   res.setHeader('Set-Cookie', `sid=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_DAYS * 86400}`);
 };
-const needCustomer = (req) => { if (!req.user || req.user.role !== 'customer') bad('กรุณาเข้าสู่ระบบก่อน', 401); return req.user.id; };
+const getShopCustomerId = (user) => {
+  if (!user) return null;
+  if (user.role === 'customer') return user.id;
+  if (user.role === 'admin') {
+    const row =
+      db.prepare("SELECT customer_id FROM customer WHERE LOWER(email)='demo@shop.com' ORDER BY customer_id LIMIT 1").get() ||
+      db.prepare('SELECT customer_id FROM customer WHERE customer_id=1').get() ||
+      db.prepare('SELECT customer_id FROM customer WHERE admin_id=? ORDER BY customer_id LIMIT 1').get(user.id) ||
+      db.prepare('SELECT customer_id FROM customer ORDER BY customer_id LIMIT 1').get();
+    return row ? row.customer_id : null;
+  }
+  return null;
+};
+const needCustomer = (req) => {
+  if (!req.user) bad('กรุณาเข้าสู่ระบบก่อน', 401);
+  if (req.user.role === 'customer') return req.user.id;
+  if (req.user.role === 'admin') {
+    let cid = getShopCustomerId(req.user);
+    if (!cid) {
+      const a = db.prepare('SELECT admin_id, phone FROM admin WHERE admin_id=?').get(req.user.id);
+      cid = Number(
+        db.prepare('INSERT INTO customer (first_name,last_name,phone,email,admin_id,password_hash) VALUES (?,?,?,?,?,?)')
+          .run('สมชาย', 'ทดสอบ', a?.phone || '089-999-9999', 'demo@shop.com', a?.admin_id || null, bcrypt.hashSync('12345678', 10))
+          .lastInsertRowid
+      );
+    }
+    if (!db.prepare('SELECT 1 FROM address WHERE customer_id=? LIMIT 1').get(cid)) {
+      const c = db.prepare('SELECT first_name, last_name, phone FROM customer WHERE customer_id=?').get(cid);
+      db.prepare(`INSERT INTO address (customer_id, recipient, phone, house_no, village, road, subdistrict, district, province, postal_code, is_default)
+        VALUES (?,?,?,?,?,?,?,?,?,?,1)`)
+        .run(
+          cid,
+          `${c?.first_name || 'สมชาย'} ${c?.last_name || 'ทดสอบ'}`.trim(),
+          c?.phone || '089-999-9999',
+          'เลขที่ 99/148 ชั้น 19 ห้อง 1908',
+          'อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7',
+          'ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12',
+          'บางพลีใหญ่',
+          'บางพลี',
+          'สมุทรปราการ',
+          '10540'
+        );
+      syncCustomerAddress(cid);
+    }
+    return cid;
+  }
+  bad('กรุณาเข้าสู่ระบบก่อน', 401);
+};
 const needAdmin = (req) => { if (!req.user || req.user.role !== 'admin') bad('ต้องเป็นผู้ดูแลระบบ', 403); return req.user.id; };
 
 const publicUser = (role, id) => {
   if (role === 'admin') {
     const a = db.prepare('SELECT admin_id id,name,email,phone FROM admin WHERE admin_id=?').get(id);
-    return a && { role, id: a.id, name: a.name, email: a.email, phone: a.phone };
+    if (!a) return null;
+    const scid = getShopCustomerId({ role: 'admin', id: a.id });
+    const sc = scid ? db.prepare('SELECT customer_id,first_name,last_name FROM customer WHERE customer_id=?').get(scid) : null;
+    return {
+      role,
+      id: a.id,
+      name: a.name,
+      email: a.email,
+      phone: a.phone,
+      shop_customer_id: sc?.customer_id || null,
+      shop_customer_name: sc ? `${sc.first_name} ${sc.last_name}`.trim() : 'สมชาย ทดสอบ'
+    };
   }
   const c = db.prepare('SELECT customer_id id,first_name,last_name,email,phone,address,admin_id FROM customer WHERE customer_id=?').get(id);
   return c && { role, id: c.id, first_name: c.first_name, last_name: c.last_name, name: `${c.first_name} ${c.last_name}`, email: c.email, phone: c.phone, address: c.address };
@@ -208,11 +266,11 @@ app.get('/api/products', wrap((req) => {
     price_desc: 'ORDER BY min_price DESC',
     rating: 'ORDER BY rating DESC NULLS LAST',
   };
-  return { products: productList(where.join(' AND '), params, orders[sort] || 'ORDER BY p.product_id', req.user?.role === 'customer' ? req.user.id : null) };
+  return { products: productList(where.join(' AND '), params, orders[sort] || 'ORDER BY p.product_id', getShopCustomerId(req.user)) };
 }));
 
 app.get('/api/products/:id', wrap((req) => {
-  const uid = req.user?.role === 'customer' ? req.user.id : null;
+  const uid = getShopCustomerId(req.user);
   const [p] = productList("p.product_id=? AND p.status='active'", [int(req.params.id)], '', uid);
   if (!p) bad('ไม่พบสินค้า', 404);
   p.variants = db.prepare('SELECT variant_id,size,color,color_hex,price,stock,stock_quantity FROM product_variant WHERE product_id=? ORDER BY color,rowid').all(p.product_id);
@@ -479,7 +537,7 @@ app.get('/api/orders', wrap((req) => {
 }));
 const ownOrder = (req) => {
   const uid = needCustomer(req), o = orderDetail(int(req.params.id));
-  if (!o || o.customer_id !== uid) bad('ไม่พบคำสั่งซื้อ', 404);
+  if (!o || (req.user?.role !== 'admin' && o.customer_id !== uid)) bad('ไม่พบคำสั่งซื้อ', 404);
   return o;
 };
 app.get('/api/orders/:id', wrap((req) => ({ order: ownOrder(req) })));
