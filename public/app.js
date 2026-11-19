@@ -1127,42 +1127,35 @@ pages.sql = async () => {
 
 pages.admin = async () => {
   if (state.user?.role !== 'admin') { go('#/login'); return; }
+  if (adminTab === 'sql') adminTab = 'dash';
   const tabs = [
     ['dash', '📊 ภาพรวม'],
     ['products', '📦 สินค้า/สต็อก'],
     ['orders', '📑 คำสั่งซื้อ'],
     ['customers', '👥 ลูกค้า'],
-    ['suppliers', '🏭 ซัพพลายเออร์/พนักงาน'],
-    ['sql', '🗄️ SQL Server (Realtime)']
+    ['suppliers', '🏭 ซัพพลายเออร์/พนักงาน']
   ];
   app.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
-        <button type="button" class="sql-live-pill" id="sqlHeaderPill" onclick="A.tab('sql')" title="คลิกเพื่อเปิดหน้า SQL Server Realtime Studio">
-          <span class="sql-pulse-dot"></span>
-          <span>SQL Realtime: <b>.\\SQLEXPRESS01</b> / <code>NoirCreamShop</code></span>
-        </button>
-        <button type="button" class="sql-live-pill" id="githubHeaderPill" onclick="A.syncGitHubNow()" title="คลิกเพื่อซิงค์ฐานข้อมูล (สินค้า/สต็อก/ลูกค้า) ขึ้น GitHub ทันที">
-          <span class="sql-pulse-dot"></span>
-          <span id="githubHeaderText">☁️ GitHub Auto-Sync</span>
-        </button>
-        <button type="button" class="btn ghost sm" id="githubTokenBtn" onclick="A.setupGitHubToken()" title="ตั้งค่า GitHub Token เพื่อให้ Render Cloud ซิงค์ขึ้น GitHub อัตโนมัติ">🔑 ตั้งค่า GitHub Token</button>
-      </div>
-      <button class="btn danger sm" onclick="A.clearAllStock()">⚠️ ล้างสต็อกสินค้าทั้งหมด</button>
+      <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
     </div>
     <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
     <div id="tab"></div>
   `;
 
   await adminTabs[adminTab]();
-  A.refreshGitHubHeader?.();
 };
 
+const _adminCache = { customers: [], admins: [], suppliers: [], employees: [], coupons: [] };
 const adminTabs = {};
 
 adminTabs.dash = async () => {
-  const s = await api('GET', '/api/admin/stats');
+  const [s, couponRes] = await Promise.all([
+    api('GET', '/api/admin/stats'),
+    api('GET', '/api/admin/coupons').catch(() => ({ coupons: [] }))
+  ]);
+  const coupons = couponRes.coupons || [];
+  _adminCache.coupons = coupons;
   $('#tab').innerHTML = `
     <div class="stats">
       <div class="stat"><small>รายได้ (ชำระแล้ว)</small><b data-count="${s.revenue}" data-money="1">${money(s.revenue)}</b></div>
@@ -1181,6 +1174,41 @@ adminTabs.dash = async () => {
           </table>
         </div>
       ` : '<p class="muted">ไม่มีสินค้าใกล้หมด</p>'}
+    </div>
+    <div class="panel">
+      <h3>🎟️ จัดการคูปองส่วนลด</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>โค้ดส่วนลด</th><th>ประเภท</th><th>มูลค่าส่วนลด</th><th>ยอดสั่งซื้อขั้นต่ำ</th><th>สถานะ</th><th>การจัดการ</th></tr>
+          ${coupons.length ? coupons.map((c) => `
+            <tr>
+              <td><b><code>${esc(c.code)}</code></b></td>
+              <td>${c.type === 'percent' ? 'เปอร์เซ็นต์ (%)' : 'ลดจำนวนเงิน (฿)'}</td>
+              <td><b>${c.type === 'percent' ? `${Number(c.value)}%` : money(c.value)}</b></td>
+              <td>${Number(c.min_total || 0) > 0 ? money(c.min_total) : 'ไม่มีขั้นต่ำ'}</td>
+              <td><span class="status ${c.active ? 'paid' : 'cancelled'}">${c.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</span></td>
+              <td class="actions" style="white-space:nowrap">
+                <button type="button" class="btn ghost sm" onclick="A.openEditCoupon(${JSON.stringify(c.code).replace(/"/g, '&quot;')})">✏️ แก้ไข</button>
+                <button type="button" class="btn danger sm" onclick="A.deleteCoupon(${JSON.stringify(c.code).replace(/"/g, '&quot;')})">ลบ</button>
+              </td>
+            </tr>
+          `).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">ยังไม่มีคูปองส่วนลด</td></tr>'}
+        </table>
+      </div>
+      <form class="inline-form" onsubmit="return A.addCoupon(event)">
+        <input name="code" placeholder="รหัสคูปอง เช่น SALE20" style="text-transform:uppercase" required>
+        <select name="type">
+          <option value="percent">ลดเป็น %</option>
+          <option value="fixed">ลดเป็นบาท (฿)</option>
+        </select>
+        <input name="value" type="number" min="1" step="1" placeholder="มูลค่าส่วนลด" required>
+        <input name="min_total" type="number" min="0" step="1" placeholder="ยอดขั้นต่ำ (฿)" value="0">
+        <select name="active">
+          <option value="1">เปิดใช้งาน</option>
+          <option value="0">ปิดใช้งาน</option>
+        </select>
+        <button class="btn sm">+ เพิ่มคูปอง</button>
+      </form>
     </div>
   `;
   animateCounters();
@@ -1409,7 +1437,9 @@ adminTabs.orders = async () => {
 };
 
 adminTabs.customers = async () => {
-  const { customers } = await api('GET', '/api/admin/customers');
+  const { customers = [], admins = [] } = await api('GET', '/api/admin/customers');
+  _adminCache.customers = customers;
+  _adminCache.admins = admins;
   const q = ($('#custSearch')?.value || '').trim().toLowerCase();
   const filtered = q
     ? customers.filter((c) =>
@@ -1428,33 +1458,50 @@ adminTabs.customers = async () => {
         </div>
       </div>
       <table>
-        <tr><th># (Customer_ID)</th><th>ชื่อ</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>แอดมินดูแล (FK)</th><th>สมัครเมื่อ</th><th>ออเดอร์</th><th>ยอดซื้อ</th></tr>
+        <tr><th># (Customer_ID)</th><th>ชื่อ</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>แอดมินดูแล (FK)</th><th>สมัครเมื่อ</th><th>ออเดอร์</th><th>ยอดซื้อ</th><th>การจัดการ</th></tr>
         ${filtered.length
-          ? filtered.map((c) => `<tr data-cust-row="${esc((c.customer_id + ' ' + c.first_name + ' ' + c.last_name + ' ' + c.email + ' ' + (c.phone || '') + ' ' + (c.address || '')).toLowerCase())}"><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${esc(c.email)}</td><td>${esc(c.phone || '-')}</td><td>${esc(c.address || '-')}</td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td>${dt(c.created_at)}</td><td>${c.orders}</td><td>${money(c.spent)}</td></tr>`).join('')
-          : '<tr><td colspan="9" class="muted" style="text-align:center;padding:20px">ไม่พบข้อมูลลูกค้า</td></tr>'}
+          ? filtered.map((c) => `<tr data-cust-row="${esc((c.customer_id + ' ' + c.first_name + ' ' + c.last_name + ' ' + c.email + ' ' + (c.phone || '') + ' ' + (c.address || '')).toLowerCase())}"><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${esc(c.email)}</td><td>${esc(c.phone || '-')}</td><td>${esc(c.address || '-')}</td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td>${dt(c.created_at)}</td><td>${c.orders}</td><td>${money(c.spent)}</td><td class="actions" style="white-space:nowrap"><button type="button" class="btn ghost sm" onclick="A.openEditCustomer(${c.customer_id})">✏️ แก้ไข</button><button type="button" class="btn danger sm" onclick="A.deleteCustomer(${c.customer_id}, ${JSON.stringify(`${c.first_name} ${c.last_name}`).replace(/"/g, '&quot;')})">ลบ</button></td></tr>`).join('')
+          : '<tr><td colspan="10" class="muted" style="text-align:center;padding:20px">ไม่พบข้อมูลลูกค้า</td></tr>'}
       </table>
     </div>
   `;
 };
 
 adminTabs.suppliers = async () => {
-  const { admins = [], suppliers, employees } = await api('GET', '/api/admin/suppliers');
+  const { admins = [], suppliers = [], employees = [] } = await api('GET', '/api/admin/suppliers');
+  _adminCache.admins = admins;
+  _adminCache.suppliers = suppliers;
+  _adminCache.employees = employees;
+  const curAdminId = state.user?.admin_id || state.user?.id;
   $('#tab').innerHTML = `
     <div class="panel">
       <h3>ผู้ดูแลระบบ (Admin)</h3>
       <div class="table-wrap">
         <table>
-          <tr><th># (Admin_ID)</th><th>ชื่อ-นามสกุล</th><th>อีเมล</th><th>เบอร์โทรศัพท์</th></tr>
+          <tr><th># (Admin_ID)</th><th>ชื่อ-นามสกุล</th><th>อีเมล</th><th>เบอร์โทรศัพท์</th><th>การจัดการ</th></tr>
           ${admins.map((a) => `
             <tr>
               <td><b>#${a.admin_id}</b></td>
               <td><b>${esc(a.name)}</b></td>
               <td>${esc(a.email)}</td>
               <td>${esc(a.phone || '-')}</td>
+              <td class="actions" style="white-space:nowrap">
+                <button type="button" class="btn ghost sm" onclick="A.openEditAdmin(${a.admin_id})">✏️ แก้ไข</button>
+                ${a.admin_id === curAdminId
+                  ? '<button type="button" class="btn ghost sm" disabled title="ไม่สามารถลบบัญชีที่กำลังล็อกอิน">กำลังใช้งาน</button>'
+                  : `<button type="button" class="btn danger sm" onclick="A.deleteAdmin(${a.admin_id}, ${JSON.stringify(a.name).replace(/"/g, '&quot;')})">ลบ</button>`}
+              </td>
             </tr>
           `).join('')}
         </table>
       </div>
+      <form class="inline-form" onsubmit="return A.addAdmin(event)">
+        <input name="name" placeholder="ชื่อผู้ดูแลระบบ" required>
+        <input name="email" type="email" placeholder="อีเมล" required>
+        <input name="phone" placeholder="เบอร์โทร">
+        <input name="password" type="password" minlength="8" placeholder="รหัสผ่าน (8+ ตัว)" required>
+        <button class="btn sm">+ เพิ่มแอดมิน</button>
+      </form>
     </div>
     <div class="panel">
       <h3>ซัพพลายเออร์</h3>
@@ -1471,7 +1518,10 @@ adminTabs.suppliers = async () => {
               <td>${esc(s.address || '-')}</td>
               <td>${s.employee_id ? `#${s.employee_id} ` : ''}${esc(s.employee_name || '-')}</td>
               <td>${s.admin_id ? `#${s.admin_id} ` : ''}${esc(s.admin_name || '-')}</td>
-              <td><button class="btn danger sm" onclick="A.deleteSupplier(${s.supplier_id}, ${JSON.stringify(s.name).replace(/"/g, '&quot;')})">ลบ</button></td>
+              <td class="actions" style="white-space:nowrap">
+                <button type="button" class="btn ghost sm" onclick="A.openEditSupplier(${s.supplier_id})">✏️ แก้ไข</button>
+                <button type="button" class="btn danger sm" onclick="A.deleteSupplier(${s.supplier_id}, ${JSON.stringify(s.name).replace(/"/g, '&quot;')})">ลบ</button>
+              </td>
             </tr>
           `).join('') : '<tr><td colspan="9" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูลซัพพลายเออร์</td></tr>'}
         </table>
@@ -1499,7 +1549,10 @@ adminTabs.suppliers = async () => {
               <td>${esc(e.email || '-')}</td>
               <td>${esc(e.phone || '-')}</td>
               <td>${esc(e.address || '-')}</td>
-              <td><button class="btn danger sm" onclick="A.deleteEmployee(${e.employee_id}, ${JSON.stringify(`${e.first_name} ${e.last_name}`).replace(/"/g, '&quot;')})">ลบ</button></td>
+              <td class="actions" style="white-space:nowrap">
+                <button type="button" class="btn ghost sm" onclick="A.openEditEmployee(${e.employee_id})">✏️ แก้ไข</button>
+                <button type="button" class="btn danger sm" onclick="A.deleteEmployee(${e.employee_id}, ${JSON.stringify(`${e.first_name} ${e.last_name}`).replace(/"/g, '&quot;')})">ลบ</button>
+              </td>
             </tr>
           `).join('') : '<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูลพนักงาน</td></tr>'}
         </table>
@@ -2151,6 +2204,259 @@ const A = window.A = {
     }
   },
 
+  openEditCustomer(id) {
+    const c = _adminCache.customers.find((x) => x.customer_id === id);
+    const mb = $('#modalBox');
+    if (!c || !mb) return;
+    const adminOpts = '<option value="">— ไม่ระบุ —</option>' +
+      _adminCache.admins.map((a) => `<option value="${a.admin_id}" ${a.admin_id === c.admin_id ? 'selected' : ''}>#${a.admin_id} ${esc(a.name)}</option>`).join('');
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 6px">✏️ แก้ไขข้อมูลลูกค้า #${c.customer_id}</h3>
+      <p class="muted" style="margin:0 0 16px;font-size:13px">ออเดอร์สะสม ${c.orders || 0} รายการ · ยอดซื้อรวม ${money(c.spent || 0)}</p>
+      <form onsubmit="return A.saveCustomerEdit(event, ${c.customer_id})">
+        <div class="row2">
+          <div class="field"><label>ชื่อ *</label><input name="first_name" value="${esc(c.first_name)}" required></div>
+          <div class="field"><label>นามสกุล *</label><input name="last_name" value="${esc(c.last_name)}" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>อีเมล *</label><input name="email" type="email" value="${esc(c.email)}" required></div>
+          <div class="field"><label>เบอร์โทรศัพท์</label><input name="phone" value="${esc(c.phone || '')}" placeholder="08x-xxx-xxxx"></div>
+        </div>
+        <div class="field"><label>ที่อยู่หลัก</label><textarea name="address" rows="2" placeholder="ที่อยู่สำหรับติดต่อ / จัดส่ง">${esc(c.address || '')}</textarea></div>
+        <div class="row2">
+          <div class="field"><label>แอดมินดูแล (FK)</label><select name="admin_id">${adminOpts}</select></div>
+          <div class="field"><label>รหัสผ่านใหม่ (ไม่บังคับ)</label><input name="new_password" type="password" minlength="8" autocomplete="new-password" placeholder="เว้นว่างหากไม่เปลี่ยน"></div>
+        </div>
+        <div class="actions" style="justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+  },
+  saveCustomerEdit(e, id) {
+    const d = formData(e);
+    d.admin_id = d.admin_id ? Number(d.admin_id) : null;
+    if (!d.new_password) delete d.new_password;
+    safe(async () => {
+      await api('PUT', `/api/admin/customers/${id}`, d);
+      A.closeModal();
+      toast('อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
+      refresh();
+    });
+    return false;
+  },
+  deleteCustomer(id, name) {
+    if (confirm(`ยืนยันการลบบัญชีลูกค้า "${name || ''}" (#${id}) ออกจากระบบ?`)) {
+      safe(async () => {
+        await api('DELETE', `/api/admin/customers/${id}`);
+        toast('ลบข้อมูลลูกค้าเรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  },
+
+  addAdmin(e) {
+    const d = formData(e);
+    safe(async () => {
+      await api('POST', '/api/admin/admins', d);
+      toast('เพิ่มผู้ดูแลระบบแล้ว');
+      refresh();
+    });
+    return false;
+  },
+  openEditAdmin(id) {
+    const a = _adminCache.admins.find((x) => x.admin_id === id);
+    const mb = $('#modalBox');
+    if (!a || !mb) return;
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 14px">✏️ แก้ไขข้อมูลผู้ดูแลระบบ #${a.admin_id}</h3>
+      <form onsubmit="return A.saveAdminEdit(event, ${a.admin_id})">
+        <div class="field"><label>ชื่อ-นามสกุล *</label><input name="name" value="${esc(a.name)}" required></div>
+        <div class="row2">
+          <div class="field"><label>อีเมล *</label><input name="email" type="email" value="${esc(a.email)}" required></div>
+          <div class="field"><label>เบอร์โทรศัพท์</label><input name="phone" value="${esc(a.phone || '')}"></div>
+        </div>
+        <div class="field"><label>รหัสผ่านใหม่ (ไม่บังคับ)</label><input name="new_password" type="password" minlength="8" autocomplete="new-password" placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน (8 ตัวขึ้นไป)"></div>
+        <div class="actions" style="justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+  },
+  saveAdminEdit(e, id) {
+    const d = formData(e);
+    if (!d.new_password) delete d.new_password;
+    safe(async () => {
+      await api('PUT', `/api/admin/admins/${id}`, d);
+      if (state.user?.role === 'admin' && (state.user.admin_id === id || state.user.id === id)) {
+        state.user.name = d.name;
+        state.user.email = d.email;
+        state.user.phone = d.phone;
+      }
+      A.closeModal();
+      toast('อัปเดตข้อมูลผู้ดูแลระบบเรียบร้อยแล้ว');
+      refresh();
+    });
+    return false;
+  },
+  deleteAdmin(id, name) {
+    if (confirm(`ยืนยันการลบผู้ดูแลระบบ "${name || ''}" (#${id})?`)) {
+      safe(async () => {
+        await api('DELETE', `/api/admin/admins/${id}`);
+        toast('ลบผู้ดูแลระบบเรียบร้อยแล้ว');
+        refresh();
+      });
+    }
+  },
+
+  openEditSupplier(id) {
+    const s = _adminCache.suppliers.find((x) => x.supplier_id === id);
+    const mb = $('#modalBox');
+    if (!s || !mb) return;
+    const empOpts = '<option value="">— ไม่ระบุ —</option>' +
+      _adminCache.employees.map((e) => `<option value="${e.employee_id}" ${e.employee_id === s.employee_id ? 'selected' : ''}>#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}</option>`).join('');
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 14px">✏️ แก้ไขข้อมูลซัพพลายเออร์ #${s.supplier_id}</h3>
+      <form onsubmit="return A.saveSupplierEdit(event, ${s.supplier_id})">
+        <div class="row2">
+          <div class="field"><label>ชื่อซัพพลายเออร์ *</label><input name="name" value="${esc(s.name)}" required></div>
+          <div class="field"><label>ผู้ติดต่อ</label><input name="contact_name" value="${esc(s.contact_name || '')}"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>เบอร์โทรศัพท์</label><input name="phone" value="${esc(s.phone || '')}"></div>
+          <div class="field"><label>อีเมล</label><input name="email" type="email" value="${esc(s.email || '')}"></div>
+        </div>
+        <div class="field"><label>ที่อยู่</label><textarea name="address" rows="2">${esc(s.address || '')}</textarea></div>
+        <div class="field"><label>พนักงานดูแล (FK)</label><select name="employee_id">${empOpts}</select></div>
+        <div class="actions" style="justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+  },
+  saveSupplierEdit(e, id) {
+    const d = formData(e);
+    d.employee_id = d.employee_id ? Number(d.employee_id) : null;
+    safe(async () => {
+      await api('PUT', `/api/admin/suppliers/${id}`, d);
+      A.closeModal();
+      toast('อัปเดตข้อมูลซัพพลายเออร์เรียบร้อยแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  openEditEmployee(id) {
+    const emp = _adminCache.employees.find((x) => x.employee_id === id);
+    const mb = $('#modalBox');
+    if (!emp || !mb) return;
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 14px">✏️ แก้ไขข้อมูลพนักงาน #${emp.employee_id}</h3>
+      <form onsubmit="return A.saveEmployeeEdit(event, ${emp.employee_id})">
+        <div class="row2">
+          <div class="field"><label>ชื่อ *</label><input name="first_name" value="${esc(emp.first_name)}" required></div>
+          <div class="field"><label>นามสกุล *</label><input name="last_name" value="${esc(emp.last_name)}" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>ตำแหน่ง</label><input name="position" value="${esc(emp.position || '')}"></div>
+          <div class="field"><label>เบอร์โทรศัพท์</label><input name="phone" value="${esc(emp.phone || '')}"></div>
+        </div>
+        <div class="field"><label>อีเมล</label><input name="email" type="email" value="${esc(emp.email || '')}"></div>
+        <div class="field"><label>ที่อยู่</label><textarea name="address" rows="2">${esc(emp.address || '')}</textarea></div>
+        <div class="actions" style="justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+  },
+  saveEmployeeEdit(e, id) {
+    const d = formData(e);
+    safe(async () => {
+      await api('PUT', `/api/admin/employees/${id}`, d);
+      A.closeModal();
+      toast('อัปเดตข้อมูลพนักงานเรียบร้อยแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  addCoupon(e) {
+    const d = formData(e);
+    safe(async () => {
+      const r = await api('POST', '/api/admin/coupons', d);
+      toast(`เพิ่มคูปอง "${r.code}" เรียบร้อยแล้ว`);
+      refresh();
+    });
+    return false;
+  },
+  openEditCoupon(code) {
+    const c = _adminCache.coupons.find((x) => x.code === code);
+    const mb = $('#modalBox');
+    if (!c || !mb) return;
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 14px">✏️ แก้ไขคูปอง <code>${esc(c.code)}</code></h3>
+      <form onsubmit="return A.saveCouponEdit(event, ${JSON.stringify(c.code).replace(/"/g, '&quot;')})">
+        <div class="row2">
+          <div class="field">
+            <label>ประเภทส่วนลด</label>
+            <select name="type">
+              <option value="percent" ${c.type === 'percent' ? 'selected' : ''}>เปอร์เซ็นต์ (%)</option>
+              <option value="fixed" ${c.type === 'fixed' ? 'selected' : ''}>ลดจำนวนเงิน (฿)</option>
+            </select>
+          </div>
+          <div class="field"><label>มูลค่าส่วนลด *</label><input name="value" type="number" min="1" step="1" value="${Number(c.value)}" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>ยอดสั่งซื้อขั้นต่ำ (฿)</label><input name="min_total" type="number" min="0" step="1" value="${Number(c.min_total || 0)}"></div>
+          <div class="field">
+            <label>สถานะ</label>
+            <select name="active">
+              <option value="1" ${c.active ? 'selected' : ''}>เปิดใช้งาน</option>
+              <option value="0" ${!c.active ? 'selected' : ''}>ปิดใช้งาน</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกคูปอง</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+  },
+  saveCouponEdit(e, code) {
+    const d = formData(e);
+    safe(async () => {
+      await api('PUT', `/api/admin/coupons/${encodeURIComponent(code)}`, d);
+      A.closeModal();
+      toast(`อัปเดตคูปอง "${code}" เรียบร้อยแล้ว`);
+      refresh();
+    });
+    return false;
+  },
+  deleteCoupon(code) {
+    if (confirm(`ยืนยันการลบคูปอง "${code}"?`)) {
+      safe(async () => {
+        await api('DELETE', `/api/admin/coupons/${encodeURIComponent(code)}`);
+        toast(`ลบคูปอง "${code}" เรียบร้อยแล้ว`);
+        refresh();
+      });
+    }
+  },
+
   /* ---------- SQL Server Realtime Studio Actions ---------- */
   selectSqlTable(name) {
     activeSqlTable = name;
@@ -2395,9 +2701,9 @@ function initRealtimeSqlStream() {
         if (location.hash.startsWith('#/admin') && adminTab === 'sql') {
           const { snapshot } = await api('GET', '/api/sql/status');
           updateLiveSqlExplorerDom(snapshot);
-        } else if (location.hash.startsWith('#/admin') && ['customers', 'orders', 'dash'].includes(adminTab)) {
+        } else if (location.hash.startsWith('#/admin') && ['customers', 'orders', 'dash', 'suppliers'].includes(adminTab)) {
           const activeTag = document.activeElement?.tagName;
-          if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+          if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) && !$('#modal')?.classList.contains('open')) {
             await adminTabs[adminTab]?.();
           }
         } else if (data.source === 'ssms') {

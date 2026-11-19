@@ -771,14 +771,62 @@ app.post('/api/admin/orders/:id/cancel', wrap((req) => {
 
 app.get('/api/admin/customers', wrap((req) => {
   needAdmin(req);
-  return { customers: db.prepare(`SELECT c.customer_id,c.first_name,c.last_name,c.email,c.phone,c.address,c.admin_id,c.created_at,
-    a.name admin_name,
-    (SELECT COUNT(*) FROM "order" o WHERE o.customer_id=c.customer_id) orders,
-    (SELECT COALESCE(SUM(total_price),0) FROM "order" o WHERE o.customer_id=c.customer_id AND o.status IN ('paid','shipped','completed')) spent
-    FROM customer c
-    LEFT JOIN admin a USING(admin_id)
-    ORDER BY c.customer_id DESC`).all() };
+  return {
+    admins: db.prepare('SELECT admin_id, name FROM admin ORDER BY admin_id').all(),
+    customers: db.prepare(`SELECT c.customer_id,c.first_name,c.last_name,c.email,c.phone,c.address,c.admin_id,c.created_at,
+      a.name admin_name,
+      (SELECT COUNT(*) FROM "order" o WHERE o.customer_id=c.customer_id) orders,
+      (SELECT COALESCE(SUM(total_price),0) FROM "order" o WHERE o.customer_id=c.customer_id AND o.status IN ('paid','shipped','completed')) spent
+      FROM customer c
+      LEFT JOIN admin a USING(admin_id)
+      ORDER BY c.customer_id DESC`).all()
+  };
 }));
+app.put('/api/admin/customers/:id', wrap((req) => {
+  needAdmin(req);
+  const cid = int(req.params.id), b = req.body || {};
+  const existing = db.prepare('SELECT * FROM customer WHERE customer_id=?').get(cid);
+  if (!existing) bad('ไม่พบข้อมูลลูกค้านี้', 404);
+  const first = str(b.first_name, 60), last = str(b.last_name, 60);
+  const email = str(b.email, 120).toLowerCase(), phone = str(b.phone, 30);
+  const address = str(b.address, 500);
+  const adminId = b.admin_id ? int(b.admin_id) : null;
+  if (!first || !last) bad('กรุณากรอกชื่อและนามสกุลลูกค้า');
+  if (!emailRe.test(email)) bad('รูปแบบอีเมลไม่ถูกต้อง');
+  if (phone && !/^[0-9+\-\s]{9,20}$/.test(phone)) bad('เบอร์โทรศัพท์ไม่ถูกต้อง');
+  if (db.prepare('SELECT 1 FROM customer WHERE LOWER(email)=? AND customer_id<>?').get(email, cid)) bad('อีเมลนี้ถูกใช้งานแล้ว', 409);
+  if (adminId && !db.prepare('SELECT 1 FROM admin WHERE admin_id=?').get(adminId)) bad('ไม่พบแอดมินที่เลือก');
+  const newPw = typeof b.new_password === 'string' ? b.new_password : '';
+  if (newPw && newPw.length < 8) bad('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร');
+  tx(() => {
+    db.prepare('UPDATE customer SET first_name=?, last_name=?, email=?, phone=?, address=?, admin_id=? WHERE customer_id=?')
+      .run(first, last, email, phone, address || null, adminId, cid);
+    if (newPw) {
+      db.prepare('UPDATE customer SET password_hash=? WHERE customer_id=?').run(bcrypt.hashSync(newPw, 10), cid);
+    }
+    db.prepare('UPDATE review SET first_name=?, last_name=? WHERE customer_id=?').run(first, last, cid);
+  });
+  return { ok: true };
+}));
+app.delete('/api/admin/customers/:id', wrap((req) => {
+  needAdmin(req);
+  const cid = int(req.params.id);
+  if (!db.prepare('SELECT 1 FROM customer WHERE customer_id=?').get(cid)) bad('ไม่พบข้อมูลลูกค้านี้', 404);
+  if (db.prepare('SELECT 1 FROM "order" WHERE customer_id=? LIMIT 1').get(cid)) {
+    bad('ลบไม่ได้ เพราะลูกค้ามีประวัติคำสั่งซื้อแล้ว');
+  }
+  tx(() => {
+    db.prepare("DELETE FROM session WHERE role='customer' AND user_id=?").run(cid);
+    db.prepare('DELETE FROM review_like WHERE customer_id=?').run(cid);
+    db.prepare('DELETE FROM review WHERE customer_id=?').run(cid);
+    db.prepare('DELETE FROM wishlist WHERE customer_id=?').run(cid);
+    db.prepare('DELETE FROM cart_item WHERE customer_id=?').run(cid);
+    db.prepare('DELETE FROM address WHERE customer_id=?').run(cid);
+    db.prepare('DELETE FROM customer WHERE customer_id=?').run(cid);
+  });
+  return { ok: true };
+}));
+
 app.get('/api/admin/suppliers', wrap((req) => {
   needAdmin(req);
   return {
@@ -792,12 +840,70 @@ app.get('/api/admin/suppliers', wrap((req) => {
     employees: db.prepare('SELECT * FROM employee').all(),
   };
 }));
+app.post('/api/admin/admins', wrap((req) => {
+  needAdmin(req);
+  const b = req.body || {};
+  const name = str(b.name, 100), email = str(b.email, 120).toLowerCase(), phone = str(b.phone, 30);
+  const pw = typeof b.password === 'string' ? b.password : '';
+  if (!name) bad('กรุณากรอกชื่อผู้ดูแลระบบ');
+  if (!emailRe.test(email)) bad('รูปแบบอีเมลไม่ถูกต้อง');
+  if (pw.length < 8) bad('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+  if (db.prepare('SELECT 1 FROM admin WHERE LOWER(email)=?').get(email)) bad('อีเมลแอดมินนี้ถูกใช้แล้ว', 409);
+  const id = db.prepare('INSERT INTO admin (name,email,phone,password_hash) VALUES (?,?,?,?)')
+    .run(name, email, phone, bcrypt.hashSync(pw, 10)).lastInsertRowid;
+  return { admin_id: Number(id) };
+}));
+app.put('/api/admin/admins/:id', wrap((req) => {
+  needAdmin(req);
+  const aid = int(req.params.id), b = req.body || {};
+  if (!db.prepare('SELECT 1 FROM admin WHERE admin_id=?').get(aid)) bad('ไม่พบผู้ดูแลระบบนี้', 404);
+  const name = str(b.name, 100), email = str(b.email, 120).toLowerCase(), phone = str(b.phone, 30);
+  if (!name) bad('กรุณากรอกชื่อผู้ดูแลระบบ');
+  if (!emailRe.test(email)) bad('รูปแบบอีเมลไม่ถูกต้อง');
+  if (db.prepare('SELECT 1 FROM admin WHERE LOWER(email)=? AND admin_id<>?').get(email, aid)) bad('อีเมลแอดมินนี้ถูกใช้แล้ว', 409);
+  const newPw = typeof b.new_password === 'string' ? b.new_password : '';
+  if (newPw && newPw.length < 8) bad('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร');
+  tx(() => {
+    db.prepare('UPDATE admin SET name=?, email=?, phone=? WHERE admin_id=?').run(name, email, phone, aid);
+    if (newPw) {
+      db.prepare('UPDATE admin SET password_hash=? WHERE admin_id=?').run(bcrypt.hashSync(newPw, 10), aid);
+    }
+  });
+  return { ok: true };
+}));
+app.delete('/api/admin/admins/:id', wrap((req) => {
+  const curId = needAdmin(req);
+  const aid = int(req.params.id);
+  if (aid === curId) bad('ไม่สามารถลบบัญชีแอดมินที่กำลังล็อกอินอยู่ได้');
+  if (!db.prepare('SELECT 1 FROM admin WHERE admin_id=?').get(aid)) bad('ไม่พบผู้ดูแลระบบนี้', 404);
+  if (db.prepare('SELECT COUNT(*) n FROM admin').get().n <= 1) bad('ต้องมีผู้ดูแลระบบอย่างน้อย 1 บัญชี');
+  tx(() => {
+    db.prepare("DELETE FROM session WHERE role='admin' AND user_id=?").run(aid);
+    db.prepare('UPDATE supplier SET admin_id=NULL WHERE admin_id=?').run(aid);
+    db.prepare('UPDATE customer SET admin_id=NULL WHERE admin_id=?').run(aid);
+    db.prepare('DELETE FROM admin WHERE admin_id=?').run(aid);
+  });
+  return { ok: true };
+}));
+
 app.post('/api/admin/suppliers', wrap((req) => {
   const adminId = needAdmin(req);
   const b = req.body || {}, name = str(b.name, 120);
   if (!name) bad('กรุณากรอกชื่อซัพพลายเออร์');
   db.prepare('INSERT INTO supplier (name,contact_name,phone,email,address,employee_id,admin_id) VALUES (?,?,?,?,?,?,?)')
-    .run(name, str(b.contact_name, 80), str(b.phone, 20), str(b.email, 120), str(b.address, 300), int(b.employee_id) || null, adminId);
+    .run(name, str(b.contact_name, 80), str(b.phone, 30), str(b.email, 120), str(b.address, 300), int(b.employee_id) || null, adminId);
+}));
+app.put('/api/admin/suppliers/:id', wrap((req) => {
+  needAdmin(req);
+  const sid = int(req.params.id), b = req.body || {};
+  if (!db.prepare('SELECT 1 FROM supplier WHERE supplier_id=?').get(sid)) bad('ไม่พบซัพพลายเออร์นี้', 404);
+  const name = str(b.name, 120);
+  if (!name) bad('กรุณากรอกชื่อซัพพลายเออร์');
+  const empId = b.employee_id ? int(b.employee_id) : null;
+  if (empId && !db.prepare('SELECT 1 FROM employee WHERE employee_id=?').get(empId)) bad('ไม่พบพนักงานที่เลือก');
+  db.prepare('UPDATE supplier SET name=?, contact_name=?, phone=?, email=?, address=?, employee_id=? WHERE supplier_id=?')
+    .run(name, str(b.contact_name, 80), str(b.phone, 30), str(b.email, 120), str(b.address, 300), empId, sid);
+  return { ok: true };
 }));
 app.delete('/api/admin/suppliers/:id', wrap((req) => {
   needAdmin(req);
@@ -814,7 +920,17 @@ app.post('/api/admin/employees', wrap((req) => {
   const b = req.body || {};
   if (!str(b.first_name, 60) || !str(b.last_name, 60)) bad('กรุณากรอกชื่อและนามสกุลพนักงาน');
   db.prepare('INSERT INTO employee (first_name,last_name,email,phone,position,address) VALUES (?,?,?,?,?,?)')
-    .run(str(b.first_name, 60), str(b.last_name, 60), str(b.email, 120), str(b.phone, 20), str(b.position, 80), str(b.address, 300));
+    .run(str(b.first_name, 60), str(b.last_name, 60), str(b.email, 120), str(b.phone, 30), str(b.position, 80), str(b.address, 300));
+}));
+app.put('/api/admin/employees/:id', wrap((req) => {
+  needAdmin(req);
+  const eid = int(req.params.id), b = req.body || {};
+  if (!db.prepare('SELECT 1 FROM employee WHERE employee_id=?').get(eid)) bad('ไม่พบพนักงานนี้', 404);
+  const first = str(b.first_name, 60), last = str(b.last_name, 60);
+  if (!first || !last) bad('กรุณากรอกชื่อและนามสกุลพนักงาน');
+  db.prepare('UPDATE employee SET first_name=?, last_name=?, email=?, phone=?, position=?, address=? WHERE employee_id=?')
+    .run(first, last, str(b.email, 120), str(b.phone, 30), str(b.position, 80), str(b.address, 300), eid);
+  return { ok: true };
 }));
 app.delete('/api/admin/employees/:id', wrap((req) => {
   needAdmin(req);
@@ -825,6 +941,47 @@ app.delete('/api/admin/employees/:id', wrap((req) => {
     db.prepare('UPDATE product SET employee_id=NULL WHERE employee_id=?').run(eid);
     db.prepare('DELETE FROM employee WHERE employee_id=?').run(eid);
   });
+  return { ok: true };
+}));
+
+app.get('/api/admin/coupons', wrap((req) => {
+  needAdmin(req);
+  return { coupons: db.prepare('SELECT * FROM coupon ORDER BY code').all() };
+}));
+app.post('/api/admin/coupons', wrap((req) => {
+  needAdmin(req);
+  const b = req.body || {};
+  const code = str(b.code, 30).toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  const type = b.type === 'percent' ? 'percent' : 'fixed';
+  const value = Number(b.value);
+  const minTotal = Math.max(0, Number(b.min_total) || 0);
+  const active = b.active === 0 || b.active === false || b.active === '0' ? 0 : 1;
+  if (!code || code.length < 2) bad('กรุณากรอกรหัสคูปอง (ตัวอักษรภาษาอังกฤษ/ตัวเลขอย่างน้อย 2 ตัว)');
+  if (!Number.isFinite(value) || value <= 0) bad('มูลค่าส่วนลดต้องมากกว่า 0');
+  if (type === 'percent' && value > 100) bad('ส่วนลดแบบเปอร์เซ็นต์ต้องไม่เกิน 100%');
+  if (db.prepare('SELECT 1 FROM coupon WHERE code=?').get(code)) bad('มีโค้ดส่วนลดนี้อยู่แล้ว', 409);
+  db.prepare('INSERT INTO coupon (code,type,value,min_total,active) VALUES (?,?,?,?,?)').run(code, type, value, minTotal, active);
+  return { ok: true, code };
+}));
+app.put('/api/admin/coupons/:code', wrap((req) => {
+  needAdmin(req);
+  const origCode = str(req.params.code, 30).toUpperCase();
+  if (!db.prepare('SELECT 1 FROM coupon WHERE code=?').get(origCode)) bad('ไม่พบโค้ดส่วนลดนี้', 404);
+  const b = req.body || {};
+  const type = b.type === 'percent' ? 'percent' : 'fixed';
+  const value = Number(b.value);
+  const minTotal = Math.max(0, Number(b.min_total) || 0);
+  const active = b.active === 0 || b.active === false || b.active === '0' ? 0 : 1;
+  if (!Number.isFinite(value) || value <= 0) bad('มูลค่าส่วนลดต้องมากกว่า 0');
+  if (type === 'percent' && value > 100) bad('ส่วนลดแบบเปอร์เซ็นต์ต้องไม่เกิน 100%');
+  db.prepare('UPDATE coupon SET type=?, value=?, min_total=?, active=? WHERE code=?').run(type, value, minTotal, active, origCode);
+  return { ok: true };
+}));
+app.delete('/api/admin/coupons/:code', wrap((req) => {
+  needAdmin(req);
+  const code = str(req.params.code, 30).toUpperCase();
+  if (!db.prepare('SELECT 1 FROM coupon WHERE code=?').get(code)) bad('ไม่พบโค้ดส่วนลดนี้', 404);
+  db.prepare('DELETE FROM coupon WHERE code=?').run(code);
   return { ok: true };
 }));
 
