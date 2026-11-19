@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-19T21:59:40.447Z",
-  "checksum": "6ddec0279976960e",
+  "timestamp": "2026-11-19T21:59:44.081Z",
+  "checksum": "4704f255b9e8c7ea",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2799,7 +2799,7 @@
         "customer_id": 1,
         "product_id": 24,
         "order_date": "2026-11-19 01:49:29",
-        "status": "pending",
+        "status": "paid",
         "subtotal": 7700,
         "discount": 770,
         "shipping_fee": 0,
@@ -2893,9 +2893,9 @@
         "payment_id": 10,
         "order_id": 10,
         "method": "โอนผ่านธนาคาร",
-        "status": "pending",
+        "status": "paid",
         "amount": 6930,
-        "paid_at": null
+        "paid_at": "2026-11-19 21:59:42"
       },
       {
         "payment_id": 11,
@@ -2987,7 +2987,7 @@
         "customer_id": 1,
         "order_date": "2026-11-19 01:49:29",
         "total_amount": 6930,
-        "order_status": "pending"
+        "order_status": "paid"
       },
       {
         "order_id": 11,
