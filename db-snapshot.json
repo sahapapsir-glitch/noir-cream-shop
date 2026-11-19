@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-19T21:47:16.565Z",
-  "checksum": "24a81c2aad767e51",
+  "timestamp": "2026-11-19T21:59:34.742Z",
+  "checksum": "a4276e7da11d22b7",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -16,7 +16,7 @@
     "order": 4,
     "order_item": 5,
     "payment": 4,
-    "shipment": 2,
+    "shipment": 3,
     "review": 1,
     "wishlist": 2,
     "review_like": 0
@@ -2814,7 +2814,7 @@
         "customer_id": 1,
         "product_id": 24,
         "order_date": "2026-11-19 21:47:12",
-        "status": "paid",
+        "status": "shipped",
         "subtotal": 2900,
         "discount": 0,
         "shipping_fee": 0,
@@ -2928,6 +2928,17 @@
         "status": "delivered",
         "shipping_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540",
         "shipped_at": "2026-11-18 06:51:52"
+      },
+      {
+        "shipment_id": 7,
+        "tracking_no": "TH261120011UEKUB",
+        "payment_id": 11,
+        "order_id": 11,
+        "product_id": 24,
+        "carrier": "Flash Express",
+        "status": "shipped",
+        "shipping_address": "12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540",
+        "shipped_at": "2026-11-19 21:59:34"
       }
     ],
     "review": [
@@ -2983,7 +2994,7 @@
         "customer_id": 1,
         "order_date": "2026-11-19 21:47:12",
         "total_amount": 2900,
-        "order_status": "paid"
+        "order_status": "shipped"
       }
     ],
     "Order_Detail": [
