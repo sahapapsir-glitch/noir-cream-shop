@@ -906,6 +906,7 @@ pages.checkout = async () => {
   await loadCart();
   if (!state.cart.items.length) return go('#/cart');
   const { addresses } = await api('GET', '/api/addresses');
+  _addrCache = addresses;
   const co = {
     address: (addresses.find((a) => a.is_default) || addresses[0] || {}).address_id,
     method: state.config.pay_methods[0],
@@ -954,7 +955,8 @@ pages.checkout = async () => {
           ${addresses.map((a) => `
             <label class="opt-card ${a.address_id === co.address ? 'on' : ''}" data-addr="${a.address_id}">
               <input type="radio" name="addr" ${a.address_id === co.address ? 'checked' : ''} onchange="A.pickAddr(${a.address_id})">
-              <div><b>${esc(a.recipient)}</b> · ${esc(a.phone)}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+              <div style="flex:1"><b>${esc(a.recipient)}</b> · ${esc(a.phone)}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+              <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="event.preventDefault();event.stopPropagation();A.openEditAddress(${a.address_id})">✏️ แก้ไข</button>
             </label>
           `).join('')}
           ${addresses.length ? '' : '<p class="muted">ยังไม่มีที่อยู่จัดส่ง กรุณาเพิ่มที่อยู่ด้านล่าง</p>'}
@@ -993,16 +995,21 @@ pages.checkout = async () => {
   sum();
 };
 
+let _addrCache = [];
 const fmtAddr = (a) => [a.house_no, a.village, a.road, 'ต.' + a.subdistrict, 'อ./เขต ' + a.district, 'จ.' + a.province, a.postal_code].filter(Boolean).join(' ');
-function addressForm(handler) {
-  const f = (n, l, extra = '') => `<div class="field"><label>${l}</label><input name="${n}" ${extra}></div>`;
+function addressForm(handler, v = {}, btnLabel = 'บันทึกที่อยู่', showCancel = false) {
+  const f = (n, l, extra = '') => `<div class="field"><label>${l}</label><input name="${n}" value="${esc(v[n] || '')}" ${extra}></div>`;
   return `<form onsubmit="return ${handler}">
     <div class="row2">${f('recipient', 'ชื่อผู้รับ', 'required')}${f('phone', 'เบอร์โทรศัพท์', 'required type="tel"')}</div>
     <div class="row3">${f('house_no', 'บ้านเลขที่', 'required')}${f('village', 'หมู่บ้าน/หมู่ที่')}${f('road', 'ถนน')}</div>
     <div class="row3">${f('subdistrict', 'ตำบล/แขวง', 'required')}${f('district', 'อำเภอ/เขต', 'required')}${f('province', 'จังหวัด', 'required')}</div>
     <div class="row2">${f('postal_code', 'รหัสไปรษณีย์', 'required inputmode="numeric" maxlength="5" pattern="[0-9]{5}"')}
-      <label style="display:flex;gap:8px;align-items:center;margin-top:24px"><input type="checkbox" name="is_default" style="width:auto"> ตั้งเป็นที่อยู่หลัก</label></div>
-    <button class="btn sm">บันทึกที่อยู่</button></form>`;
+      <label style="display:flex;gap:8px;align-items:center;margin-top:24px"><input type="checkbox" name="is_default" style="width:auto" ${v.is_default ? 'checked' : ''}> ตั้งเป็นที่อยู่หลัก</label></div>
+    <div class="actions" style="justify-content:${showCancel ? 'flex-end' : 'flex-start'};margin-top:6px">
+      ${showCancel ? '<button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>' : ''}
+      <button class="btn sm">${esc(btnLabel)}</button>
+    </div>
+  </form>`;
 }
 
 pages.orders = async (params) => {
@@ -1072,6 +1079,7 @@ pages.account = async () => {
     return;
   }
   const { addresses } = await api('GET', '/api/addresses');
+  _addrCache = addresses;
   app.innerHTML = `
     <h2>บัญชีของฉัน <span class="muted" style="font-size:16px;font-weight:400">(Customer_ID: #${u.id})</span></h2>
     <div class="panel">
@@ -1094,8 +1102,9 @@ pages.account = async () => {
         <div class="opt-card" style="cursor:default">
           <div style="flex:1"><span class="muted" style="font-size:12px">#${a.address_id} · </span><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
           <div class="actions">
-            ${a.is_default ? '' : `<button class="btn ghost sm" onclick="A.defAddr(${a.address_id})">ตั้งเป็นหลัก</button>`}
-            <button class="btn danger sm" onclick="A.delAddr(${a.address_id})">ลบ</button>
+            ${a.is_default ? '' : `<button type="button" class="btn ghost sm" onclick="A.defAddr(${a.address_id})">ตั้งเป็นหลัก</button>`}
+            <button type="button" class="btn ghost sm" onclick="A.openEditAddress(${a.address_id})">✏️ แก้ไข</button>
+            <button type="button" class="btn danger sm" onclick="A.delAddr(${a.address_id})">ลบ</button>
           </div>
         </div>
       `).join('') || '<p class="muted">ยังไม่มีที่อยู่จัดส่ง</p>'}
@@ -1978,6 +1987,34 @@ const A = window.A = {
     safe(async () => {
       await api('POST', '/api/addresses', d);
       toast('บันทึกที่อยู่จัดส่งแล้ว');
+      refresh();
+    });
+    return false;
+  },
+
+  openEditAddress(id) {
+    const a = _addrCache.find((x) => x.address_id === id);
+    const mb = $('#modalBox');
+    if (!a || !mb) return;
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 14px">✏️ แก้ไขที่อยู่จัดส่ง #${a.address_id}</h3>
+      ${addressForm(`A.saveAddressEdit(event, ${a.address_id})`, a, '💾 บันทึกการแก้ไข', true)}
+    `;
+    $('#modal').classList.add('open');
+  },
+
+  saveAddressEdit(e, id) {
+    const d = formData(e);
+    d.is_default = !!d.is_default;
+    safe(async () => {
+      await api('PUT', `/api/addresses/${id}`, d);
+      try {
+        const me = await api('GET', '/api/me');
+        if (me.user) state.user = me.user;
+      } catch {}
+      A.closeModal();
+      toast('อัปเดตที่อยู่จัดส่งเรียบร้อยแล้ว');
       refresh();
     });
     return false;

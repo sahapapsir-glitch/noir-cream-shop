@@ -366,6 +366,21 @@ app.post('/api/addresses', wrap((req) => {
     syncCustomerAddress(uid);
   });
 }));
+app.put('/api/addresses/:id', wrap((req) => {
+  const uid = needCustomer(req), id = int(req.params.id);
+  const existing = db.prepare('SELECT is_default FROM address WHERE address_id=? AND customer_id=?').get(id, uid);
+  if (!existing) bad('ไม่พบที่อยู่นี้', 404);
+  const a = readAddr(req.body);
+  const makeDefault = !!req.body?.is_default;
+  tx(() => {
+    if (makeDefault) db.prepare('UPDATE address SET is_default=0 WHERE customer_id=?').run(uid);
+    const nextDefault = makeDefault ? 1 : existing.is_default;
+    db.prepare(`UPDATE address SET ${addrFields.map((f) => `${f}=?`).join(',')}, is_default=? WHERE address_id=? AND customer_id=?`)
+      .run(...addrFields.map((f) => a[f]), nextDefault, id, uid);
+    syncCustomerAddress(uid);
+  });
+  return { ok: true };
+}));
 app.put('/api/addresses/:id/default', wrap((req) => {
   const uid = needCustomer(req), id = int(req.params.id);
   if (!db.prepare('SELECT 1 FROM address WHERE address_id=? AND customer_id=?').get(id, uid)) bad('ไม่พบที่อยู่', 404);
