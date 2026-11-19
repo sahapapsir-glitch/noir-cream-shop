@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-19T21:47:07.484Z",
-  "checksum": "69a6cb0a2d825b38",
+  "timestamp": "2026-11-19T21:47:16.565Z",
+  "checksum": "24a81c2aad767e51",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,10 +12,10 @@
     "address": 22,
     "product": 33,
     "product_variant": 142,
-    "cart_item": 2,
-    "order": 3,
-    "order_item": 4,
-    "payment": 3,
+    "cart_item": 1,
+    "order": 4,
+    "order_item": 5,
+    "payment": 4,
     "shipment": 2,
     "review": 1,
     "wishlist": 2,
@@ -699,8 +699,8 @@
         "category": "เสื้อโปโล",
         "description": "brand:Polo Ralph Lauren",
         "status": "active",
-        "stock": 149,
-        "quantity": 149,
+        "stock": 148,
+        "quantity": 148,
         "price": 2900,
         "supplier_id": 3,
         "employee_id": 2,
@@ -1197,8 +1197,8 @@
         "color": "ดำ",
         "color_hex": "#000000",
         "price": 2900,
-        "stock": 30,
-        "stock_quantity": 30,
+        "stock": 29,
+        "stock_quantity": 29,
         "sku": "SKU-24-S-ดำ"
       },
       {
@@ -2761,14 +2761,6 @@
         "product_id": 24,
         "quantity": 1,
         "total_price": 2900
-      },
-      {
-        "cart_id": 13,
-        "customer_id": 1,
-        "variant_id": 165,
-        "product_id": 24,
-        "quantity": 1,
-        "total_price": 2900
       }
     ],
     "order": [
@@ -2816,6 +2808,21 @@
         "ship_name": "สมชาย ทดสอบ",
         "ship_phone": "089-999-9999",
         "ship_address": "เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540"
+      },
+      {
+        "order_id": 11,
+        "customer_id": 1,
+        "product_id": 24,
+        "order_date": "2026-11-19 21:47:12",
+        "status": "paid",
+        "subtotal": 2900,
+        "discount": 0,
+        "shipping_fee": 0,
+        "total_price": 2900,
+        "coupon_code": null,
+        "ship_name": "สมชาย ทดสอบ",
+        "ship_phone": "089-999-9999",
+        "ship_address": "12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540"
       }
     ],
     "order_item": [
@@ -2854,6 +2861,15 @@
         "quantity": 2,
         "unit_price": 2400,
         "total_price": 4800
+      },
+      {
+        "order_item_id": 13,
+        "order_id": 11,
+        "variant_id": 165,
+        "product_id": 24,
+        "quantity": 1,
+        "unit_price": 2900,
+        "total_price": 2900
       }
     ],
     "payment": [
@@ -2880,6 +2896,14 @@
         "status": "pending",
         "amount": 6930,
         "paid_at": null
+      },
+      {
+        "payment_id": 11,
+        "order_id": 11,
+        "method": "PromptPay",
+        "status": "paid",
+        "amount": 2900,
+        "paid_at": "2026-11-19 21:47:16"
       }
     ],
     "shipment": [
@@ -2953,6 +2977,13 @@
         "order_date": "2026-11-19 01:49:29",
         "total_amount": 6930,
         "order_status": "pending"
+      },
+      {
+        "order_id": 11,
+        "customer_id": 1,
+        "order_date": "2026-11-19 21:47:12",
+        "total_amount": 2900,
+        "order_status": "paid"
       }
     ],
     "Order_Detail": [
@@ -2983,6 +3014,13 @@
         "product_id": 35,
         "quantity": 2,
         "unit_price": 2400
+      },
+      {
+        "order_detail_id": 13,
+        "order_id": 11,
+        "product_id": 24,
+        "quantity": 1,
+        "unit_price": 2900
       }
     ]
   }
