@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 70c5e0981fab6e6b | Updated: 2026-11-20T02:26:37.653Z
+-- Checksum: f380da00a9ea22da | Updated: 2026-11-20T02:26:48.322Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -664,7 +664,7 @@ INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, 
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (10, 1, 24, '2026-11-19 01:49:29', N'completed', 7700, 770, 0, 6930, N'WELCOME10', N'สมชาย ทดสอบ', N'089-999-9999', N'เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (11, 1, 24, '2026-11-19 21:47:12', N'completed', 2900, 0, 0, 2900, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (12, 1, 24, '2026-11-19 22:18:45', N'completed', 2900, 0, 0, 2900, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
-INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (13, 1, 24, '2026-11-20 02:26:37', N'pending', 8700, 0, 0, 8700, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
+INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (13, 1, 24, '2026-11-20 02:26:37', N'paid', 8700, 0, 0, 8700, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
 SET IDENTITY_INSERT dbo.[order] OFF;
 
 -- ตาราง dbo.order_item (7 รายการ)
@@ -685,7 +685,7 @@ INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) 
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (10, 10, N'โอนผ่านธนาคาร', N'paid', 6930, '2026-11-19 21:59:42');
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (11, 11, N'PromptPay', N'paid', 2900, '2026-11-19 21:47:16');
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (12, 12, N'โอนผ่านธนาคาร', N'paid', 2900, '2026-11-19 22:19:48');
-INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (13, 13, N'โอนผ่านธนาคาร', N'pending', 8700, NULL);
+INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (13, 13, N'โอนผ่านธนาคาร', N'paid', 8700, '2026-11-20 02:26:48');
 SET IDENTITY_INSERT dbo.payment OFF;
 
 -- ตาราง dbo.shipment (5 รายการ)
