@@ -1199,10 +1199,6 @@ pages.admin = async () => {
   app.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a class="btn ghost sm" href="#/shop">🛍️ ทดลองซื้อสินค้า (Test Buy)</a>
-        <a class="btn ghost sm" href="#/orders">📦 คำสั่งซื้อที่ทดลองสั่ง</a>
-      </div>
     </div>
     <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
     <div id="tab"></div>
