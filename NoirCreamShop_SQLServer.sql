@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 73c9107055d0e615 | Updated: 2026-11-23T18:03:24.174Z
+-- Checksum: 72bbf083c03d3bef | Updated: 2026-11-23T18:05:35.599Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -561,9 +561,9 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (229, 39, N'M', N'สีกรมท่า / สีขาว', N'#373e54', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg', 4800, 25, 25, N'SKU-39-M-สีกรมท่า/สีขาว');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (230, 39, N'L', N'สีกรมท่า / สีขาว', N'#373e54', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg', 4800, 25, 25, N'SKU-39-L-สีกรมท่า/สีขาว');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (231, 39, N'XL', N'สีกรมท่า / สีขาว', N'#373e54', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS541_V1.jpg', 4800, 25, 25, N'SKU-39-XL-สีกรมท่า/สีขาว');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (232, 40, N'S', N'ชมพูพาสเทล', N'#f4c5cd', NULL, 690, 25, 25, N'SKU-40-S-ชมพูพาสเทล');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (233, 40, N'M', N'ชมพูพาสเทล', N'#f4c5cd', NULL, 690, 25, 25, N'SKU-40-M-ชมพูพาสเทล');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (234, 40, N'L', N'ชมพูพาสเทล', N'#f4c5cd', NULL, 690, 25, 25, N'SKU-40-L-ชมพูพาสเทล');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (232, 40, N'S', N'ชมพูพาสเทล', N'#f4c5cd', N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75', 690, 25, 25, N'SKU-40-S-ชมพูพาสเทล');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (233, 40, N'M', N'ชมพูพาสเทล', N'#f4c5cd', N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75', 690, 25, 25, N'SKU-40-M-ชมพูพาสเทล');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (234, 40, N'L', N'ชมพูพาสเทล', N'#f4c5cd', N'https://www.central.co.th/_next/image?url=https%3A%2F%2Fassets.central.co.th%2Ffile-assets%2FCDSPIM%2Fweb%2FImage%2FMKP1093%2FLEE-WOMENSSHORTSLEEVETSHIRTONTHEGOCOLLECTIONBOYFRIENDFITPINK-MKP1093361409-1.webp&w=1080&q=75', 690, 25, 25, N'SKU-40-L-ชมพูพาสเทล');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (235, 41, N'S', N'สีเทาชาร์โคล / สีเทาเข้มอมเขีย', N'#4a4a47', NULL, 5888, 30, 30, N'SKU-41-S-สีเทาชาร์โคล/สีเทาเข้มอมเขีย');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (236, 41, N'M', N'สีเทาชาร์โคล / สีเทาเข้มอมเขีย', N'#4a4a47', NULL, 5888, 30, 30, N'SKU-41-M-สีเทาชาร์โคล/สีเทาเข้มอมเขีย');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (237, 41, N'L', N'สีเทาชาร์โคล / สีเทาเข้มอมเขีย', N'#4a4a47', NULL, 5888, 30, 30, N'SKU-41-L-สีเทาชาร์โคล/สีเทาเข้มอมเขีย');
