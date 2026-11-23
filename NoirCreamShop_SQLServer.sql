@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 435a57fc3965718b | Updated: 2026-11-23T17:29:43.460Z
+-- Checksum: 49d69e140afac234 | Updated: 2026-11-23T17:30:04.406Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -474,7 +474,7 @@ SET IDENTITY_INSERT dbo.address OFF;
 
 -- ตาราง dbo.product (34 รายการ)
 SET IDENTITY_INSERT dbo.product ON;
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (24, N'Classic Fit Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 144, 144, 2900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 1, '2026-11-17 14:46:27');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (24, N'Classic Fit Mesh Polo', N'เสื้อโปโล', N'brand:Polo Ralph Lauren', N'active', 143, 143, 2900, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 1, '2026-11-17 14:46:27');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (28, N'Ronron Pattern Logo Basic Fit T Shirt White Navy', N'เสื้อยืด', N'เนื้อผ้าคอตตอน', N'active', 58, 58, 790, 2, 1, N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 1, '2026-11-17 15:48:59');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (30, N'Fleece Hoodie', N'เสื้อแขนยาว', N'brand:Polo Ralph Lauren', N'active', 149, 149, 3000, 2, 2, N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK9M_V1.jpg', 1, '2026-11-17 15:49:26');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (31, N'90''S Crewneck Sweatshirt', N'เสื้อแขนยาว', N'brand:Fear of God ESSENTIALS', N'active', 100, 100, 3600, 2, 2, N'https://is8.revolveassets.com/images/p4/n/z/FALF-MK61_V1.jpg', 1, '2026-11-17 15:51:39');
@@ -514,7 +514,7 @@ SET IDENTITY_INSERT dbo.product OFF;
 
 -- ตาราง dbo.product_variant (150 รายการ)
 SET IDENTITY_INSERT dbo.product_variant ON;
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (165, 24, N'S', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 29, 29, N'SKU-24-S-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (165, 24, N'S', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 28, 28, N'SKU-24-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (166, 24, N'M', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 28, 28, N'SKU-24-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (167, 24, N'L', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 30, 30, N'SKU-24-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (168, 24, N'XL', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 30, 30, N'SKU-24-XL-ดำ');
@@ -666,13 +666,12 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (358, 68, N'XL', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 399, 15, 15, N'SKU-68-XL-ขาว');
 SET IDENTITY_INSERT dbo.product_variant OFF;
 
--- ตาราง dbo.cart_item (2 รายการ)
+-- ตาราง dbo.cart_item (1 รายการ)
 SET IDENTITY_INSERT dbo.cart_item ON;
 INSERT INTO dbo.cart_item (cart_id, customer_id, variant_id, product_id, quantity, total_price) VALUES (10, 23, 165, 24, 1, 2900);
-INSERT INTO dbo.cart_item (cart_id, customer_id, variant_id, product_id, quantity, total_price) VALUES (16, 1, 165, 24, 1, 2900);
 SET IDENTITY_INSERT dbo.cart_item OFF;
 
--- ตาราง dbo.[order] (6 รายการ)
+-- ตาราง dbo.[order] (7 รายการ)
 SET IDENTITY_INSERT dbo.[order] ON;
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (8, 22, 28, '2026-11-17 16:16:50', N'completed', 1580, 0, 0, 1580, NULL, N'Jiraporn konsoi', N'0819551245', N'11 หมู่บ้านสัมกร กรุงเทพกรีฑรา ทับช้าง สะพานสูง กรุงเทพมหานคร 10250');
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (9, 1, 30, '2026-11-18 06:50:22', N'completed', 3299, 0, 0, 3299, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'เลขที่ 99/148 ชั้น 19 ห้อง 1908 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
@@ -680,9 +679,10 @@ INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, 
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (11, 1, 24, '2026-11-19 21:47:12', N'completed', 2900, 0, 0, 2900, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (12, 1, 24, '2026-11-19 22:18:45', N'completed', 2900, 0, 0, 2900, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
 INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (13, 1, 24, '2026-11-20 02:26:37', N'completed', 8700, 0, 0, 8700, NULL, N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
+INSERT INTO dbo.[order] (order_id, customer_id, product_id, order_date, status, subtotal, discount, shipping_fee, total_price, coupon_code, ship_name, ship_phone, ship_address) VALUES (14, 1, 24, '2026-11-23 17:30:04', N'pending', 2900, 290, 0, 2610, N'WELCOME10', N'สมชาย ทดสอบ', N'089-999-9999', N'12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540');
 SET IDENTITY_INSERT dbo.[order] OFF;
 
--- ตาราง dbo.order_item (7 รายการ)
+-- ตาราง dbo.order_item (8 รายการ)
 SET IDENTITY_INSERT dbo.order_item ON;
 INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, quantity, unit_price, total_price) VALUES (9, 8, 183, 28, 2, 790, 1580);
 INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, quantity, unit_price, total_price) VALUES (10, 9, 194, 30, 1, 3299, 3299);
@@ -691,9 +691,10 @@ INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, qua
 INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, quantity, unit_price, total_price) VALUES (13, 11, 165, 24, 1, 2900, 2900);
 INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, quantity, unit_price, total_price) VALUES (14, 12, 166, 24, 1, 2900, 2900);
 INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, quantity, unit_price, total_price) VALUES (15, 13, 169, 24, 3, 2900, 8700);
+INSERT INTO dbo.order_item (order_item_id, order_id, variant_id, product_id, quantity, unit_price, total_price) VALUES (16, 14, 165, 24, 1, 2900, 2900);
 SET IDENTITY_INSERT dbo.order_item OFF;
 
--- ตาราง dbo.payment (6 รายการ)
+-- ตาราง dbo.payment (7 รายการ)
 SET IDENTITY_INSERT dbo.payment ON;
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (8, 8, N'โอนผ่านธนาคาร', N'paid', 1580, '2026-11-17 16:16:54');
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (9, 9, N'บัตรเครดิต/เดบิต', N'paid', 3299, '2026-11-18 06:50:27');
@@ -701,6 +702,7 @@ INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) 
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (11, 11, N'PromptPay', N'paid', 2900, '2026-11-19 21:47:16');
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (12, 12, N'โอนผ่านธนาคาร', N'paid', 2900, '2026-11-19 22:19:48');
 INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (13, 13, N'โอนผ่านธนาคาร', N'paid', 8700, '2026-11-20 02:26:48');
+INSERT INTO dbo.payment (payment_id, order_id, method, status, amount, paid_at) VALUES (14, 14, N'โอนผ่านธนาคาร', N'pending', 2610, NULL);
 SET IDENTITY_INSERT dbo.payment OFF;
 
 -- ตาราง dbo.shipment (6 รายการ)
