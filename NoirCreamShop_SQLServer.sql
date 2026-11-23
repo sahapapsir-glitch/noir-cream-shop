@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 0481238262a75145 | Updated: 2026-11-23T18:06:16.627Z
+-- Checksum: f61477f5b23269e7 | Updated: 2026-11-23T18:06:49.939Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -571,10 +571,10 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (239, 42, N'M', N'เทา', N'#b3b3b3', N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 11900, 5, 5, N'SKU-42-M-เทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (240, 42, N'L', N'เทา', N'#b3b3b3', N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 11900, 5, 5, N'SKU-42-L-เทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (241, 42, N'XL', N'เทา', N'#b3b3b3', N'https://cdn-images.farfetch-contents.com/38/64/63/84/38646384_71929619_1000.jpg', 11900, 5, 5, N'SKU-42-XL-เทา');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (242, 43, N'S', N'สีกรม', N'#262335', NULL, 3900, 45, 45, N'SKU-43-S-สีกรม');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (243, 43, N'M', N'สีกรม', N'#262335', NULL, 3900, 45, 45, N'SKU-43-M-สีกรม');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (244, 43, N'L', N'สีกรม', N'#262335', NULL, 3900, 45, 45, N'SKU-43-L-สีกรม');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (245, 43, N'XL', N'สีกรม', N'#262335', NULL, 3900, 42, 42, N'SKU-43-XL-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (242, 43, N'S', N'สีกรม', N'#262335', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS263_V1.jpg', 3900, 45, 45, N'SKU-43-S-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (243, 43, N'M', N'สีกรม', N'#262335', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS263_V1.jpg', 3900, 45, 45, N'SKU-43-M-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (244, 43, N'L', N'สีกรม', N'#262335', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS263_V1.jpg', 3900, 45, 45, N'SKU-43-L-สีกรม');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (245, 43, N'XL', N'สีกรม', N'#262335', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS263_V1.jpg', 3900, 42, 42, N'SKU-43-XL-สีกรม');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (246, 44, N'S', N'แดง', N'#c6242e', NULL, 5200, 5, 5, N'SKU-44-S-แดง');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (247, 44, N'M', N'แดง', N'#c6242e', NULL, 5200, 5, 5, N'SKU-44-M-แดง');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (248, 44, N'L', N'แดง', N'#c6242e', NULL, 5200, 5, 5, N'SKU-44-L-แดง');
