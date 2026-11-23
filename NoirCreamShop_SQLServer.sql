@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 14c138ec0b968b77 | Updated: 2026-11-23T20:04:25.435Z
+-- Checksum: c1f2a485d6f15859 | Updated: 2026-11-23T20:06:52.190Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -732,7 +732,7 @@ SET IDENTITY_INSERT dbo.shipment OFF;
 SET IDENTITY_INSERT dbo.review ON;
 INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (5, 22, 28, N'จิราภรณ์', N'ธาราสืบ', 5, N'👍👍เสื้อสวย', N'2026-11-17', '2026-11-17 16:19:03');
 INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (6, 1, 24, N'สมชาย', N'ทดสอบ', 4, N'ดีมากกๆ', N'2026-11-23', '2026-11-23 18:03:08');
-INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (7, 1, 68, N'สมชาย', N'ทดสอบ', 5, N'Very good มากๆ', N'2026-11-23', '2026-11-23 20:04:25');
+INSERT INTO dbo.review (review_id, customer_id, product_id, first_name, last_name, rating, comment, review_date, created_at) VALUES (9, 1, 68, N'สมชาย', N'ทดสอบ', 5, N'Very Good มากๆ', N'2026-11-23', '2026-11-23 20:06:52');
 SET IDENTITY_INSERT dbo.review OFF;
 
 -- ตาราง dbo.wishlist (2 รายการ)
