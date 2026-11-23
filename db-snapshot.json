@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T18:03:08.554Z",
-  "checksum": "794bec7702780466",
+  "timestamp": "2026-11-23T18:03:15.706Z",
+  "checksum": "190493a78c50c4be",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -19,7 +19,7 @@
     "shipment": 8,
     "review": 2,
     "wishlist": 2,
-    "review_like": 0
+    "review_like": 1
   },
   "tables": {
     "admin": [
@@ -3411,7 +3411,13 @@
         "product_id": 34
       }
     ],
-    "review_like": []
+    "review_like": [
+      {
+        "customer_id": 1,
+        "review_id": 6,
+        "created_at": "2026-11-23 18:03:15"
+      }
+    ]
   },
   "views": {
     "Orders": [
