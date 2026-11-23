@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T20:17:15.578Z",
-  "checksum": "34e7f0a9ad4f1312",
+  "timestamp": "2026-11-23T20:21:55.885Z",
+  "checksum": "15bf24f9f7475389",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -12,10 +12,10 @@
     "address": 22,
     "product": 34,
     "product_variant": 150,
-    "cart_item": 2,
-    "order": 10,
-    "order_item": 11,
-    "payment": 10,
+    "cart_item": 1,
+    "order": 11,
+    "order_item": 12,
+    "payment": 11,
     "shipment": 10,
     "review": 3,
     "wishlist": 2,
@@ -1194,8 +1194,8 @@
         "category": "เสื้อยืด",
         "description": "เสื้อยืดผ้าฝ้ายจอร์ซี่น้ำหนักเบา",
         "status": "active",
-        "stock": 136,
-        "quantity": 136,
+        "stock": 131,
+        "quantity": 131,
         "price": 390,
         "supplier_id": 2,
         "employee_id": 1,
@@ -2953,8 +2953,8 @@
         "color_hex": "#000000",
         "image_url": null,
         "price": 390,
-        "stock": 20,
-        "stock_quantity": 20,
+        "stock": 15,
+        "stock_quantity": 15,
         "sku": "SKU-68-XL-ดำ"
       },
       {
@@ -3014,14 +3014,6 @@
         "product_id": 24,
         "quantity": 1,
         "total_price": 2900
-      },
-      {
-        "cart_id": 20,
-        "customer_id": 1,
-        "variant_id": 354,
-        "product_id": 68,
-        "quantity": 5,
-        "total_price": 1950
       }
     ],
     "order": [
@@ -3174,6 +3166,21 @@
         "ship_name": "สมชาย ทดสอบ",
         "ship_phone": "089-999-9999",
         "ship_address": "12121 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540"
+      },
+      {
+        "order_id": 18,
+        "customer_id": 1,
+        "product_id": 68,
+        "order_date": "2026-11-23 20:21:55",
+        "status": "pending",
+        "subtotal": 1950,
+        "discount": 195,
+        "shipping_fee": 0,
+        "total_price": 1755,
+        "coupon_code": "WELCOME10",
+        "ship_name": "สมชาย ทดสอบ",
+        "ship_phone": "089-999-9999",
+        "ship_address": "12123 อาคารพาโนรามา ทาวเวอร์ สุขใจแลนด์ หมู่ 7 ซอยกิ่งแก้ว 25/1 ถนนบางนา-ตราด กม.12 บางพลีใหญ่ บางพลี สมุทรปราการ 10540"
       }
     ],
     "order_item": [
@@ -3275,6 +3282,15 @@
         "quantity": 2,
         "unit_price": 399,
         "total_price": 798
+      },
+      {
+        "order_item_id": 20,
+        "order_id": 18,
+        "variant_id": 354,
+        "product_id": 68,
+        "quantity": 5,
+        "unit_price": 390,
+        "total_price": 1950
       }
     ],
     "payment": [
@@ -3357,6 +3373,14 @@
         "status": "paid",
         "amount": 768,
         "paid_at": "2026-11-23 20:01:57"
+      },
+      {
+        "payment_id": 18,
+        "order_id": 18,
+        "method": "โอนผ่านธนาคาร",
+        "status": "pending",
+        "amount": 1755,
+        "paid_at": null
       }
     ],
     "shipment": [
@@ -3595,6 +3619,13 @@
         "order_date": "2026-11-23 19:43:04",
         "total_amount": 768,
         "order_status": "completed"
+      },
+      {
+        "order_id": 18,
+        "customer_id": 1,
+        "order_date": "2026-11-23 20:21:55",
+        "total_amount": 1755,
+        "order_status": "pending"
       }
     ],
     "Order_Detail": [
@@ -3674,6 +3705,13 @@
         "product_id": 68,
         "quantity": 2,
         "unit_price": 399
+      },
+      {
+        "order_detail_id": 20,
+        "order_id": 18,
+        "product_id": 68,
+        "quantity": 5,
+        "unit_price": 390
       }
     ]
   }
