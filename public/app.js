@@ -2903,13 +2903,67 @@ const A = window.A = {
   _openOrderAddressModal(o, addresses = [], isAdmin = false) {
     const mb = $('#modalBox');
     if (!mb) return;
-    const rawAddrText = (a) => [a.house_no, a.village, a.road, a.subdistrict, a.district, a.province, a.postal_code].filter(Boolean).join(' ');
+    const rawAddrText = (a) => [a.house_no, a.village, a.road, a.subdistrict, a.district, a.province, a.postal_code].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    const curNorm = String(o.ship_address || '').replace(/\s+/g, ' ').trim();
+    const matchedSaved = addresses.find((a) => rawAddrText(a) === curNorm);
+
+    const splitShipAddress = (raw) => {
+      const text = String(raw || '').trim().replace(/\s+/g, ' ');
+      if (!text) return { house_no: '', village: '', road: '', subdistrict: '', district: '', province: '', postal_code: '' };
+      const mZip = text.match(/(\d{5})$/);
+      const postal_code = mZip ? mZip[1] : '';
+      const body = (mZip ? text.slice(0, mZip.index) : text).trim();
+      const tokens = body.split(' ').filter(Boolean);
+      let province = '', district = '', subdistrict = '', front = body;
+      if (tokens.length >= 4) {
+        province = tokens[tokens.length - 1];
+        district = tokens[tokens.length - 2];
+        subdistrict = tokens[tokens.length - 3];
+        front = tokens.slice(0, -3).join(' ');
+      }
+      let house_no = front, village = '', road = '';
+      const roadIdx = front.search(/(?:ซอย|ซ\.|ถนน|ถ\.)/);
+      let beforeRoad = front;
+      if (roadIdx > 0) {
+        beforeRoad = front.slice(0, roadIdx).trim();
+        road = front.slice(roadIdx).trim();
+      }
+      const vilIdx = beforeRoad.search(/(?:หมู่บ้าน|หมู่ที่|หมู่\s*\d+|อาคาร|คอนโด)/);
+      if (vilIdx > 0) {
+        house_no = beforeRoad.slice(0, vilIdx).trim();
+        village = beforeRoad.slice(vilIdx).trim();
+      } else {
+        house_no = beforeRoad;
+      }
+      return { house_no, village, road, subdistrict, district, province, postal_code };
+    };
+
+    const init7 = matchedSaved ? {
+      house_no: matchedSaved.house_no || '',
+      village: matchedSaved.village || '',
+      road: matchedSaved.road || '',
+      subdistrict: matchedSaved.subdistrict || '',
+      district: matchedSaved.district || '',
+      province: matchedSaved.province || '',
+      postal_code: matchedSaved.postal_code || ''
+    } : splitShipAddress(o.ship_address);
+
     const savedHtml = addresses.length ? `
       <div style="margin-bottom:14px">
-        <div style="font-size:13px;font-weight:500;margin-bottom:6px">📍 เลือกจากสมุดที่อยู่ที่บันทึกไว้ (คลิกเพื่อใส่ข้อมูลอัตโนมัติ):</div>
-        <div style="display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto">
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px">📍 เลือกจากสมุดที่อยู่ที่บันทึกไว้ (คลิกเพื่อเติมข้อมูล 7 ช่องอัตโนมัติ):</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:150px;overflow:auto">
           ${addresses.map((a) => `
-            <button type="button" class="opt-card ord-addr-pick" style="text-align:left;width:100%;margin-bottom:0;padding:10px 12px" data-name="${esc(a.recipient || '')}" data-phone="${esc(a.phone || '')}" data-addr="${esc(rawAddrText(a))}" onclick="A.pickOrderSavedAddr(this)">
+            <button type="button" class="opt-card ord-addr-pick ${matchedSaved?.address_id === a.address_id ? 'on' : ''}" style="text-align:left;width:100%;margin-bottom:0;padding:10px 12px"
+              data-name="${esc(a.recipient || '')}"
+              data-phone="${esc(a.phone || '')}"
+              data-house_no="${esc(a.house_no || '')}"
+              data-village="${esc(a.village || '')}"
+              data-road="${esc(a.road || '')}"
+              data-subdistrict="${esc(a.subdistrict || '')}"
+              data-district="${esc(a.district || '')}"
+              data-province="${esc(a.province || '')}"
+              data-postal_code="${esc(a.postal_code || '')}"
+              onclick="A.pickOrderSavedAddr(this)">
               <div style="flex:1;font-size:13px">
                 <b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:4px;font-size:11px">ที่อยู่หลัก</span>' : ''}<br>
                 <span class="muted">${esc(fmtAddr(a))}</span>
@@ -2925,7 +2979,7 @@ const A = window.A = {
     mb.innerHTML = `
       <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
       <h3 style="margin:0 0 6px">✏️ แก้ไขที่อยู่จัดส่ง (Order #${o.order_id})</h3>
-      <p class="muted" style="margin:0 0 14px;font-size:13px">แก้ไขเฉพาะคำสั่งซื้อ #${o.order_id} (สถานะ: ${esc(STATUS[o.status] || o.status)}) — ไม่กระทบประวัติคำสั่งซื้ออื่น</p>
+      <p class="muted" style="margin:0 0 12px;font-size:13px">แก้ไขเฉพาะคำสั่งซื้อ #${o.order_id} (สถานะ: ${esc(STATUS[o.status] || o.status)}) — ระบบจะรวม 7 ช่องเก็บเป็น Snapshot ลงออเดอร์ให้ตรงกับ ER</p>
       ${shippedWarn}
       ${savedHtml}
       <form onsubmit="return A.saveOrderAddress(event, ${o.order_id}, ${isAdmin ? 'true' : 'false'})">
@@ -2933,7 +2987,23 @@ const A = window.A = {
           <div class="field"><label>ชื่อผู้รับ *</label><input id="ordEditName" name="ship_name" value="${esc(o.ship_name || '')}" maxlength="150" required></div>
           <div class="field"><label>เบอร์โทรศัพท์ผู้รับ *</label><input id="ordEditPhone" name="ship_phone" value="${esc(o.ship_phone || '')}" maxlength="40" required placeholder="08x-xxx-xxxx"></div>
         </div>
-        <div class="field"><label>ที่อยู่จัดส่งเต็ม *</label><textarea id="ordEditAddr" name="ship_address" rows="3" maxlength="600" required placeholder="บ้านเลขที่ หมู่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์">${esc(o.ship_address || '')}</textarea></div>
+        <div style="border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;background:#fcfaf7">
+          <div style="font-size:13px;font-weight:500;margin-bottom:10px">🏠 รายละเอียดที่อยู่จัดส่ง (แยก 7 ช่อง)</div>
+          <div class="row3">
+            <div class="field"><label>บ้านเลขที่ *</label><input id="ordEditHouse" name="house_no" value="${esc(init7.house_no)}" placeholder="เช่น 99/12" required></div>
+            <div class="field"><label>หมู่บ้าน/หมู่ที่</label><input id="ordEditVillage" name="village" value="${esc(init7.village)}" placeholder="เช่น หมู่ 4"></div>
+            <div class="field"><label>ถนน</label><input id="ordEditRoad" name="road" value="${esc(init7.road)}" placeholder="เช่น สุขุมวิท"></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label>ตำบล/แขวง *</label><input id="ordEditSubdistrict" name="subdistrict" value="${esc(init7.subdistrict)}" placeholder="เช่น คลองเตย" required></div>
+            <div class="field"><label>อำเภอ/เขต *</label><input id="ordEditDistrict" name="district" value="${esc(init7.district)}" placeholder="เช่น คลองเตย" required></div>
+            <div class="field"><label>จังหวัด *</label><input id="ordEditProvince" name="province" value="${esc(init7.province)}" placeholder="เช่น กรุงเทพมหานคร" required></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="margin-bottom:0"><label>รหัสไปรษณีย์ *</label><input id="ordEditPostal" name="postal_code" value="${esc(init7.postal_code)}" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="ตัวเลข 5 หลัก" required></div>
+            <div style="display:flex;align-items:flex-end;font-size:12px" class="muted"><span>บันทึกแล้วจะรวมข้อความเก็บใน <code>order.ship_address</code> ให้อัตโนมัติ</span></div>
+          </div>
+        </div>
         <div class="actions" style="justify-content:flex-end">
           <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
           <button class="btn sm">💾 บันทึกที่อยู่ใหม่</button>
@@ -2946,10 +3016,16 @@ const A = window.A = {
   pickOrderSavedAddr(btn) {
     $$('#modalBox .ord-addr-pick').forEach((el) => el.classList.remove('on'));
     btn.classList.add('on');
-    const n = $('#ordEditName'), p = $('#ordEditPhone'), a = $('#ordEditAddr');
-    if (n) n.value = btn.dataset.name || '';
-    if (p) p.value = btn.dataset.phone || '';
-    if (a) a.value = btn.dataset.addr || '';
+    const set = (id, key) => { const el = $(`#${id}`); if (el) el.value = btn.dataset[key] || ''; };
+    set('ordEditName', 'name');
+    set('ordEditPhone', 'phone');
+    set('ordEditHouse', 'house_no');
+    set('ordEditVillage', 'village');
+    set('ordEditRoad', 'road');
+    set('ordEditSubdistrict', 'subdistrict');
+    set('ordEditDistrict', 'district');
+    set('ordEditProvince', 'province');
+    set('ordEditPostal', 'postal_code');
   },
 
   saveOrderAddress(e, id, isAdmin = false) {

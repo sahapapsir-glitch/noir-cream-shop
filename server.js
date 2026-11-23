@@ -603,9 +603,24 @@ const resolveOrderShipping = (b, customerId) => {
   }
   const ship_name = str(b?.ship_name, 150);
   const ship_phone = str(b?.ship_phone, 40);
-  const ship_address = str(b?.ship_address, 600);
   if (!ship_name) bad('กรุณากรอกชื่อผู้รับ');
   if (!/^[0-9+\-\s]{9,20}$/.test(ship_phone)) bad('เบอร์โทรศัพท์ผู้รับไม่ถูกต้อง');
+  if (b?.house_no !== undefined || b?.subdistrict !== undefined || b?.postal_code !== undefined) {
+    const house_no = str(b?.house_no, 120);
+    const village = str(b?.village, 120);
+    const road = str(b?.road, 120);
+    const subdistrict = str(b?.subdistrict, 120);
+    const district = str(b?.district, 120);
+    const province = str(b?.province, 120);
+    const postal_code = str(b?.postal_code, 10);
+    if (!house_no || !subdistrict || !district || !province) {
+      bad('กรุณากรอกบ้านเลขที่ ตำบล/แขวง อำเภอ/เขต และจังหวัด ให้ครบถ้วน');
+    }
+    if (!/^\d{5}$/.test(postal_code)) bad('รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก');
+    const ship_address = [house_no, village, road, subdistrict, district, province, postal_code].filter(Boolean).join(' ').slice(0, 600);
+    return { ship_name, ship_phone, ship_address };
+  }
+  const ship_address = str(b?.ship_address, 600);
   if (!ship_address || ship_address.length < 5) bad('กรุณากรอกที่อยู่จัดส่งให้ครบถ้วน');
   return { ship_name, ship_phone, ship_address };
 };
