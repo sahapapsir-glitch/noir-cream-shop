@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 9c11bca00469afaa | Updated: 2026-11-23T20:27:19.246Z
+-- Checksum: 1d568eb0c6dc90a6 | Updated: 2026-11-23T21:14:29.309Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -408,7 +408,8 @@ INSERT INTO dbo.employee (employee_id, first_name, last_name, email, phone, posi
 INSERT INTO dbo.employee (employee_id, first_name, last_name, email, phone, position, address) VALUES (2, N'ธนากร', N'มั่นคง', N'thanakorn@shop.com', N'082-222-2222', N'เจ้าหน้าที่คลังสินค้า', N'45/8 ถนนพระราม 9 เขตห้วยขวาง กรุงเทพมหานคร');
 SET IDENTITY_INSERT dbo.employee OFF;
 
--- ตาราง dbo.coupon (2 รายการ)
+-- ตาราง dbo.coupon (3 รายการ)
+INSERT INTO dbo.coupon (code, type, value, min_total, active) VALUES (N'SALE67', N'percent', 10, 67, 1);
 INSERT INTO dbo.coupon (code, type, value, min_total, active) VALUES (N'SAVE100', N'fixed', 100, 1000, 1);
 INSERT INTO dbo.coupon (code, type, value, min_total, active) VALUES (N'WELCOME10', N'percent', 10, 0, 1);
 

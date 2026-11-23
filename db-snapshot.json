@@ -1,12 +1,12 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T20:27:19.246Z",
-  "checksum": "9c11bca00469afaa",
+  "timestamp": "2026-11-23T21:14:29.309Z",
+  "checksum": "1d568eb0c6dc90a6",
   "counts": {
     "admin": 5,
     "employee": 2,
-    "coupon": 2,
+    "coupon": 3,
     "supplier": 3,
     "customer": 23,
     "address": 22,
@@ -80,6 +80,13 @@
       }
     ],
     "coupon": [
+      {
+        "code": "SALE67",
+        "type": "percent",
+        "value": 10,
+        "min_total": 67,
+        "active": 1
+      },
       {
         "code": "SAVE100",
         "type": "fixed",
