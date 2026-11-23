@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: f9d5dd894060da87 | Updated: 2026-11-23T16:19:55.450Z
+-- Checksum: ad8afb811f5071ba | Updated: 2026-11-23T16:20:10.838Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -548,11 +548,11 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (212, 35, N'M', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#62749a', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg', 2400, 40, 40, N'SKU-35-M-สีครีมอ่อน/สีเบจอ่อนอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (213, 35, N'L', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#62749a', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg', 2400, 38, 38, N'SKU-35-L-สีครีมอ่อน/สีเบจอ่อนอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (214, 35, N'XL', N'สีครีมอ่อน / สีเบจอ่อนอมเทา', N'#62749a', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MK263_V1.jpg', 2400, 40, 40, N'SKU-35-XL-สีครีมอ่อน/สีเบจอ่อนอมเทา');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (219, 37, N'S', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', NULL, 5600, 35, 35, N'SKU-37-S-สีขาวงาช้าง/สีครีมอ่อน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (220, 37, N'M', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', NULL, 5600, 35, 35, N'SKU-37-M-สีขาวงาช้าง/สีครีมอ่อน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (221, 37, N'L', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', NULL, 5600, 35, 35, N'SKU-37-L-สีขาวงาช้าง/สีครีมอ่อน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (222, 37, N'XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', NULL, 5600, 35, 35, N'SKU-37-XL-สีขาวงาช้าง/สีครีมอ่อน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (223, 37, N'2XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', NULL, 5600, 35, 35, N'SKU-37-2XL-สีขาวงาช้าง/สีครีมอ่อน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (219, 37, N'S', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-S-สีขาวงาช้าง/สีครีมอ่อน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (220, 37, N'M', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-M-สีขาวงาช้าง/สีครีมอ่อน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (221, 37, N'L', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-L-สีขาวงาช้าง/สีครีมอ่อน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (222, 37, N'XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-XL-สีขาวงาช้าง/สีครีมอ่อน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (223, 37, N'2XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-2XL-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (224, 38, N'S', N'ดำ', N'#000000', NULL, 19999, 20, 20, N'SKU-38-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (225, 38, N'M', N'ดำ', N'#000000', NULL, 19999, 20, 20, N'SKU-38-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', NULL, 19999, 20, 20, N'SKU-38-L-ดำ');
