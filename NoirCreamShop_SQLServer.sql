@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: bc3069dc19fdd845 | Updated: 2026-11-23T18:10:08.209Z
+-- Checksum: eab649dd00c741d3 | Updated: 2026-11-23T18:11:07.104Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -595,11 +595,11 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (266, 49, N'M', N'สีแดงเลือดหมูเข้ม', N'#3b2127', N'https://is8.revolveassets.com/images/p4/n/uv/LACO-MS201_V1.jpg', 1999, 30, 30, N'SKU-49-M-สีแดงเลือดหมูเข้ม');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (267, 49, N'L', N'สีแดงเลือดหมูเข้ม', N'#3b2127', N'https://is8.revolveassets.com/images/p4/n/uv/LACO-MS201_V1.jpg', 1999, 30, 30, N'SKU-49-L-สีแดงเลือดหมูเข้ม');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (268, 49, N'XL', N'สีแดงเลือดหมูเข้ม', N'#3b2127', N'https://is8.revolveassets.com/images/p4/n/uv/LACO-MS201_V1.jpg', 1999, 30, 30, N'SKU-49-XL-สีแดงเลือดหมูเข้ม');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (269, 50, N'S', N'สีดำ / สีเทาตุ่น', N'#252424', NULL, 4300, 25, 25, N'SKU-50-S-สีดำ/สีเทาตุ่น');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (270, 50, N'M', N'สีดำ / สีเทาตุ่น', N'#252424', NULL, 4300, 25, 25, N'SKU-50-M-สีดำ/สีเทาตุ่น');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (271, 50, N'L', N'สีดำ / สีเทาตุ่น', N'#252424', NULL, 4300, 25, 25, N'SKU-50-L-สีดำ/สีเทาตุ่น');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (272, 50, N'XL', N'สีดำ / สีเทาตุ่น', N'#252424', NULL, 4300, 25, 25, N'SKU-50-XL-สีดำ/สีเทาตุ่น');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (273, 50, N'2XL', N'สีดำ / สีเทาตุ่น', N'#252424', NULL, 4399, 25, 25, N'SKU-50-2XL-สีดำ/สีเทาตุ่น');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (269, 50, N'S', N'สีดำ / สีเทาตุ่น', N'#252424', N'https://is8.revolveassets.com/images/p4/n/uv/ICER-MS90_V1.jpg', 4300, 25, 25, N'SKU-50-S-สีดำ/สีเทาตุ่น');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (270, 50, N'M', N'สีดำ / สีเทาตุ่น', N'#252424', N'https://is8.revolveassets.com/images/p4/n/uv/ICER-MS90_V1.jpg', 4300, 25, 25, N'SKU-50-M-สีดำ/สีเทาตุ่น');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (271, 50, N'L', N'สีดำ / สีเทาตุ่น', N'#252424', N'https://is8.revolveassets.com/images/p4/n/uv/ICER-MS90_V1.jpg', 4300, 25, 25, N'SKU-50-L-สีดำ/สีเทาตุ่น');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (272, 50, N'XL', N'สีดำ / สีเทาตุ่น', N'#252424', N'https://is8.revolveassets.com/images/p4/n/uv/ICER-MS90_V1.jpg', 4300, 25, 25, N'SKU-50-XL-สีดำ/สีเทาตุ่น');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (273, 50, N'2XL', N'สีดำ / สีเทาตุ่น', N'#252424', N'https://is8.revolveassets.com/images/p4/n/uv/ICER-MS90_V1.jpg', 4399, 25, 25, N'SKU-50-2XL-สีดำ/สีเทาตุ่น');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (274, 51, N'S', N'สีฟ้าหม่น / สีฟ้าอมเทา', N'#b6bbc6', NULL, 3456, 30, 30, N'SKU-51-S-สีฟ้าหม่น/สีฟ้าอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (275, 51, N'M', N'สีฟ้าหม่น / สีฟ้าอมเทา', N'#b6bbc6', NULL, 3456, 30, 30, N'SKU-51-M-สีฟ้าหม่น/สีฟ้าอมเทา');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (276, 51, N'L', N'สีฟ้าหม่น / สีฟ้าอมเทา', N'#b6bbc6', NULL, 3456, 30, 30, N'SKU-51-L-สีฟ้าหม่น/สีฟ้าอมเทา');
