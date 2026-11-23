@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: faec8c56570d1761 | Updated: 2026-11-23T15:44:41.109Z
+-- Checksum: b704335c750347a9 | Updated: 2026-11-23T15:45:17.371Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -660,9 +660,9 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (352, 68, N'M', N'ดำ', N'#000000', NULL, 390, 20, 20, N'SKU-68-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (353, 68, N'L', N'ดำ', N'#000000', NULL, 390, 20, 20, N'SKU-68-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (354, 68, N'XL', N'ดำ', N'#000000', NULL, 390, 20, 20, N'SKU-68-XL-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (355, 68, N'S', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 390, 15, 15, N'SKU-68-S-ขาว');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (356, 68, N'M', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 390, 15, 15, N'SKU-68-M-ขาว');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (357, 68, N'L', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 390, 15, 15, N'SKU-68-L-ขาว');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (355, 68, N'S', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 399, 15, 15, N'SKU-68-S-ขาว');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (356, 68, N'M', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 399, 15, 15, N'SKU-68-M-ขาว');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (357, 68, N'L', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 399, 15, 15, N'SKU-68-L-ขาว');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (358, 68, N'XL', N'ขาว', N'#ffffff', N'https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200', 390, 15, 15, N'SKU-68-XL-ขาว');
 SET IDENTITY_INSERT dbo.product_variant OFF;
 

@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T15:44:41.109Z",
-  "checksum": "faec8c56570d1761",
+  "timestamp": "2026-11-23T15:45:17.371Z",
+  "checksum": "b704335c750347a9",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -2964,7 +2964,7 @@
         "color": "ขาว",
         "color_hex": "#ffffff",
         "image_url": "https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200",
-        "price": 390,
+        "price": 399,
         "stock": 15,
         "stock_quantity": 15,
         "sku": "SKU-68-S-ขาว"
@@ -2976,7 +2976,7 @@
         "color": "ขาว",
         "color_hex": "#ffffff",
         "image_url": "https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200",
-        "price": 390,
+        "price": 399,
         "stock": 15,
         "stock_quantity": 15,
         "sku": "SKU-68-M-ขาว"
@@ -2988,7 +2988,7 @@
         "color": "ขาว",
         "color_hex": "#ffffff",
         "image_url": "https://th.hm.com/cdn/shop/files/6586560871845dd06b093e3777ddfb71f78ff84b_xxl-1.jpg?v=1794515157&width=1200",
-        "price": 390,
+        "price": 399,
         "stock": 15,
         "stock_quantity": 15,
         "sku": "SKU-68-L-ขาว"
