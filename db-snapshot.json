@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T16:20:52.534Z",
-  "checksum": "efbd43e3b8e6deba",
+  "timestamp": "2026-11-23T16:56:58.235Z",
+  "checksum": "916b421ae887c8aa",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -710,7 +710,7 @@
       },
       {
         "product_id": 28,
-        "name": "Ronron Pattern Logo Basic Fit T Shirt White Navy (Women's)",
+        "name": "Ronron Pattern Logo Basic Fit T Shirt White Navy",
         "category": "เสื้อยืด",
         "description": "เนื้อผ้าคอตตอน",
         "status": "active",
