@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T19:41:31.374Z",
-  "checksum": "da1b76408c115e56",
+  "timestamp": "2026-11-23T19:42:35.465Z",
+  "checksum": "931edc4d46bc45bb",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -3020,8 +3020,8 @@
         "customer_id": 1,
         "variant_id": 355,
         "product_id": 68,
-        "quantity": 1,
-        "total_price": 399
+        "quantity": 2,
+        "total_price": 798
       }
     ],
     "order": [
