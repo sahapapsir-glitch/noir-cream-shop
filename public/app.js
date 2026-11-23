@@ -1207,8 +1207,160 @@ pages.admin = async () => {
   await adminTabs[adminTab]();
 };
 
-const _adminCache = { customers: [], admins: [], suppliers: [], employees: [], coupons: [] };
+const _adminCache = { products: [], orders: [], customers: [], admins: [], suppliers: [], employees: [], coupons: [], lowStock: [], allowedCategories: [] };
 const adminTabs = {};
+
+/* ---------- Frontend Admin DataTable Engine (UI Only — Zero DB Changes) ---------- */
+const _dtCollator = typeof Intl !== 'undefined' ? new Intl.Collator('th', { numeric: true, sensitivity: 'base' }) : null;
+const _dtState = {
+  lowStock: { q: '', filter: '', extra: '', sort: 'stock', dir: 'asc', page: 1, size: 10 },
+  coupons: { q: '', filter: '', extra: '', sort: 'code', dir: 'asc', page: 1, size: 10 },
+  products: { q: '', filter: '', extra: '', sort: 'id', dir: 'asc', page: 1, size: 10 },
+  orders: { q: '', filter: '', extra: '', sort: 'id', dir: 'desc', page: 1, size: 10 },
+  customers: { q: '', filter: '', extra: '', sort: 'id', dir: 'asc', page: 1, size: 10 },
+  admins: { q: '', filter: '', extra: '', sort: 'id', dir: 'asc', page: 1, size: 10 },
+  suppliers: { q: '', filter: '', extra: '', sort: 'id', dir: 'asc', page: 1, size: 10 },
+  employees: { q: '', filter: '', extra: '', sort: 'id', dir: 'asc', page: 1, size: 10 }
+};
+const _dtConfigs = {};
+
+function dtTh(key, col, label) {
+  const st = _dtState[key] || {};
+  const active = st.sort === col;
+  const icon = active ? (st.dir === 'asc' ? '▲' : '▼') : '⇅';
+  return `<th class="dt-th ${active ? 'is-sorted' : ''}" onclick="A.dtSort('${key}', '${col}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();A.dtSort('${key}','${col}')}"><span>${label}</span><span class="dt-sort-ind">${icon}</span></th>`;
+}
+
+function dtSortPill(key, col, label) {
+  const st = _dtState[key] || {};
+  const active = st.sort === col;
+  const icon = active ? (st.dir === 'asc' ? ' ▲' : ' ▼') : ' ⇅';
+  return `<button type="button" class="dt-sort-pill ${active ? 'is-sorted' : ''}" onclick="A.dtSort('${key}', '${col}')">${label}<span>${icon}</span></button>`;
+}
+
+function dtPageList(page, totalPages) {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages = new Set([1, totalPages, page - 1, page, page + 1]);
+  const valid = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+  const out = [];
+  for (let i = 0; i < valid.length; i++) {
+    if (i > 0 && valid[i] - valid[i - 1] > 1) out.push('...');
+    out.push(valid[i]);
+  }
+  return out;
+}
+
+function dtCompute(key) {
+  const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+  const cfg = _dtConfigs[key];
+  if (!cfg) return { slice: [], total: 0, filteredTotal: 0, page: 1, totalPages: 1, startIdx: 0, endIdx: 0, st };
+  const all = cfg.items() || [];
+  const q = (st.q || '').trim().toLowerCase();
+  const filtered = all.filter((item) => cfg.match(item, st, q));
+  const getter = cfg.sorters?.[st.sort];
+  const sorted = getter ? [...filtered].sort((a, b) => {
+    const va = getter(a);
+    const vb = getter(b);
+    let cmp = 0;
+    if (typeof va === 'number' && typeof vb === 'number') {
+      cmp = va - vb;
+    } else {
+      const sa = va == null ? '' : String(va);
+      const sb = vb == null ? '' : String(vb);
+      cmp = _dtCollator ? _dtCollator.compare(sa, sb) : sa.localeCompare(sb);
+    }
+    return st.dir === 'desc' ? -cmp : cmp;
+  }) : filtered;
+
+  const total = all.length;
+  const filteredTotal = sorted.length;
+  const size = Number(st.size);
+  const totalPages = size > 0 ? Math.max(1, Math.ceil(filteredTotal / size)) : 1;
+  const page = Math.min(Math.max(1, Number(st.page) || 1), totalPages);
+  st.page = page;
+  const startIdx = size > 0 ? (page - 1) * size : 0;
+  const endIdx = size > 0 ? Math.min(startIdx + size, filteredTotal) : filteredTotal;
+  const slice = size > 0 ? sorted.slice(startIdx, endIdx) : sorted;
+  return { slice, total, filteredTotal, page, totalPages, startIdx, endIdx, st };
+}
+
+function dtToolbar(key, opts = {}) {
+  const st = _dtState[key] || { q: '', filter: '', extra: '', size: 10 };
+  const sizes = opts.sizes || [10, 20, 50, 0];
+  const hasFilter = Boolean((st.q || '').trim() || st.filter || st.extra);
+  return `
+    <div class="dt-toolbar">
+      <div class="dt-toolbar-left">
+        <div class="dt-search-wrap">
+          <span class="dt-search-icon" aria-hidden="true">🔍</span>
+          <input id="dt-search-${key}" class="dt-search" type="search" placeholder="${esc(opts.placeholder || 'ค้นหาข้อมูล...')}" value="${esc(st.q || '')}" oninput="A.dtSearch('${key}', this.value)">
+        </div>
+        ${opts.filter1 ? `
+          <select id="dt-f1-${key}" class="dt-select" aria-label="${esc(opts.filter1.label || 'ตัวกรอง 1')}" onchange="A.dtFilter('${key}', 'filter', this.value)">
+            ${opts.filter1.options.map(([v, label]) => `<option value="${esc(v)}" ${String(st.filter) === String(v) ? 'selected' : ''}>${esc(label)}</option>`).join('')}
+          </select>
+        ` : ''}
+        ${opts.filter2 ? `
+          <select id="dt-f2-${key}" class="dt-select" aria-label="${esc(opts.filter2.label || 'ตัวกรอง 2')}" onchange="A.dtFilter('${key}', 'extra', this.value)">
+            ${opts.filter2.options.map(([v, label]) => `<option value="${esc(v)}" ${String(st.extra) === String(v) ? 'selected' : ''}>${esc(label)}</option>`).join('')}
+          </select>
+        ` : ''}
+        <button type="button" id="dt-reset-${key}" class="btn ghost sm" style="${hasFilter ? '' : 'display:none'}" onclick="A.dtReset('${key}')">✕ ล้างตัวกรอง</button>
+      </div>
+      <div class="dt-toolbar-right">
+        <label class="dt-size-label">
+          <span>แสดง</span>
+          <select id="dt-size-${key}" class="dt-select" style="min-width:86px" onchange="A.dtSize('${key}', this.value)">
+            ${sizes.map((n) => `<option value="${n}" ${Number(st.size) === Number(n) ? 'selected' : ''}>${n === 0 ? 'ทั้งหมด' : `${n} รายการ`}</option>`).join('')}
+          </select>
+        </label>
+        ${opts.extraHtml || ''}
+      </div>
+    </div>
+  `;
+}
+
+function dtPager(key, meta) {
+  const { total, filteredTotal, page, totalPages, startIdx, endIdx, st } = meta;
+  const hasFilter = Boolean((st.q || '').trim() || st.filter || st.extra);
+  if (filteredTotal === 0) {
+    return `
+      <div class="dt-footer">
+        <div class="dt-info">แสดง 0 รายการ${total > 0 ? ` (จากทั้งหมด ${total} รายการ)` : ''}</div>
+        ${hasFilter ? `<button type="button" class="btn ghost sm" onclick="A.dtReset('${key}')">ล้างคำค้นหา/ตัวกรอง</button>` : ''}
+      </div>
+    `;
+  }
+  const pages = dtPageList(page, totalPages);
+  return `
+    <div class="dt-footer">
+      <div class="dt-info">
+        แสดง <b>${startIdx + 1}–${endIdx}</b> จาก <b>${filteredTotal}</b> รายการ
+        ${filteredTotal !== total ? `<span class="muted">(กรองจากทั้งหมด ${total} รายการ)</span>` : ''}
+      </div>
+      <div class="dt-pager">
+        <button type="button" class="dt-pg-btn" ${page <= 1 ? 'disabled' : `onclick="A.dtPage('${key}', ${page - 1})"`}>‹ ก่อนหน้า</button>
+        ${pages.map((p) => (p === '...'
+          ? '<span class="dt-pg-dots">…</span>'
+          : `<button type="button" class="dt-pg-btn ${p === page ? 'on' : ''}" onclick="A.dtPage('${key}', ${p})">${p}</button>`
+        )).join('')}
+        <button type="button" class="dt-pg-btn" ${page >= totalPages ? 'disabled' : `onclick="A.dtPage('${key}', ${page + 1})"`}>ถัดไป ›</button>
+      </div>
+    </div>
+  `;
+}
+
+function dtRenderBody(key) {
+  const cfg = _dtConfigs[key];
+  if (!cfg) return '';
+  const meta = dtCompute(key);
+  const resetBtn = $(`#dt-reset-${key}`);
+  if (resetBtn) {
+    const hasFilter = Boolean((meta.st.q || '').trim() || meta.st.filter || meta.st.extra);
+    resetBtn.style.display = hasFilter ? '' : 'none';
+  }
+  return cfg.render(meta.slice, meta);
+}
 
 adminTabs.dash = async () => {
   const [s, couponRes] = await Promise.all([
@@ -1217,6 +1369,83 @@ adminTabs.dash = async () => {
   ]);
   const coupons = couponRes.coupons || [];
   _adminCache.coupons = coupons;
+  _adminCache.lowStock = s.low_stock || [];
+
+  _dtConfigs.lowStock = {
+    items: () => _adminCache.lowStock,
+    match: (v, _st, q) => !q || `${v.name} ${v.color} ${v.size} ${v.stock}`.toLowerCase().includes(q),
+    sorters: {
+      name: (v) => v.name || '',
+      color: (v) => v.color || '',
+      size: (v) => v.size || '',
+      stock: (v) => Number(v.stock || 0)
+    },
+    render: (slice, meta) => `
+      <div class="table-wrap">
+        <table class="dt-table">
+          <thead><tr>
+            ${dtTh('lowStock', 'name', 'สินค้า')}
+            ${dtTh('lowStock', 'color', 'สี')}
+            ${dtTh('lowStock', 'size', 'ไซซ์')}
+            ${dtTh('lowStock', 'stock', 'คงเหลือ')}
+          </tr></thead>
+          <tbody>
+            ${slice.length
+              ? slice.map((v) => `<tr><td>${esc(v.name)}</td><td>${esc(v.color)}</td><td>${esc(v.size)}</td><td><b style="color:var(--danger)">${v.stock}</b></td></tr>`).join('')
+              : '<tr><td colspan="4" class="muted" style="text-align:center;padding:18px">ไม่พบรายการที่ตรงกับการค้นหา</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+      ${dtPager('lowStock', meta)}
+    `
+  };
+
+  _dtConfigs.coupons = {
+    items: () => _adminCache.coupons,
+    match: (c, st, q) => {
+      if (st.filter === 'active' && !c.active) return false;
+      if (st.filter === 'inactive' && c.active) return false;
+      return !q || `${c.code} ${c.type} ${c.value} ${c.min_total || 0}`.toLowerCase().includes(q);
+    },
+    sorters: {
+      code: (c) => c.code || '',
+      type: (c) => c.type || '',
+      value: (c) => Number(c.value || 0),
+      min_total: (c) => Number(c.min_total || 0),
+      active: (c) => (c.active ? 1 : 0)
+    },
+    render: (slice, meta) => `
+      <div class="table-wrap">
+        <table class="dt-table">
+          <thead><tr>
+            ${dtTh('coupons', 'code', 'โค้ดส่วนลด')}
+            ${dtTh('coupons', 'type', 'ประเภท')}
+            ${dtTh('coupons', 'value', 'มูลค่าส่วนลด')}
+            ${dtTh('coupons', 'min_total', 'ยอดสั่งซื้อขั้นต่ำ')}
+            ${dtTh('coupons', 'active', 'สถานะ')}
+            <th>การจัดการ</th>
+          </tr></thead>
+          <tbody>
+            ${slice.length ? slice.map((c) => `
+              <tr>
+                <td><b><code>${esc(c.code)}</code></b></td>
+                <td>${c.type === 'percent' ? 'เปอร์เซ็นต์ (%)' : 'ลดจำนวนเงิน (฿)'}</td>
+                <td><b>${c.type === 'percent' ? `${Number(c.value)}%` : money(c.value)}</b></td>
+                <td>${Number(c.min_total || 0) > 0 ? money(c.min_total) : 'ไม่มีขั้นต่ำ'}</td>
+                <td><span class="status ${c.active ? 'paid' : 'cancelled'}">${c.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</span></td>
+                <td class="actions" style="white-space:nowrap">
+                  <button type="button" class="btn ghost sm" onclick="A.openEditCoupon(${JSON.stringify(c.code).replace(/"/g, '&quot;')})">✏️ แก้ไข</button>
+                  <button type="button" class="btn danger sm" onclick="A.deleteCoupon(${JSON.stringify(c.code).replace(/"/g, '&quot;')})">ลบ</button>
+                </td>
+              </tr>
+            `).join('') : `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">${meta.total ? 'ไม่พบคูปองที่ตรงกับเงื่อนไข' : 'ยังไม่มีคูปองส่วนลด'}</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+      ${meta.total ? dtPager('coupons', meta) : ''}
+    `
+  };
+
   $('#tab').innerHTML = `
     <div class="stats">
       <div class="stat"><small>รายได้ (ชำระแล้ว)</small><b data-count="${s.revenue}" data-money="1">${money(s.revenue)}</b></div>
@@ -1225,38 +1454,21 @@ adminTabs.dash = async () => {
       <div class="stat"><small>สมาชิกทั้งหมด</small><b data-count="${s.customers}">${s.customers}</b></div>
       <div class="stat"><small>สินค้าที่วางขาย</small><b data-count="${s.products}">${s.products}</b></div>
     </div>
-    <div class="panel">
-      <h3>สินค้าใกล้หมด (≤ 3 ชิ้น)</h3>
-      ${s.low_stock.length ? `
-        <div class="table-wrap">
-          <table>
-            <tr><th>สินค้า</th><th>สี</th><th>ไซซ์</th><th>คงเหลือ</th></tr>
-            ${s.low_stock.map((v) => `<tr><td>${esc(v.name)}</td><td>${esc(v.color)}</td><td>${esc(v.size)}</td><td><b style="color:var(--danger)">${v.stock}</b></td></tr>`).join('')}
-          </table>
-        </div>
+    <div class="panel dt-box" id="dt-box-lowStock">
+      <h3>สินค้าใกล้หมด (≤ 3 ชิ้น) <span class="muted" style="font-size:13.5px;font-weight:400">(${_adminCache.lowStock.length} รายการ)</span></h3>
+      ${_adminCache.lowStock.length ? `
+        ${dtToolbar('lowStock', { placeholder: 'ค้นหาชื่อสินค้า / สี / ไซซ์...' })}
+        <div id="dt-body-lowStock">${dtRenderBody('lowStock')}</div>
       ` : '<p class="muted">ไม่มีสินค้าใกล้หมด</p>'}
     </div>
-    <div class="panel">
-      <h3>🎟️ จัดการคูปองส่วนลด</h3>
-      <div class="table-wrap">
-        <table>
-          <tr><th>โค้ดส่วนลด</th><th>ประเภท</th><th>มูลค่าส่วนลด</th><th>ยอดสั่งซื้อขั้นต่ำ</th><th>สถานะ</th><th>การจัดการ</th></tr>
-          ${coupons.length ? coupons.map((c) => `
-            <tr>
-              <td><b><code>${esc(c.code)}</code></b></td>
-              <td>${c.type === 'percent' ? 'เปอร์เซ็นต์ (%)' : 'ลดจำนวนเงิน (฿)'}</td>
-              <td><b>${c.type === 'percent' ? `${Number(c.value)}%` : money(c.value)}</b></td>
-              <td>${Number(c.min_total || 0) > 0 ? money(c.min_total) : 'ไม่มีขั้นต่ำ'}</td>
-              <td><span class="status ${c.active ? 'paid' : 'cancelled'}">${c.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</span></td>
-              <td class="actions" style="white-space:nowrap">
-                <button type="button" class="btn ghost sm" onclick="A.openEditCoupon(${JSON.stringify(c.code).replace(/"/g, '&quot;')})">✏️ แก้ไข</button>
-                <button type="button" class="btn danger sm" onclick="A.deleteCoupon(${JSON.stringify(c.code).replace(/"/g, '&quot;')})">ลบ</button>
-              </td>
-            </tr>
-          `).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">ยังไม่มีคูปองส่วนลด</td></tr>'}
-        </table>
-      </div>
-      <form class="inline-form" onsubmit="return A.addCoupon(event)">
+    <div class="panel dt-box" id="dt-box-coupons">
+      <h3>🎟️ จัดการคูปองส่วนลด <span class="muted" style="font-size:13.5px;font-weight:400">(${coupons.length} รายการ)</span></h3>
+      ${coupons.length ? dtToolbar('coupons', {
+        placeholder: 'ค้นหารหัสคูปอง / ส่วนลด...',
+        filter1: { label: 'สถานะคูปอง', options: [['', 'ทุกสถานะ'], ['active', 'เปิดใช้งาน'], ['inactive', 'ปิดใช้งาน']] }
+      }) : ''}
+      <div id="dt-body-coupons">${dtRenderBody('coupons')}</div>
+      <form class="inline-form" onsubmit="return A.addCoupon(event)" style="margin-top:14px">
         <input name="code" placeholder="รหัสคูปอง เช่น SALE20" style="text-transform:uppercase" required>
         <select name="type">
           <option value="percent">ลดเป็น %</option>
@@ -1278,8 +1490,162 @@ adminTabs.dash = async () => {
 adminTabs.products = async () => {
   const { products, suppliers, employees = [], allowed_categories } = await api('GET', '/api/admin/products');
   const cats = allowed_categories || ['เสื้อยืด', 'เสื้อโปโล', 'เสื้อแขนยาว', 'กางเกง'];
+  _adminCache.products = products;
+  _adminCache.suppliers = suppliers;
+  _adminCache.employees = employees;
+  _adminCache.allowedCategories = cats;
+
   const supOpts = (cur) => '<option value="">— ไม่ระบุ —</option>' + suppliers.map((s) => `<option value="${s.supplier_id}" ${s.supplier_id === cur ? 'selected' : ''}>#${s.supplier_id} ${esc(s.name)}</option>`).join('');
   const empOpts = (cur) => '<option value="">— ไม่ระบุ —</option>' + employees.map((e) => `<option value="${e.employee_id}" ${e.employee_id === cur ? 'selected' : ''}>#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}${e.position ? ` (${esc(e.position)})` : ''}</option>`).join('');
+  const prodMinPrice = (p) => {
+    const prices = (p.variants || []).map((v) => Number(v.price)).filter((n) => Number.isFinite(n));
+    return prices.length ? Math.min(...prices) : 0;
+  };
+  const prodPriceText = (p) => {
+    const prices = (p.variants || []).map((v) => Number(v.price)).filter((n) => Number.isFinite(n));
+    if (!prices.length) return '';
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    return minP === maxP ? money(minP) : `${money(minP)}–${money(maxP)}`;
+  };
+
+  _dtConfigs.products = {
+    items: () => _adminCache.products,
+    match: (p, st, q) => {
+      if (st.filter && p.category !== st.filter) return false;
+      if (st.extra === 'active' && p.status !== 'active') return false;
+      if (st.extra === 'inactive' && p.status !== 'inactive') return false;
+      if (st.extra === 'low' && Number(p.stock || 0) > 5) return false;
+      if (!q) return true;
+      const variantText = (p.variants || []).map((v) => `${v.variant_id} ${v.color} ${v.size} ${v.price}`).join(' ');
+      return `${p.product_id} ${p.name} ${p.category} ${p.description || ''} ${p.supplier_name || ''} ${p.employee_name || ''} ${variantText}`
+        .toLowerCase()
+        .includes(q);
+    },
+    sorters: {
+      id: (p) => Number(p.product_id || 0),
+      name: (p) => p.name || '',
+      category: (p) => p.category || '',
+      stock: (p) => Number(p.stock || 0),
+      price: (p) => prodMinPrice(p),
+      status: (p) => (p.status === 'active' ? 1 : 2)
+    },
+    render: (slice, meta) => {
+      const catList = _adminCache.allowedCategories;
+      return `
+        <div class="dt-sort-bar">
+          <span class="muted" style="font-size:12.5px">เรียงตาม:</span>
+          ${dtSortPill('products', 'id', '#ID')}
+          ${dtSortPill('products', 'name', 'ชื่อสินค้า')}
+          ${dtSortPill('products', 'category', 'หมวดหมู่')}
+          ${dtSortPill('products', 'price', 'ราคา')}
+          ${dtSortPill('products', 'stock', 'สต็อกรวม')}
+          ${dtSortPill('products', 'status', 'สถานะ')}
+        </div>
+        ${slice.length ? slice.map((p) => `
+          <details class="prod">
+            <summary>
+              <span><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)}${prodPriceText(p) ? ` · ${prodPriceText(p)}` : ''} · สต็อกรวม <b style="${Number(p.stock) <= 3 ? 'color:var(--danger)' : ''}">${p.stock} ชิ้น</b>${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
+              <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
+            </summary>
+            <div class="inner">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
+                <h4 style="margin:0">รูปแบบ ไซส์ และสต็อก (Product_ID: #${p.product_id})</h4>
+                <button class="btn danger sm" onclick="A.deleteProduct(${p.product_id})">🗑️ ลบสินค้านี้</button>
+              </div>
+              ${p.variants && p.variants.length ? `
+                <div class="table-wrap">
+                  <table>
+                    <tr><th># (Variant_ID)</th><th>สี</th><th>ไซซ์</th><th>ราคา</th><th>สต็อก</th><th>การจัดการ</th></tr>
+                    ${p.variants.map((v) => `
+                      <tr>
+                        <td><b>#${v.variant_id}</b></td>
+                        <td><span class="dot" style="background:${esc(v.color_hex)}"></span>${esc(v.color)}</td>
+                        <td><b>${esc(v.size)}</b></td>
+                        <td><input class="mini-in" type="number" min="1" id="vp${v.variant_id}" value="${v.price}"></td>
+                        <td><input class="mini-in" type="number" min="0" id="vs${v.variant_id}" value="${v.stock}"></td>
+                        <td class="actions">
+                          <button class="btn ghost sm" onclick="A.saveVariant(${v.variant_id})">บันทึก</button>
+                          <button class="btn danger sm" onclick="A.delVariant(${v.variant_id})">ลบ</button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </table>
+                </div>
+              ` : '<p class="muted">ยังไม่มีรูปแบบไซส์/สี (กรุณาเพิ่มด้านล่าง)</p>'}
+
+              <!-- Batch Add Sizes for existing product -->
+              <div class="batch-box" style="margin:16px 0 12px;background:var(--cream);border:1px solid var(--line);border-radius:var(--radius);padding:16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <b>⚡ เพิ่มหลายไซส์พร้อมกัน (Batch Add Sizes):</b>
+                  <span class="muted" style="font-size:12.5px">หมวดหมู่: ${esc(p.category)}</span>
+                </div>
+                <form onsubmit="return A.addBatchVariants(event, ${p.product_id})">
+                  <div class="row4">
+                    <div class="field"><label>ชื่อสี *</label><input name="color" placeholder="เช่น ดำ, ขาว, ครีม" required></div>
+                    <div class="field"><label>โค้ดสี</label><input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px" aria-label="เลือกสี"></div>
+                    <div class="field"><label>ราคาต่อชิ้น (฿) *</label><input name="price" type="number" min="1" placeholder="เช่น 390" required></div>
+                    <div class="field"><label>สต็อกต่อไซส์ *</label><input name="stock" type="number" min="0" value="10" placeholder="เช่น 10" required></div>
+                  </div>
+                  <div class="field" style="margin-top:6px">
+                    <label>เลือกไซส์ที่ต้องการเพิ่ม:</label>
+                    <div class="size-checks">
+                      ${(p.category === 'กางเกง' ? ['28', '30', '32', '34', '36'] : ['S', 'M', 'L', 'XL', '2XL']).map((sz, idx) => `
+                        <label class="size-check-label">
+                          <input type="checkbox" name="sizes" value="${sz}" ${idx < 4 ? 'checked' : ''}>
+                          <span>${sz}</span>
+                        </label>
+                      `).join('')}
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+                    <button class="btn sm" style="background:var(--ink);color:var(--cream)">+ เพิ่มทุกไซส์ที่เลือกพร้อมกัน</button>
+                    <button type="button" class="btn ghost sm" onclick="A.toggleFormSizes(this.form, true)">เลือกทั้งหมด</button>
+                    <button type="button" class="btn ghost sm" onclick="A.toggleFormSizes(this.form, false)">ยกเลิกทั้งหมด</button>
+                  </div>
+                </form>
+              </div>
+
+              <details style="margin:10px 0 16px">
+                <summary class="link muted" style="font-size:13px;cursor:pointer">+ หรือเพิ่มรูปแบบเดี่ยวทีละ 1 ไซส์</summary>
+                <form class="inline-form" style="margin-top:10px" onsubmit="return A.addVariant(event, ${p.product_id})">
+                  <input name="color" placeholder="สี เช่น ดำ" required>
+                  <input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px;max-width:60px" aria-label="สี">
+                  <input name="size" placeholder="ไซซ์ เช่น L" required>
+                  <input name="price" type="number" min="1" placeholder="ราคา" required>
+                  <input name="stock" type="number" min="0" placeholder="สต็อก" required>
+                  <button class="btn sm">+ เพิ่มรูปแบบเดี่ยว</button>
+                </form>
+              </details>
+
+              <h4 style="margin-top:22px">แก้ไขข้อมูลสินค้า</h4>
+              <form onsubmit="return A.saveProduct(event, ${p.product_id})">
+                <div class="row2">
+                  <div class="field"><label>ชื่อสินค้า</label><input name="name" value="${esc(p.name)}" required></div>
+                  <div class="field">
+                    <label>หมวดหมู่</label>
+                    <select name="category">
+                      ${catList.map((c) => `<option value="${c}" ${c === p.category ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+                <div class="field"><label>รายละเอียด</label><textarea name="description" rows="2">${esc(p.description)}</textarea></div>
+                <div class="row4">
+                  <div class="field"><label>รูปภาพ</label><input name="image_url" value="${esc(p.image_url)}"></div>
+                  <div class="field"><label>ซัพพลายเออร์ (จัดหาสินค้า)</label><select name="supplier_id">${supOpts(p.supplier_id)}</select></div>
+                  <div class="field"><label>พนักงานผู้ดูแลสินค้า (Employee)</label><select name="employee_id">${empOpts(p.employee_id)}</select></div>
+                  <div class="field"><label>สถานะ</label><select name="status"><option value="active">วางขาย</option><option value="inactive" ${p.status === 'inactive' ? 'selected' : ''}>ซ่อน</option></select></div>
+                </div>
+                <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="is_featured" style="width:auto" ${p.is_featured ? 'checked' : ''}> แสดงเป็นสินค้าแนะนำที่หน้าแรก</label>
+                <button class="btn sm">บันทึกการแก้ไข</button>
+              </form>
+            </div>
+          </details>
+        `).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบสินค้าที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีสินค้าในสต็อก'}</h3><p class="muted">${meta.total ? 'ลองเปลี่ยนคำค้นหาหรือกดปุ่มล้างตัวกรอง' : 'คุณสามารถใช้ฟอร์ม "+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก" ด้านบนเพื่อเริ่มลงสินค้าได้เลย'}</p></div>`}
+        ${meta.total ? dtPager('products', meta) : ''}
+      `;
+    }
+  };
 
   $('#tab').innerHTML = `
     <details class="prod" style="margin-bottom:20px" open>
@@ -1333,198 +1699,197 @@ adminTabs.products = async () => {
       </div>
     </details>
 
-    <div class="section-head" style="margin:24px 0 12px">
-      <h3>รายการสินค้าในร้าน (${products.length} รายการ)</h3>
+    <div class="panel dt-box" id="dt-box-products">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <h3 style="margin:0">📦 รายการสินค้าในร้าน (${products.length} รายการ)</h3>
+        <button type="button" class="btn ghost sm" onclick="A.tab('products')">🔄 รีเฟรชสินค้า</button>
+      </div>
+      ${products.length ? dtToolbar('products', {
+        placeholder: 'ค้นหา #ID / ชื่อสินค้า / ซัพพลายเออร์ / สี / ไซซ์...',
+        filter1: { label: 'หมวดหมู่', options: [['', 'ทุกหมวดหมู่'], ...cats.map((c) => [c, c])] },
+        filter2: { label: 'สถานะและสต็อก', options: [['', 'ทุกสถานะ'], ['active', 'วางขาย'], ['inactive', 'ซ่อน'], ['low', 'สต็อกต่ำ (≤ 5 ชิ้น)']] }
+      }) : ''}
+      <div id="dt-body-products">${dtRenderBody('products')}</div>
     </div>
-
-    ${products.length ? products.map((p) => `
-      <details class="prod">
-        <summary>
-          <span><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)} · สต็อกรวม ${p.stock} ชิ้น${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
-          <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
-        </summary>
-        <div class="inner">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
-            <h4 style="margin:0">รูปแบบ ไซส์ และสต็อก (Product_ID: #${p.product_id})</h4>
-            <button class="btn danger sm" onclick="A.deleteProduct(${p.product_id})">🗑️ ลบสินค้านี้</button>
-          </div>
-          ${p.variants && p.variants.length ? `
-            <div class="table-wrap">
-              <table>
-                <tr><th># (Variant_ID)</th><th>สี</th><th>ไซซ์</th><th>ราคา</th><th>สต็อก</th><th>การจัดการ</th></tr>
-                ${p.variants.map((v) => `
-                  <tr>
-                    <td><b>#${v.variant_id}</b></td>
-                    <td><span class="dot" style="background:${esc(v.color_hex)}"></span>${esc(v.color)}</td>
-                    <td><b>${esc(v.size)}</b></td>
-                    <td><input class="mini-in" type="number" min="1" id="vp${v.variant_id}" value="${v.price}"></td>
-                    <td><input class="mini-in" type="number" min="0" id="vs${v.variant_id}" value="${v.stock}"></td>
-                    <td class="actions">
-                      <button class="btn ghost sm" onclick="A.saveVariant(${v.variant_id})">บันทึก</button>
-                      <button class="btn danger sm" onclick="A.delVariant(${v.variant_id})">ลบ</button>
-                    </td>
-                  </tr>
-                `).join('')}
-              </table>
-            </div>
-          ` : '<p class="muted">ยังไม่มีรูปแบบไซส์/สี (กรุณาเพิ่มด้านล่าง)</p>'}
-
-          <!-- Batch Add Sizes for existing product -->
-          <div class="batch-box" style="margin:16px 0 12px;background:var(--cream);border:1px solid var(--line);border-radius:var(--radius);padding:16px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <b>⚡ เพิ่มหลายไซส์พร้อมกัน (Batch Add Sizes):</b>
-              <span class="muted" style="font-size:12.5px">หมวดหมู่: ${esc(p.category)}</span>
-            </div>
-            <form onsubmit="return A.addBatchVariants(event, ${p.product_id})">
-              <div class="row4">
-                <div class="field"><label>ชื่อสี *</label><input name="color" placeholder="เช่น ดำ, ขาว, ครีม" required></div>
-                <div class="field"><label>โค้ดสี</label><input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px" aria-label="เลือกสี"></div>
-                <div class="field"><label>ราคาต่อชิ้น (฿) *</label><input name="price" type="number" min="1" placeholder="เช่น 390" required></div>
-                <div class="field"><label>สต็อกต่อไซส์ *</label><input name="stock" type="number" min="0" value="10" placeholder="เช่น 10" required></div>
-              </div>
-              <div class="field" style="margin-top:6px">
-                <label>เลือกไซส์ที่ต้องการเพิ่ม:</label>
-                <div class="size-checks">
-                  ${(p.category === 'กางเกง' ? ['28', '30', '32', '34', '36'] : ['S', 'M', 'L', 'XL', '2XL']).map((sz, idx) => `
-                    <label class="size-check-label">
-                      <input type="checkbox" name="sizes" value="${sz}" ${idx < 4 ? 'checked' : ''}>
-                      <span>${sz}</span>
-                    </label>
-                  `).join('')}
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
-                <button class="btn sm" style="background:var(--ink);color:var(--cream)">+ เพิ่มทุกไซส์ที่เลือกพร้อมกัน</button>
-                <button type="button" class="btn ghost sm" onclick="A.toggleFormSizes(this.form, true)">เลือกทั้งหมด</button>
-                <button type="button" class="btn ghost sm" onclick="A.toggleFormSizes(this.form, false)">ยกเลิกทั้งหมด</button>
-              </div>
-            </form>
-          </div>
-
-          <details style="margin:10px 0 16px">
-            <summary class="link muted" style="font-size:13px;cursor:pointer">+ หรือเพิ่มรูปแบบเดี่ยวทีละ 1 ไซส์</summary>
-            <form class="inline-form" style="margin-top:10px" onsubmit="return A.addVariant(event, ${p.product_id})">
-              <input name="color" placeholder="สี เช่น ดำ" required>
-              <input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px;max-width:60px" aria-label="สี">
-              <input name="size" placeholder="ไซซ์ เช่น L" required>
-              <input name="price" type="number" min="1" placeholder="ราคา" required>
-              <input name="stock" type="number" min="0" placeholder="สต็อก" required>
-              <button class="btn sm">+ เพิ่มรูปแบบเดี่ยว</button>
-            </form>
-          </details>
-
-          <h4 style="margin-top:22px">แก้ไขข้อมูลสินค้า</h4>
-          <form onsubmit="return A.saveProduct(event, ${p.product_id})">
-            <div class="row2">
-              <div class="field"><label>ชื่อสินค้า</label><input name="name" value="${esc(p.name)}" required></div>
-              <div class="field">
-                <label>หมวดหมู่</label>
-                <select name="category">
-                  ${cats.map((c) => `<option value="${c}" ${c === p.category ? 'selected' : ''}>${c}</option>`).join('')}
-                </select>
-              </div>
-            </div>
-            <div class="field"><label>รายละเอียด</label><textarea name="description" rows="2">${esc(p.description)}</textarea></div>
-            <div class="row4">
-              <div class="field"><label>รูปภาพ</label><input name="image_url" value="${esc(p.image_url)}"></div>
-              <div class="field"><label>ซัพพลายเออร์ (จัดหาสินค้า)</label><select name="supplier_id">${supOpts(p.supplier_id)}</select></div>
-              <div class="field"><label>พนักงานผู้ดูแลสินค้า (Employee)</label><select name="employee_id">${empOpts(p.employee_id)}</select></div>
-              <div class="field"><label>สถานะ</label><select name="status"><option value="active">วางขาย</option><option value="inactive" ${p.status === 'inactive' ? 'selected' : ''}>ซ่อน</option></select></div>
-            </div>
-            <label style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="is_featured" style="width:auto" ${p.is_featured ? 'checked' : ''}> แสดงเป็นสินค้าแนะนำที่หน้าแรก</label>
-            <button class="btn sm">บันทึกการแก้ไข</button>
-          </form>
-        </div>
-      </details>
-    `).join('') : '<div class="empty"><h3>ยังไม่มีสินค้าในสต็อก</h3><p class="muted">คุณสามารถใช้ฟอร์ม "+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก" ด้านบนเพื่อเริ่มลงสินค้าได้เลย</p></div>'}
   `;
   A.onCatChange($('#newProdCat')?.value || 'เสื้อยืด');
 };
 
 adminTabs.orders = async () => {
   const { orders } = await api('GET', '/api/admin/orders');
-  $('#tab').innerHTML = orders.length ? `
+  _adminCache.orders = orders || [];
+
+  const payMethods = [...new Set(_adminCache.orders.map((o) => o.payment?.method).filter(Boolean))];
+  const statusRank = { pending: 1, paid: 2, shipped: 3, completed: 4, cancelled: 5 };
+
+  _dtConfigs.orders = {
+    items: () => _adminCache.orders,
+    match: (o, st, q) => {
+      if (st.filter && o.status !== st.filter) return false;
+      if (st.extra && o.payment?.method !== st.extra) return false;
+      if (!q) return true;
+      const itemText = (o.items || []).map((i) => `${i.name} ${i.color} ${i.size} ${i.product_id}`).join(' ');
+      const trackText = o.shipment ? `${o.shipment.carrier || ''} ${o.shipment.tracking_no || ''}` : '';
+      return `${o.order_id} ${o.customer_id} ${o.customer} ${o.ship_name} ${o.ship_phone} ${o.ship_address} ${o.payment?.method || ''} ${trackText} ${itemText}`
+        .toLowerCase()
+        .includes(q);
+    },
+    sorters: {
+      id: (o) => Number(o.order_id || 0),
+      date: (o) => Date.parse(o.order_date) || Number(o.order_id || 0),
+      customer: (o) => o.customer || '',
+      total: (o) => Number(o.total_price || 0),
+      status: (o) => statusRank[o.status] || 99
+    },
+    render: (slice, meta) => `
+      <div class="dt-sort-bar">
+        <span class="muted" style="font-size:12.5px">เรียงตาม:</span>
+        ${dtSortPill('orders', 'id', '#Order')}
+        ${dtSortPill('orders', 'date', 'วันที่สั่งซื้อ')}
+        ${dtSortPill('orders', 'customer', 'ลูกค้า')}
+        ${dtSortPill('orders', 'total', 'ยอดรวม')}
+        ${dtSortPill('orders', 'status', 'สถานะ')}
+      </div>
+      ${slice.length ? slice.map((o) => {
+        const cod = o.payment.method === 'เก็บเงินปลายทาง';
+        const canShip = o.status === 'paid' || (o.status === 'pending' && cod);
+        const defaultTrack = A.genTrackingNo('Flash Express', o.order_id);
+        return `
+          <div class="panel order">
+            <div class="order-head">
+              <div><b>Order #${o.order_id}</b> · ลูกค้า #${o.customer_id} (${esc(o.customer)}) <span class="muted">· ${dt(o.order_date)}</span></div>
+              <span class="status ${o.status}">${STATUS[o.status]}</span>
+            </div>
+            ${o.items.map((i) => `
+              <div style="display:flex;justify-content:space-between;padding:4px 0">
+                <span><span class="muted" style="font-size:12px">[Item #${i.order_item_id} · PID #${i.product_id}${i.variant_id ? ` · VID #${i.variant_id}` : ''}]</span> ${esc(i.name)} <span class="muted">(${esc(i.color)}/${esc(i.size)}) ×${i.quantity}</span></span>
+                <span>${money(i.unit_price * i.quantity)}</span>
+              </div>
+            `).join('')}
+            <div class="muted" style="font-size:13.5px;margin-top:8px">
+              ส่งถึง: ${esc(o.ship_name)} ${esc(o.ship_phone)} · ${esc(o.ship_address)}<br>
+              ชำระ (Payment #${o.payment.payment_id}): ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || ''}) · ยอดรวม <b>${money(o.total_price)}</b>
+            </div>
+            ${shipInfo(o)}
+            ${canShip ? `
+              <form class="inline-form" onsubmit="return A.ship(event, ${o.order_id})">
+                <input name="carrier" id="ship-carrier-${o.order_id}" list="carrier-presets" value="Flash Express" placeholder="ขนส่ง เช่น Flash Express, Kerry" required>
+                <input name="tracking_no" id="ship-track-${o.order_id}" value="${esc(defaultTrack)}" placeholder="เลขพัสดุ (ระบบสุ่มให้ หรือพิมพ์แก้เองได้)">
+                <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id})">🎲 สุ่มใหม่</button>
+                <button class="btn sm" style="flex:0 0 auto">บันทึกการจัดส่ง</button>
+              </form>
+            ` : ''}
+            ${o.status === 'shipped' && o.shipment ? `
+              <form id="edit-ship-form-${o.order_id}" class="inline-form" style="display:none" onsubmit="return A.updateShipment(event, ${o.order_id})">
+                <input name="carrier" id="edit-carrier-${o.order_id}" list="carrier-presets" value="${esc(o.shipment.carrier || 'Flash Express')}" placeholder="ผู้ให้บริการขนส่ง" required>
+                <input name="tracking_no" id="edit-track-${o.order_id}" value="${esc(o.shipment.tracking_no || '')}" placeholder="หมายเลขพัสดุ" required>
+                <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id}, true)">🎲 สุ่มใหม่</button>
+                <button class="btn sm" style="flex:0 0 auto">บันทึกการแก้ไข</button>
+              </form>
+            ` : ''}
+            <div class="actions" style="margin-top:10px">
+              ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">💳 จำลองชำระเงิน</button>` : ''}
+              ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
+              ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
+              ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบคำสั่งซื้อที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีคำสั่งซื้อ'}</h3></div>`}
+      ${meta.total ? dtPager('orders', meta) : ''}
+    `
+  };
+
+  $('#tab').innerHTML = `
     <datalist id="carrier-presets">
       <option value="Flash Express">
       <option value="Kerry Express">
       <option value="J&T Express">
       <option value="ไปรษณีย์ไทย (EMS)">
     </datalist>
-    ${orders.map((o) => {
-    const cod = o.payment.method === 'เก็บเงินปลายทาง';
-    const canShip = o.status === 'paid' || (o.status === 'pending' && cod);
-    const defaultTrack = A.genTrackingNo('Flash Express', o.order_id);
-    return `
-      <div class="panel order">
-        <div class="order-head">
-          <div><b>Order #${o.order_id}</b> · ลูกค้า #${o.customer_id} (${esc(o.customer)}) <span class="muted">· ${dt(o.order_date)}</span></div>
-          <span class="status ${o.status}">${STATUS[o.status]}</span>
-        </div>
-        ${o.items.map((i) => `
-          <div style="display:flex;justify-content:space-between;padding:4px 0">
-            <span><span class="muted" style="font-size:12px">[Item #${i.order_item_id} · PID #${i.product_id}${i.variant_id ? ` · VID #${i.variant_id}` : ''}]</span> ${esc(i.name)} <span class="muted">(${esc(i.color)}/${esc(i.size)}) ×${i.quantity}</span></span>
-            <span>${money(i.unit_price * i.quantity)}</span>
-          </div>
-        `).join('')}
-        <div class="muted" style="font-size:13.5px;margin-top:8px">
-          ส่งถึง: ${esc(o.ship_name)} ${esc(o.ship_phone)} · ${esc(o.ship_address)}<br>
-          ชำระ (Payment #${o.payment.payment_id}): ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || ''}) · ยอดรวม <b>${money(o.total_price)}</b>
-        </div>
-        ${shipInfo(o)}
-        ${canShip ? `
-          <form class="inline-form" onsubmit="return A.ship(event, ${o.order_id})">
-            <input name="carrier" id="ship-carrier-${o.order_id}" list="carrier-presets" value="Flash Express" placeholder="ขนส่ง เช่น Flash Express, Kerry" required>
-            <input name="tracking_no" id="ship-track-${o.order_id}" value="${esc(defaultTrack)}" placeholder="เลขพัสดุ (ระบบสุ่มให้ หรือพิมพ์แก้เองได้)">
-            <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id})">🎲 สุ่มใหม่</button>
-            <button class="btn sm" style="flex:0 0 auto">บันทึกการจัดส่ง</button>
-          </form>
-        ` : ''}
-        ${o.status === 'shipped' && o.shipment ? `
-          <form id="edit-ship-form-${o.order_id}" class="inline-form" style="display:none" onsubmit="return A.updateShipment(event, ${o.order_id})">
-            <input name="carrier" id="edit-carrier-${o.order_id}" list="carrier-presets" value="${esc(o.shipment.carrier || 'Flash Express')}" placeholder="ผู้ให้บริการขนส่ง" required>
-            <input name="tracking_no" id="edit-track-${o.order_id}" value="${esc(o.shipment.tracking_no || '')}" placeholder="หมายเลขพัสดุ" required>
-            <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id}, true)">🎲 สุ่มใหม่</button>
-            <button class="btn sm" style="flex:0 0 auto">บันทึกการแก้ไข</button>
-          </form>
-        ` : ''}
-        <div class="actions" style="margin-top:10px">
-          ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">💳 จำลองชำระเงิน</button>` : ''}
-          ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
-          ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
-          ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
-        </div>
+    <div class="panel dt-box" id="dt-box-orders">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <h3 style="margin:0">📑 คำสั่งซื้อทั้งหมด (${_adminCache.orders.length} รายการ)</h3>
+        <button type="button" class="btn ghost sm" onclick="A.tab('orders')">🔄 รีเฟรชออเดอร์</button>
       </div>
-    `;
-  }).join('')}` : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3></div>';
+      ${_adminCache.orders.length ? dtToolbar('orders', {
+        placeholder: 'ค้นหา #Order / ลูกค้า / เบอร์ / เลขพัสดุ / สินค้า...',
+        filter1: {
+          label: 'สถานะออเดอร์',
+          options: [['', 'ทุกสถานะ'], ['pending', 'รอดำเนินการ'], ['paid', 'ชำระเงินแล้ว'], ['shipped', 'จัดส่งแล้ว'], ['completed', 'สำเร็จ'], ['cancelled', 'ยกเลิก']]
+        },
+        filter2: payMethods.length ? {
+          label: 'ช่องทางชำระเงิน',
+          options: [['', 'ทุกวิธีชำระเงิน'], ...payMethods.map((m) => [m, m])]
+        } : null
+      }) : ''}
+      <div id="dt-body-orders">${dtRenderBody('orders')}</div>
+    </div>
+  `;
 };
 
 adminTabs.customers = async () => {
   const { customers = [], admins = [] } = await api('GET', '/api/admin/customers');
   _adminCache.customers = customers;
   _adminCache.admins = admins;
-  const q = ($('#custSearch')?.value || '').trim().toLowerCase();
-  const filtered = q
-    ? customers.filter((c) =>
-        `${c.customer_id} ${c.first_name} ${c.last_name} ${c.email} ${c.phone || ''} ${c.address || ''}`
-          .toLowerCase()
-          .includes(q)
-      )
-    : customers;
+
+  _dtConfigs.customers = {
+    items: () => _adminCache.customers,
+    match: (c, st, q) => {
+      if (st.filter === 'has_orders' && Number(c.orders || 0) <= 0) return false;
+      if (st.filter === 'no_orders' && Number(c.orders || 0) > 0) return false;
+      return !q || `${c.customer_id} ${c.first_name} ${c.last_name} ${c.email} ${c.phone || ''} ${c.address || ''} ${c.admin_name || ''}`
+        .toLowerCase()
+        .includes(q);
+    },
+    sorters: {
+      id: (c) => Number(c.customer_id || 0),
+      name: (c) => `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+      email: (c) => c.email || '',
+      phone: (c) => c.phone || '',
+      address: (c) => c.address || '',
+      admin: (c) => c.admin_name || '',
+      created_at: (c) => Date.parse(c.created_at) || 0,
+      orders: (c) => Number(c.orders || 0),
+      spent: (c) => Number(c.spent || 0)
+    },
+    render: (slice, meta) => `
+      <div class="table-wrap">
+        <table class="dt-table">
+          <thead><tr>
+            ${dtTh('customers', 'id', '#ID')}
+            ${dtTh('customers', 'name', 'ชื่อ')}
+            ${dtTh('customers', 'email', 'อีเมล')}
+            ${dtTh('customers', 'phone', 'โทร')}
+            ${dtTh('customers', 'address', 'ที่อยู่')}
+            ${dtTh('customers', 'admin', 'แอดมิน (FK)')}
+            ${dtTh('customers', 'created_at', 'สมัครเมื่อ')}
+            ${dtTh('customers', 'orders', 'ออเดอร์')}
+            ${dtTh('customers', 'spent', 'ยอดซื้อ')}
+            <th>การจัดการ</th>
+          </tr></thead>
+          <tbody>
+            ${slice.length
+              ? slice.map((c) => `<tr><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td style="font-size:12.5px">${esc(c.email)}</td><td style="white-space:nowrap">${esc(c.phone || '-')}</td><td><div class="dt-clamp" title="${esc(c.address || '-')}">${esc(c.address || '-')}</div></td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td style="white-space:nowrap;font-size:12.5px">${dt(c.created_at)}</td><td>${c.orders}</td><td><b>${money(c.spent)}</b></td><td class="actions" style="white-space:nowrap;flex-wrap:nowrap"><button type="button" class="btn ghost sm" onclick="A.openEditCustomer(${c.customer_id})">✏️ แก้ไข</button><button type="button" class="btn danger sm" onclick="A.deleteCustomer(${c.customer_id}, ${JSON.stringify(`${c.first_name} ${c.last_name}`).replace(/"/g, '&quot;')})">ลบ</button></td></tr>`).join('')
+              : '<tr><td colspan="10" class="muted" style="text-align:center;padding:20px">ไม่พบข้อมูลลูกค้า</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+      ${dtPager('customers', meta)}
+    `
+  };
+
   $('#tab').innerHTML = `
-    <div class="panel table-wrap">
+    <div class="panel dt-box" id="dt-box-customers">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
         <h3 style="margin:0">👥 รายชื่อลูกค้าทั้งหมด (${customers.length} บัญชี)</h3>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input id="custSearch" type="search" placeholder="ค้นหาชื่อ / อีเมล / เบอร์..." value="${esc(q)}" oninput="A.filterCustomers()" style="padding:7px 12px;border:1px solid #ddd;border-radius:8px;min-width:220px">
-          <button type="button" class="btn ghost sm" onclick="A.tab('customers')">🔄 รีเฟรชรายชื่อ</button>
-        </div>
+        <button type="button" class="btn ghost sm" onclick="A.tab('customers')">🔄 รีเฟรชรายชื่อ</button>
       </div>
-      <table>
-        <tr><th># (Customer_ID)</th><th>ชื่อ</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>แอดมินดูแล (FK)</th><th>สมัครเมื่อ</th><th>ออเดอร์</th><th>ยอดซื้อ</th><th>การจัดการ</th></tr>
-        ${filtered.length
-          ? filtered.map((c) => `<tr data-cust-row="${esc((c.customer_id + ' ' + c.first_name + ' ' + c.last_name + ' ' + c.email + ' ' + (c.phone || '') + ' ' + (c.address || '')).toLowerCase())}"><td><b>#${c.customer_id}</b></td><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${esc(c.email)}</td><td>${esc(c.phone || '-')}</td><td>${esc(c.address || '-')}</td><td>${c.admin_id ? `#${c.admin_id} ` : ''}${esc(c.admin_name || '-')}</td><td>${dt(c.created_at)}</td><td>${c.orders}</td><td>${money(c.spent)}</td><td class="actions" style="white-space:nowrap"><button type="button" class="btn ghost sm" onclick="A.openEditCustomer(${c.customer_id})">✏️ แก้ไข</button><button type="button" class="btn danger sm" onclick="A.deleteCustomer(${c.customer_id}, ${JSON.stringify(`${c.first_name} ${c.last_name}`).replace(/"/g, '&quot;')})">ลบ</button></td></tr>`).join('')
-          : '<tr><td colspan="10" class="muted" style="text-align:center;padding:20px">ไม่พบข้อมูลลูกค้า</td></tr>'}
-      </table>
+      ${dtToolbar('customers', {
+        placeholder: 'ค้นหา #ID / ชื่อ / อีเมล / เบอร์ / ที่อยู่...',
+        filter1: { label: 'ประวัติสั่งซื้อ', options: [['', 'ลูกค้าทั้งหมด'], ['has_orders', 'เคยสั่งซื้อแล้ว'], ['no_orders', 'ยังไม่เคยสั่งซื้อ']] }
+      })}
+      <div id="dt-body-customers">${dtRenderBody('customers')}</div>
     </div>
   `;
 };
@@ -1534,30 +1899,151 @@ adminTabs.suppliers = async () => {
   _adminCache.admins = admins;
   _adminCache.suppliers = suppliers;
   _adminCache.employees = employees;
-  const curAdminId = state.user?.admin_id || state.user?.id;
-  $('#tab').innerHTML = `
-    <div class="panel">
-      <h3>ผู้ดูแลระบบ (Admin)</h3>
+
+  _dtConfigs.admins = {
+    items: () => _adminCache.admins,
+    match: (a, _st, q) => !q || `${a.admin_id} ${a.name} ${a.email} ${a.phone || ''}`.toLowerCase().includes(q),
+    sorters: {
+      id: (a) => Number(a.admin_id || 0),
+      name: (a) => a.name || '',
+      email: (a) => a.email || '',
+      phone: (a) => a.phone || ''
+    },
+    render: (slice, meta) => {
+      const curAdminId = state.user?.admin_id || state.user?.id;
+      return `
+        <div class="table-wrap">
+          <table class="dt-table">
+            <thead><tr>
+              ${dtTh('admins', 'id', '# (Admin_ID)')}
+              ${dtTh('admins', 'name', 'ชื่อ-นามสกุล')}
+              ${dtTh('admins', 'email', 'อีเมล')}
+              ${dtTh('admins', 'phone', 'เบอร์โทรศัพท์')}
+              <th>การจัดการ</th>
+            </tr></thead>
+            <tbody>
+              ${slice.length ? slice.map((a) => `
+                <tr>
+                  <td><b>#${a.admin_id}</b></td>
+                  <td><b>${esc(a.name)}</b></td>
+                  <td>${esc(a.email)}</td>
+                  <td>${esc(a.phone || '-')}</td>
+                  <td class="actions" style="white-space:nowrap">
+                    <button type="button" class="btn ghost sm" onclick="A.openEditAdmin(${a.admin_id})">✏️ แก้ไข</button>
+                    ${a.admin_id === curAdminId
+                      ? '<button type="button" class="btn ghost sm" disabled title="ไม่สามารถลบบัญชีที่กำลังล็อกอิน">กำลังใช้งาน</button>'
+                      : `<button type="button" class="btn danger sm" onclick="A.deleteAdmin(${a.admin_id}, ${JSON.stringify(a.name).replace(/"/g, '&quot;')})">ลบ</button>`}
+                  </td>
+                </tr>
+              `).join('') : '<tr><td colspan="5" class="muted" style="text-align:center;padding:18px">ไม่พบข้อมูลผู้ดูแลระบบ</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        ${dtPager('admins', meta)}
+      `;
+    }
+  };
+
+  _dtConfigs.suppliers = {
+    items: () => _adminCache.suppliers,
+    match: (s, _st, q) => !q || `${s.supplier_id} ${s.name} ${s.contact_name || ''} ${s.phone || ''} ${s.email || ''} ${s.address || ''} ${s.employee_name || ''} ${s.admin_name || ''}`.toLowerCase().includes(q),
+    sorters: {
+      id: (s) => Number(s.supplier_id || 0),
+      name: (s) => s.name || '',
+      contact_name: (s) => s.contact_name || '',
+      phone: (s) => s.phone || '',
+      email: (s) => s.email || '',
+      employee: (s) => s.employee_name || '',
+      admin: (s) => s.admin_name || ''
+    },
+    render: (slice, meta) => `
       <div class="table-wrap">
-        <table>
-          <tr><th># (Admin_ID)</th><th>ชื่อ-นามสกุล</th><th>อีเมล</th><th>เบอร์โทรศัพท์</th><th>การจัดการ</th></tr>
-          ${admins.map((a) => `
-            <tr>
-              <td><b>#${a.admin_id}</b></td>
-              <td><b>${esc(a.name)}</b></td>
-              <td>${esc(a.email)}</td>
-              <td>${esc(a.phone || '-')}</td>
-              <td class="actions" style="white-space:nowrap">
-                <button type="button" class="btn ghost sm" onclick="A.openEditAdmin(${a.admin_id})">✏️ แก้ไข</button>
-                ${a.admin_id === curAdminId
-                  ? '<button type="button" class="btn ghost sm" disabled title="ไม่สามารถลบบัญชีที่กำลังล็อกอิน">กำลังใช้งาน</button>'
-                  : `<button type="button" class="btn danger sm" onclick="A.deleteAdmin(${a.admin_id}, ${JSON.stringify(a.name).replace(/"/g, '&quot;')})">ลบ</button>`}
-              </td>
-            </tr>
-          `).join('')}
+        <table class="dt-table">
+          <thead><tr>
+            ${dtTh('suppliers', 'id', '# (Supplier_ID)')}
+            ${dtTh('suppliers', 'name', 'ชื่อ')}
+            ${dtTh('suppliers', 'contact_name', 'ผู้ติดต่อ')}
+            ${dtTh('suppliers', 'phone', 'โทร')}
+            ${dtTh('suppliers', 'email', 'อีเมล')}
+            <th>ที่อยู่</th>
+            ${dtTh('suppliers', 'employee', 'พนักงานดูแล (FK)')}
+            ${dtTh('suppliers', 'admin', 'แอดมิน (FK)')}
+            <th>การจัดการ</th>
+          </tr></thead>
+          <tbody>
+            ${slice.length ? slice.map((s) => `
+              <tr>
+                <td><b>#${s.supplier_id}</b></td>
+                <td>${esc(s.name)}</td>
+                <td>${esc(s.contact_name || '-')}</td>
+                <td style="white-space:nowrap">${esc(s.phone || '-')}</td>
+                <td style="font-size:12.5px">${esc(s.email || '-')}</td>
+                <td><div class="dt-clamp" title="${esc(s.address || '-')}">${esc(s.address || '-')}</div></td>
+                <td>${s.employee_id ? `#${s.employee_id} ` : ''}${esc(s.employee_name || '-')}</td>
+                <td>${s.admin_id ? `#${s.admin_id} ` : ''}${esc(s.admin_name || '-')}</td>
+                <td class="actions" style="white-space:nowrap;flex-wrap:nowrap">
+                  <button type="button" class="btn ghost sm" onclick="A.openEditSupplier(${s.supplier_id})">✏️ แก้ไข</button>
+                  <button type="button" class="btn danger sm" onclick="A.deleteSupplier(${s.supplier_id}, ${JSON.stringify(s.name).replace(/"/g, '&quot;')})">ลบ</button>
+                </td>
+              </tr>
+            `).join('') : `<tr><td colspan="9" class="muted" style="text-align:center;padding:18px">${meta.total ? 'ไม่พบข้อมูลซัพพลายเออร์ที่ค้นหา' : 'ยังไม่มีข้อมูลซัพพลายเออร์'}</td></tr>`}
+          </tbody>
         </table>
       </div>
-      <form class="inline-form" onsubmit="return A.addAdmin(event)">
+      ${meta.total ? dtPager('suppliers', meta) : ''}
+    `
+  };
+
+  _dtConfigs.employees = {
+    items: () => _adminCache.employees,
+    match: (e, _st, q) => !q || `${e.employee_id} ${e.first_name} ${e.last_name} ${e.position || ''} ${e.email || ''} ${e.phone || ''} ${e.address || ''}`.toLowerCase().includes(q),
+    sorters: {
+      id: (e) => Number(e.employee_id || 0),
+      name: (e) => `${e.first_name || ''} ${e.last_name || ''}`.trim(),
+      position: (e) => e.position || '',
+      email: (e) => e.email || '',
+      phone: (e) => e.phone || ''
+    },
+    render: (slice, meta) => `
+      <div class="table-wrap">
+        <table class="dt-table">
+          <thead><tr>
+            ${dtTh('employees', 'id', '# (Employee_ID)')}
+            ${dtTh('employees', 'name', 'ชื่อ')}
+            ${dtTh('employees', 'position', 'ตำแหน่ง')}
+            ${dtTh('employees', 'email', 'อีเมล')}
+            ${dtTh('employees', 'phone', 'โทร')}
+            <th>ที่อยู่</th>
+            <th>การจัดการ</th>
+          </tr></thead>
+          <tbody>
+            ${slice.length ? slice.map((e) => `
+              <tr>
+                <td><b>#${e.employee_id}</b></td>
+                <td>${esc(e.first_name)} ${esc(e.last_name)}</td>
+                <td>${esc(e.position || '-')}</td>
+                <td style="font-size:12.5px">${esc(e.email || '-')}</td>
+                <td style="white-space:nowrap">${esc(e.phone || '-')}</td>
+                <td><div class="dt-clamp" title="${esc(e.address || '-')}">${esc(e.address || '-')}</div></td>
+                <td class="actions" style="white-space:nowrap;flex-wrap:nowrap">
+                  <button type="button" class="btn ghost sm" onclick="A.openEditEmployee(${e.employee_id})">✏️ แก้ไข</button>
+                  <button type="button" class="btn danger sm" onclick="A.deleteEmployee(${e.employee_id}, ${JSON.stringify(`${e.first_name} ${e.last_name}`).replace(/"/g, '&quot;')})">ลบ</button>
+                </td>
+              </tr>
+            `).join('') : `<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">${meta.total ? 'ไม่พบข้อมูลพนักงานที่ค้นหา' : 'ยังไม่มีข้อมูลพนักงาน'}</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+      ${meta.total ? dtPager('employees', meta) : ''}
+    `
+  };
+
+  $('#tab').innerHTML = `
+    <div class="panel dt-box" id="dt-box-admins">
+      <h3>ผู้ดูแลระบบ (Admin) <span class="muted" style="font-size:13.5px;font-weight:400">(${admins.length} บัญชี)</span></h3>
+      ${dtToolbar('admins', { placeholder: 'ค้นหาชื่อ / อีเมล / เบอร์แอดมิน...' })}
+      <div id="dt-body-admins">${dtRenderBody('admins')}</div>
+      <form class="inline-form" onsubmit="return A.addAdmin(event)" style="margin-top:14px">
         <input name="name" placeholder="ชื่อผู้ดูแลระบบ" required>
         <input name="email" type="email" placeholder="อีเมล" required>
         <input name="phone" placeholder="เบอร์โทร">
@@ -1565,30 +2051,11 @@ adminTabs.suppliers = async () => {
         <button class="btn sm">+ เพิ่มแอดมิน</button>
       </form>
     </div>
-    <div class="panel">
-      <h3>ซัพพลายเออร์</h3>
-      <div class="table-wrap">
-        <table>
-          <tr><th># (Supplier_ID)</th><th>ชื่อ</th><th>ผู้ติดต่อ</th><th>โทร</th><th>อีเมล</th><th>ที่อยู่</th><th>พนักงานดูแล (FK)</th><th>แอดมิน (FK)</th><th>การจัดการ</th></tr>
-          ${suppliers.length ? suppliers.map((s) => `
-            <tr>
-              <td><b>#${s.supplier_id}</b></td>
-              <td>${esc(s.name)}</td>
-              <td>${esc(s.contact_name || '-')}</td>
-              <td>${esc(s.phone || '-')}</td>
-              <td>${esc(s.email || '-')}</td>
-              <td>${esc(s.address || '-')}</td>
-              <td>${s.employee_id ? `#${s.employee_id} ` : ''}${esc(s.employee_name || '-')}</td>
-              <td>${s.admin_id ? `#${s.admin_id} ` : ''}${esc(s.admin_name || '-')}</td>
-              <td class="actions" style="white-space:nowrap">
-                <button type="button" class="btn ghost sm" onclick="A.openEditSupplier(${s.supplier_id})">✏️ แก้ไข</button>
-                <button type="button" class="btn danger sm" onclick="A.deleteSupplier(${s.supplier_id}, ${JSON.stringify(s.name).replace(/"/g, '&quot;')})">ลบ</button>
-              </td>
-            </tr>
-          `).join('') : '<tr><td colspan="9" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูลซัพพลายเออร์</td></tr>'}
-        </table>
-      </div>
-      <form class="inline-form" onsubmit="return A.addSupplier(event)">
+    <div class="panel dt-box" id="dt-box-suppliers">
+      <h3>ซัพพลายเออร์ <span class="muted" style="font-size:13.5px;font-weight:400">(${suppliers.length} รายการ)</span></h3>
+      ${suppliers.length ? dtToolbar('suppliers', { placeholder: 'ค้นหาชื่อซัพพลายเออร์ / ผู้ติดต่อ / พนักงานดูแล...' }) : ''}
+      <div id="dt-body-suppliers">${dtRenderBody('suppliers')}</div>
+      <form class="inline-form" onsubmit="return A.addSupplier(event)" style="margin-top:14px">
         <input name="name" placeholder="ชื่อซัพพลายเออร์" required>
         <input name="contact_name" placeholder="ผู้ติดต่อ">
         <input name="phone" placeholder="เบอร์โทร">
@@ -1598,28 +2065,11 @@ adminTabs.suppliers = async () => {
         <button class="btn sm">+ เพิ่ม</button>
       </form>
     </div>
-    <div class="panel">
-      <h3>พนักงาน</h3>
-      <div class="table-wrap">
-        <table>
-          <tr><th># (Employee_ID)</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>อีเมล</th><th>โทร</th><th>ที่อยู่</th><th>การจัดการ</th></tr>
-          ${employees.length ? employees.map((e) => `
-            <tr>
-              <td><b>#${e.employee_id}</b></td>
-              <td>${esc(e.first_name)} ${esc(e.last_name)}</td>
-              <td>${esc(e.position || '-')}</td>
-              <td>${esc(e.email || '-')}</td>
-              <td>${esc(e.phone || '-')}</td>
-              <td>${esc(e.address || '-')}</td>
-              <td class="actions" style="white-space:nowrap">
-                <button type="button" class="btn ghost sm" onclick="A.openEditEmployee(${e.employee_id})">✏️ แก้ไข</button>
-                <button type="button" class="btn danger sm" onclick="A.deleteEmployee(${e.employee_id}, ${JSON.stringify(`${e.first_name} ${e.last_name}`).replace(/"/g, '&quot;')})">ลบ</button>
-              </td>
-            </tr>
-          `).join('') : '<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">ยังไม่มีข้อมูลพนักงาน</td></tr>'}
-        </table>
-      </div>
-      <form class="inline-form" onsubmit="return A.addEmployee(event)">
+    <div class="panel dt-box" id="dt-box-employees">
+      <h3>พนักงาน <span class="muted" style="font-size:13.5px;font-weight:400">(${employees.length} คน)</span></h3>
+      ${employees.length ? dtToolbar('employees', { placeholder: 'ค้นหาชื่อ / ตำแหน่ง / อีเมล / เบอร์...' }) : ''}
+      <div id="dt-body-employees">${dtRenderBody('employees')}</div>
+      <form class="inline-form" onsubmit="return A.addEmployee(event)" style="margin-top:14px">
         <input name="first_name" placeholder="ชื่อ" required>
         <input name="last_name" placeholder="นามสกุล" required>
         <input name="position" placeholder="ตำแหน่ง">
@@ -2775,11 +3225,74 @@ const A = window.A = {
     });
   },
 
+  dtRender(key) {
+    const body = $(`#dt-body-${key}`);
+    if (body) body.innerHTML = dtRenderBody(key);
+  },
+
+  dtSearch(key, val) {
+    const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+    st.q = val;
+    st.page = 1;
+    this.dtRender(key);
+  },
+
+  dtFilter(key, field, val) {
+    const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+    st[field] = val;
+    st.page = 1;
+    this.dtRender(key);
+  },
+
+  dtSort(key, col) {
+    const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+    if (st.sort === col) {
+      st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      st.sort = col;
+      st.dir = ['date', 'created_at', 'spent', 'total', 'orders'].includes(col) ? 'desc' : 'asc';
+    }
+    st.page = 1;
+    this.dtRender(key);
+  },
+
+  dtPage(key, page) {
+    const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+    st.page = Math.max(1, Number(page) || 1);
+    this.dtRender(key);
+    const box = $(`#dt-box-${key}`);
+    if (box) {
+      const rect = box.getBoundingClientRect();
+      if (rect.top < 0 || rect.top > window.innerHeight * 0.7) {
+        box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  },
+
+  dtSize(key, size) {
+    const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+    st.size = Number(size) || 0;
+    st.page = 1;
+    this.dtRender(key);
+  },
+
+  dtReset(key) {
+    const st = _dtState[key] || (_dtState[key] = { q: '', filter: '', extra: '', sort: '', dir: 'asc', page: 1, size: 10 });
+    st.q = '';
+    st.filter = '';
+    st.extra = '';
+    st.page = 1;
+    const sIn = $(`#dt-search-${key}`);
+    const f1 = $(`#dt-f1-${key}`);
+    const f2 = $(`#dt-f2-${key}`);
+    if (sIn) sIn.value = '';
+    if (f1) f1.value = '';
+    if (f2) f2.value = '';
+    this.dtRender(key);
+  },
+
   filterCustomers() {
-    const q = ($('#custSearch')?.value || '').trim().toLowerCase();
-    $$('[data-cust-row]').forEach((tr) => {
-      tr.style.display = !q || tr.dataset.custRow.includes(q) ? '' : 'none';
-    });
+    this.dtSearch('customers', $(`#dt-search-customers`)?.value || $(`#custSearch`)?.value || '');
   }
 };
 
