@@ -1876,7 +1876,6 @@ adminTabs.orders = async () => {
               </form>
             ` : ''}
             <div class="actions" style="margin-top:10px">
-              ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">💳 จำลองชำระเงิน</button>` : ''}
               ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
               ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
               ${['pending', 'paid', 'shipped'].includes(o.status) ? `<button type="button" class="btn ghost sm" onclick="A.openAdminEditOrderAddress(${o.order_id})">✏️ แก้ที่อยู่จัดส่ง</button>` : ''}
