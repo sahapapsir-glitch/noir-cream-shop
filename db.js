@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS product_variant (   -- Product variant (หน้า 
   size           TEXT NOT NULL,                            -- ขนาด / Size
   color          TEXT NOT NULL,                            -- สี / Color
   color_hex      TEXT,                                     -- [+]
+  image_url      TEXT,                                     -- [+] รูปภาพเฉพาะสี/รูปแบบนี้ (ถ้าว่างใช้ product.image_url)
   price          REAL NOT NULL,                            -- ราคา / Price
   stock          INTEGER NOT NULL DEFAULT 0,               -- จำนวนสินค้าคงเหลือ
   stock_quantity INTEGER NOT NULL DEFAULT 0,               -- stock_quantity (หน้า 14)
@@ -204,6 +205,7 @@ ensureCol('product', 'employee_id', 'INTEGER REFERENCES employee(employee_id)');
 ensureCol('product', 'quantity', 'INTEGER NOT NULL DEFAULT 0');
 ensureCol('product', 'price', 'REAL NOT NULL DEFAULT 0');
 ensureCol('product_variant', 'stock_quantity', 'INTEGER NOT NULL DEFAULT 0');
+ensureCol('product_variant', 'image_url', 'TEXT');
 ensureCol('customer', 'address', 'TEXT');
 ensureCol('customer', 'admin_id', 'INTEGER REFERENCES admin(admin_id)');
 ensureCol('cart_item', 'product_id', 'INTEGER REFERENCES product(product_id) ON DELETE CASCADE');

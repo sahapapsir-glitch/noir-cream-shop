@@ -113,7 +113,7 @@ const SIZE_GUIDES = {
 
 /* ---------- Product Illustration (SVG Vector เฉพาะ 4 หมวดหมู่) ---------- */
 function art(img, color) {
-  if (img && /^https?:\/\//i.test(img)) {
+  if (img && (/^https?:\/\//i.test(img) || /^data:image\//i.test(img))) {
     return `<img src="${esc(img)}" alt="" loading="lazy">`;
   }
   const key = (img || '').replace('shape:', '').toLowerCase();
@@ -161,15 +161,23 @@ const heartSvg = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8
 function card(p) {
   const out = p.stock === 0;
   const price = p.min_price === p.max_price ? money(p.min_price) : `${money(p.min_price)} – ${money(p.max_price)}`;
+  const colors = Array.isArray(p.colors) ? p.colors : [];
+  const initImg = p.image_url;
   return `<article class="card">
     <button class="heart ${p.wished ? 'on' : ''}" aria-label="เพิ่มในรายการโปรด" onclick="A.wish(${p.product_id}, this)">${heartSvg}</button>
     <a href="#/product/${p.product_id}">
-      <div class="img">${p.is_featured ? '<span class="tag">แนะนำ</span>' : ''}${out ? '<span class="tag out">สินค้าหมด</span>' : ''}${art(p.image_url)}</div>
+      <div class="img">${p.is_featured ? '<span class="tag">แนะนำ</span>' : ''}${out ? '<span class="tag out">สินค้าหมด</span>' : ''}<span class="card-art" style="display:contents">${art(initImg)}</span></div>
       <h3>${esc(p.name)}</h3>
       <div class="cat-name">${esc(p.category)}</div>
       <div class="price">${price}</div>
       ${stars(p.rating, p.review_count)}
-    </a></article>`;
+    </a>
+    ${colors.length > 1 || colors.some((c) => c.image_url) ? `
+      <div class="card-swatches" aria-label="เลือกดูสี">
+        ${colors.map((c, idx) => `<button type="button" class="card-swatch ${idx === 0 ? 'on' : ''}" style="background:${esc(c.color_hex || '#EADFC8')}" title="${esc(c.color)}" aria-label="ดูสี ${esc(c.color)}" data-img="${esc(c.image_url || p.image_url || '')}" data-hex="${esc(c.color_hex || '#FAF7F2')}" onclick="A.previewCardColor(event, this)"></button>`).join('')}
+      </div>
+    ` : ''}
+  </article>`;
 }
 
 /* ---------- Chrome (Header, Nav, Topbar) ---------- */
@@ -449,6 +457,17 @@ pages.product = async (params, id) => {
     return;
   }
   const colors = [...new Map(p.variants.map((v) => [v.color, v.color_hex])).entries()];
+  const colorImgMap = new Map();
+  for (const pv of p.variants) {
+    if (pv.image_url && !colorImgMap.has(pv.color)) colorImgMap.set(pv.color, pv.image_url);
+  }
+  colors.forEach(([c]) => {
+    const u = colorImgMap.get(c);
+    if (u && (/^https?:\/\//i.test(u) || /^data:image\//i.test(u))) {
+      const pre = new Image();
+      pre.src = u;
+    }
+  });
   const sizes = [...new Set(p.variants.map((v) => v.size))];
   const sel = {
     color: (p.variants.find((v) => v.stock > 0) || p.variants[0]).color,
@@ -457,13 +476,17 @@ pages.product = async (params, id) => {
   };
   const find = () => p.variants.find((v) => v.color === sel.color && v.size === sel.size);
   const price = p.min_price === p.max_price ? money(p.min_price) : `${money(p.min_price)} – ${money(p.max_price)}`;
+  let lastImgKey = null;
 
   const draw = (animColor = false) => {
     const v = find();
     const hex = colors.find((c) => c[0] === sel.color)?.[1] || '#FAF7F2';
+    const targetImg = v?.image_url || colorImgMap.get(sel.color) || p.image_url;
+    const imgKey = `${targetImg || ''}::${hex}`;
     const pdImg = $('#pd-img');
-    if (pdImg) {
-      pdImg.innerHTML = art(p.image_url, hex);
+    if (pdImg && lastImgKey !== imgKey) {
+      pdImg.innerHTML = art(targetImg, hex);
+      lastImgKey = imgKey;
       if (animColor) {
         pdImg.classList.remove('switching');
         void pdImg.offsetWidth;
@@ -1542,8 +1565,16 @@ adminTabs.products = async () => {
           ${dtSortPill('products', 'stock', 'สต็อกรวม')}
           ${dtSortPill('products', 'status', 'สถานะ')}
         </div>
-        ${slice.length ? slice.map((p) => `
-          <details class="prod">
+        ${slice.length ? slice.map((p) => {
+          const colorGroups = [...(p.variants || []).reduce((m, v) => {
+            const cur = m.get(v.color) || { color: v.color, hex: v.color_hex, count: 0, img: '' };
+            cur.count += 1;
+            if (!cur.img && v.image_url) cur.img = v.image_url;
+            m.set(v.color, cur);
+            return m;
+          }, new Map()).values()];
+          return `
+          <details class="prod" ${A._openProds?.has(p.product_id) ? 'open' : ''} ontoggle="A._openProds=A._openProds||new Set();this.open?A._openProds.add(${p.product_id}):A._openProds.delete(${p.product_id})">
             <summary>
               <span><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)}${prodPriceText(p) ? ` · ${prodPriceText(p)}` : ''} · สต็อกรวม <b style="${Number(p.stock) <= 3 ? 'color:var(--danger)' : ''}">${p.stock} ชิ้น</b>${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
               <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
@@ -1556,12 +1587,18 @@ adminTabs.products = async () => {
               ${p.variants && p.variants.length ? `
                 <div class="table-wrap">
                   <table>
-                    <tr><th># (Variant_ID)</th><th>สี</th><th>ไซซ์</th><th>ราคา</th><th>สต็อก</th><th>การจัดการ</th></tr>
+                    <tr><th># (Variant_ID)</th><th>สี</th><th>ไซซ์</th><th>รูปสีนี้ (ไม่บังคับ)</th><th>ราคา</th><th>สต็อก</th><th>การจัดการ</th></tr>
                     ${p.variants.map((v) => `
                       <tr>
                         <td><b>#${v.variant_id}</b></td>
                         <td><span class="dot" style="background:${esc(v.color_hex)}"></span>${esc(v.color)}</td>
                         <td><b>${esc(v.size)}</b></td>
+                        <td>
+                          <div style="display:flex;align-items:center;gap:6px;min-width:190px">
+                            <span class="mini-thumb" id="vthumb${v.variant_id}">${art(v.image_url || p.image_url, v.color_hex)}</span>
+                            <input class="mini-in" type="text" id="vimg${v.variant_id}" value="${esc(v.image_url || '')}" placeholder="ว่าง = ใช้รูปหลัก" style="flex:1;min-width:130px;width:auto" oninput="A.previewMiniThumb('vthumb${v.variant_id}', this.value || ${JSON.stringify(p.image_url || '').replace(/"/g, '&quot;')}, ${JSON.stringify(v.color_hex || '#FAF7F2').replace(/"/g, '&quot;')})">
+                          </div>
+                        </td>
                         <td><input class="mini-in" type="number" min="1" id="vp${v.variant_id}" value="${v.price}"></td>
                         <td><input class="mini-in" type="number" min="0" id="vs${v.variant_id}" value="${v.stock}"></td>
                         <td class="actions">
@@ -1571,6 +1608,20 @@ adminTabs.products = async () => {
                       </tr>
                     `).join('')}
                   </table>
+                </div>
+                <div class="color-photo-box">
+                  <b>🎨 กำหนดรูปภาพตามสี (อัปเดตทุกไซซ์ของสีเดียวกันในคลิกเดียว):</b>
+                  <div class="muted" style="font-size:12px;margin-top:2px">เมื่อลูกค้ากดเลือกสีในหน้าร้าน รูปเสื้อจะเปลี่ยนตามลิงก์ที่ตั้งไว้ (ถ้าเว้นว่างจะใช้รูปหลักของสินค้า)</div>
+                  <div class="color-photo-list">
+                    ${colorGroups.map((cg, ci) => `
+                      <div class="color-photo-row">
+                        <span class="color-photo-name"><span class="dot" style="background:${esc(cg.hex)}"></span>${esc(cg.color)} <span class="muted" style="font-weight:400">(${cg.count} ไซซ์)</span></span>
+                        <span class="mini-thumb" id="cp-thumb-${p.product_id}-${ci}">${art(cg.img || p.image_url, cg.hex)}</span>
+                        <input class="color-photo-in" id="cp-in-${p.product_id}-${ci}" value="${esc(cg.img || '')}" placeholder="วางลิงก์รูปเสื้อสี ${esc(cg.color)} (https://...)" oninput="A.previewMiniThumb('cp-thumb-${p.product_id}-${ci}', this.value || ${JSON.stringify(p.image_url || '').replace(/"/g, '&quot;')}, ${JSON.stringify(cg.hex || '#FAF7F2').replace(/"/g, '&quot;')})">
+                        <button type="button" class="btn sm" onclick="A.saveColorImage(${p.product_id}, ${JSON.stringify(cg.color).replace(/"/g, '&quot;')}, 'cp-in-${p.product_id}-${ci}')">💾 บันทึกรูปสีนี้</button>
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
               ` : '<p class="muted">ยังไม่มีรูปแบบไซส์/สี (กรุณาเพิ่มด้านล่าง)</p>'}
 
@@ -1586,6 +1637,10 @@ adminTabs.products = async () => {
                     <div class="field"><label>โค้ดสี</label><input name="color_hex" type="color" value="#141414" style="padding:2px;height:42px" aria-label="เลือกสี"></div>
                     <div class="field"><label>ราคาต่อชิ้น (฿) *</label><input name="price" type="number" min="1" placeholder="เช่น 390" required></div>
                     <div class="field"><label>สต็อกต่อไซส์ *</label><input name="stock" type="number" min="0" value="10" placeholder="เช่น 10" required></div>
+                  </div>
+                  <div class="field" style="margin-top:8px">
+                    <label>🖼️ ลิงก์รูปภาพของสีนี้ (ไม่บังคับ — ถ้าว่างใช้รูปหลักของสินค้า)</label>
+                    <input name="image_url" placeholder="https://... รูปเสื้อสีนี้โดยเฉพาะ (เวลาลูกค้ากดเลือกสี รูปจะเปลี่ยนตาม)">
                   </div>
                   <div class="field" style="margin-top:6px">
                     <label>เลือกไซส์ที่ต้องการเพิ่ม:</label>
@@ -1614,6 +1669,7 @@ adminTabs.products = async () => {
                   <input name="size" placeholder="ไซซ์ เช่น L" required>
                   <input name="price" type="number" min="1" placeholder="ราคา" required>
                   <input name="stock" type="number" min="0" placeholder="สต็อก" required>
+                  <input name="image_url" placeholder="ลิงก์รูปสีนี้ (ไม่บังคับ)" style="min-width:170px">
                   <button class="btn sm">+ เพิ่มรูปแบบเดี่ยว</button>
                 </form>
               </details>
@@ -1641,7 +1697,8 @@ adminTabs.products = async () => {
               </form>
             </div>
           </details>
-        `).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบสินค้าที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีสินค้าในสต็อก'}</h3><p class="muted">${meta.total ? 'ลองเปลี่ยนคำค้นหาหรือกดปุ่มล้างตัวกรอง' : 'คุณสามารถใช้ฟอร์ม "+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก" ด้านบนเพื่อเริ่มลงสินค้าได้เลย'}</p></div>`}
+        `;
+        }).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบสินค้าที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีสินค้าในสต็อก'}</h3><p class="muted">${meta.total ? 'ลองเปลี่ยนคำค้นหาหรือกดปุ่มล้างตัวกรอง' : 'คุณสามารถใช้ฟอร์ม "+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก" ด้านบนเพื่อเริ่มลงสินค้าได้เลย'}</p></div>`}
         ${meta.total ? dtPager('products', meta) : ''}
       `;
     }
@@ -1666,7 +1723,7 @@ adminTabs.products = async () => {
           <div class="field"><label>รายละเอียดสินค้า</label><textarea name="description" rows="2" placeholder="อธิบายเนื้อผ้า ทรงเสื้อ หรือคุณสมบัติเด่น..."></textarea></div>
           <div class="row4">
             <div class="field">
-              <label>รูปภาพ (ลิงก์ URL หรือรูปวาด)</label>
+              <label>รูปภาพหลัก (ลิงก์ URL หรือรูปวาด)</label>
               <input name="image_url" id="newProdImg" value="shape:tee" placeholder="shape:tee หรือ https://...">
             </div>
             <div class="field"><label>ซัพพลายเออร์ (จัดหาสินค้า)</label><select name="supplier_id">${supOpts(null)}</select></div>
@@ -1682,6 +1739,10 @@ adminTabs.products = async () => {
               <div class="field"><label>ชื่อสี</label><input name="batch_color" value="ครีม" placeholder="เช่น ครีม, ดำ, ขาว" required></div>
               <div class="field"><label>โค้ดสี</label><input name="batch_color_hex" type="color" value="#EADFC8" style="padding:2px;height:42px" aria-label="เลือกสี"></div>
               <div class="field"><label>ราคาต่อชิ้น (บาท)</label><input name="batch_price" type="number" min="1" value="390" required></div>
+            </div>
+            <div class="field" style="margin-top:6px">
+              <label>🖼️ ลิงก์รูปภาพของสีนี้ (ไม่บังคับ — ถ้าว่างใช้รูปภาพหลักด้านบน)</label>
+              <input name="batch_image_url" placeholder="https://... (ถ้ามีหลายสี ค่อยเพิ่มสีอื่นพร้อมรูปแยกทีหลังได้)">
             </div>
             <div class="field">
               <label>เลือกไซส์และจำนวนสต็อกต่อไซส์:</label>
@@ -2557,12 +2618,15 @@ const A = window.A = {
     const color = String(fd.get('batch_color') || '').trim();
     const colorHex = String(fd.get('batch_color_hex') || '#EADFC8').trim();
     const price = Number(fd.get('batch_price')) || 390;
-    const stock = Number(fd.get('batch_stock')) || 10;
+    const rawStock = fd.get('batch_stock');
+    const stock = rawStock !== '' && rawStock !== null ? Math.max(0, Number(rawStock)) : 10;
+    const batchImg = String(fd.get('batch_image_url') || '').trim();
 
     const variants = checkedSizes.map((sz) => ({
       size: sz,
       color: color,
       color_hex: colorHex,
+      image_url: batchImg || null,
       price: price,
       stock: stock
     }));
@@ -2609,9 +2673,43 @@ const A = window.A = {
 
   saveVariant(id) {
     safe(async () => {
-      await api('PUT', '/api/admin/variants/' + id, { price: $('#vp' + id).value, stock: $('#vs' + id).value });
-      toast('บันทึกราคาและสต็อกแล้ว');
+      await api('PUT', '/api/admin/variants/' + id, {
+        price: $('#vp' + id).value,
+        stock: $('#vs' + id).value,
+        image_url: $('#vimg' + id) ? $('#vimg' + id).value.trim() : undefined
+      });
+      toast('บันทึกราคา สต็อก และรูปสีนี้แล้ว');
+      refresh();
     });
+  },
+
+  saveColorImage(pid, color, inputId) {
+    safe(async () => {
+      const image_url = ($(`#${inputId}`)?.value || '').trim();
+      const res = await api('PUT', `/api/admin/products/${pid}/color-image`, { color, image_url });
+      toast(image_url
+        ? `อัปเดตรูปสี "${color}" (${res.updated || 1} ไซซ์) เรียบร้อยแล้ว!`
+        : `ล้างรูปเฉพาะสี "${color}" แล้ว (กลับไปใช้รูปหลักของสินค้า)`);
+      refresh();
+    });
+  },
+
+  previewMiniThumb(thumbId, url, hex) {
+    const el = $(`#${thumbId}`);
+    if (el) el.innerHTML = art(String(url || '').trim(), hex || '#FAF7F2');
+  },
+
+  previewCardColor(e, btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const cardEl = btn.closest('.card');
+    if (!cardEl) return;
+    cardEl.querySelectorAll('.card-swatch').forEach((b) => b.classList.remove('on'));
+    btn.classList.add('on');
+    const holder = cardEl.querySelector('.card-art');
+    if (holder) {
+      holder.innerHTML = art(btn.dataset.img || '', btn.dataset.hex || '#FAF7F2');
+    }
   },
 
   delVariant(id) {
@@ -2640,6 +2738,7 @@ const A = window.A = {
     const colorHex = String(fd.get('color_hex') || '#141414').trim();
     const price = Number(fd.get('price'));
     const stock = Number(fd.get('stock'));
+    const imageUrl = String(fd.get('image_url') || '').trim();
 
     if (!color || !(price > 0) || stock < 0) {
       return toast('กรุณากรอกข้อมูลสี ราคา และสต็อกให้ถูกต้อง', true);
@@ -2649,6 +2748,7 @@ const A = window.A = {
       size: sz,
       color,
       color_hex: colorHex,
+      image_url: imageUrl || null,
       price,
       stock
     }));

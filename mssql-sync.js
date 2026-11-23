@@ -111,8 +111,8 @@ const TABLE_SCHEMAS = [
     name: 'product_variant',
     sqlName: 'dbo.product_variant',
     identity: 'variant_id',
-    columns: ['variant_id', 'product_id', 'size', 'color', 'color_hex', 'price', 'stock', 'stock_quantity', 'sku'],
-    types: { variant_id: 'int', product_id: 'int', size: 'nvarchar', color: 'nvarchar', color_hex: 'nvarchar', price: 'decimal', stock: 'int', stock_quantity: 'int', sku: 'nvarchar' }
+    columns: ['variant_id', 'product_id', 'size', 'color', 'color_hex', 'image_url', 'price', 'stock', 'stock_quantity', 'sku'],
+    types: { variant_id: 'int', product_id: 'int', size: 'nvarchar', color: 'nvarchar', color_hex: 'nvarchar', image_url: 'nvarchar', price: 'decimal', stock: 'int', stock_quantity: 'int', sku: 'nvarchar' }
   },
   {
     name: 'cart_item',
@@ -316,6 +316,7 @@ function generateSqlServerScript(db, snapshot = null) {
   lines.push(`        size           NVARCHAR(40) NOT NULL,`);
   lines.push(`        color          NVARCHAR(80) NOT NULL,`);
   lines.push(`        color_hex      NVARCHAR(30),`);
+  lines.push(`        image_url      NVARCHAR(MAX),`);
   lines.push(`        price          DECIMAL(10,2) NOT NULL,`);
   lines.push(`        stock          INT NOT NULL DEFAULT 0,`);
   lines.push(`        stock_quantity INT NOT NULL DEFAULT 0,`);
@@ -507,6 +508,7 @@ function generateSqlServerScript(db, snapshot = null) {
     ['dbo.product_variant', 'size', 'NVARCHAR(40) NOT NULL', 80],
     ['dbo.product_variant', 'color', 'NVARCHAR(80) NOT NULL', 160],
     ['dbo.product_variant', 'color_hex', 'NVARCHAR(30) NULL', 60],
+    ['dbo.product_variant', 'image_url', 'NVARCHAR(MAX) NULL', -1],
     ['dbo.customer', 'first_name', 'NVARCHAR(100) NOT NULL', 200],
     ['dbo.customer', 'last_name', 'NVARCHAR(100) NOT NULL', 200],
     ['dbo.customer', 'phone', 'NVARCHAR(40) NULL', 80],
@@ -530,6 +532,8 @@ function generateSqlServerScript(db, snapshot = null) {
     ['dbo.review', 'first_name', 'NVARCHAR(100) NULL', 200],
     ['dbo.review', 'last_name', 'NVARCHAR(100) NULL', 200]
   ];
+  lines.push(`IF COL_LENGTH('dbo.product_variant', 'image_url') IS NULL`);
+  lines.push(`    ALTER TABLE dbo.product_variant ADD image_url NVARCHAR(MAX) NULL;`);
   for (const [tbl, col, colDef, minBytes] of widenRules) {
     const cond = minBytes === -1
       ? `max_length <> -1`

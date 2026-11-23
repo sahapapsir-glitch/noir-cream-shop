@@ -239,7 +239,27 @@ const productList = (where, params, order, uid) => {
            (SELECT COUNT(*) FROM review r WHERE r.product_id=p.product_id) review_count
     FROM product p WHERE ${where} ${order}`).all(...params);
   const wl = uid ? new Set(db.prepare('SELECT product_id FROM wishlist WHERE customer_id=?').all(uid).map((r) => r.product_id)) : new Set();
-  return rows.map((r) => ({ ...r, wished: wl.has(r.product_id) }));
+  const colorMap = new Map();
+  if (rows.length) {
+    const ids = rows.map((r) => r.product_id);
+    const ph = ids.map(() => '?').join(',');
+    const vrows = db.prepare(`
+      SELECT product_id, color, MAX(color_hex) color_hex, MAX(NULLIF(TRIM(image_url), '')) image_url
+      FROM product_variant
+      WHERE product_id IN (${ph})
+      GROUP BY product_id, color
+      ORDER BY MIN(rowid)
+    `).all(...ids);
+    for (const vr of vrows) {
+      if (!colorMap.has(vr.product_id)) colorMap.set(vr.product_id, []);
+      colorMap.get(vr.product_id).push({
+        color: vr.color,
+        color_hex: vr.color_hex,
+        image_url: vr.image_url || null
+      });
+    }
+  }
+  return rows.map((r) => ({ ...r, wished: wl.has(r.product_id), colors: colorMap.get(r.product_id) || [] }));
 };
 
 app.get('/api/categories', wrap(() => {
@@ -273,7 +293,7 @@ app.get('/api/products/:id', wrap((req) => {
   const uid = getShopCustomerId(req.user);
   const [p] = productList("p.product_id=? AND p.status='active'", [int(req.params.id)], '', uid);
   if (!p) bad('ไม่พบสินค้า', 404);
-  p.variants = db.prepare('SELECT variant_id,size,color,color_hex,price,stock,stock_quantity FROM product_variant WHERE product_id=? ORDER BY color,rowid').all(p.product_id);
+  p.variants = db.prepare('SELECT variant_id,size,color,color_hex,image_url,price,stock,stock_quantity FROM product_variant WHERE product_id=? ORDER BY color,rowid').all(p.product_id);
   p.reviews = db.prepare(`
     SELECT r.review_id, r.customer_id, r.rating, r.comment, r.review_date, r.created_at,
            (COALESCE(r.first_name, c.first_name) || ' ' || COALESCE(r.last_name, c.last_name)) customer_name,
@@ -363,7 +383,7 @@ app.post('/api/wishlist/:id', wrap((req) => {
 const getCart = (uid) => {
   const items = db.prepare(`
     SELECT ci.cart_id, ci.quantity, ci.total_price, v.variant_id, v.size, v.color, v.color_hex, v.price, v.stock,
-           p.product_id, p.name, p.image_url
+           p.product_id, p.name, COALESCE(NULLIF(TRIM(v.image_url), ''), p.image_url) image_url
     FROM cart_item ci JOIN product_variant v USING(variant_id) JOIN product p ON p.product_id = v.product_id
     WHERE ci.customer_id=? ORDER BY ci.cart_id`).all(uid);
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -524,7 +544,7 @@ app.post('/api/orders', wrap((req) => {
 const orderDetail = (oid) => {
   const o = db.prepare('SELECT * FROM "order" WHERE order_id=?').get(oid);
   if (!o) return null;
-  o.items = db.prepare(`SELECT oi.order_item_id, oi.variant_id, oi.quantity, oi.unit_price, oi.total_price, v.size, v.color, p.product_id, p.name, p.image_url, v.color_hex
+  o.items = db.prepare(`SELECT oi.order_item_id, oi.variant_id, oi.quantity, oi.unit_price, oi.total_price, v.size, v.color, p.product_id, p.name, COALESCE(NULLIF(TRIM(v.image_url), ''), p.image_url) image_url, v.color_hex
     FROM order_item oi JOIN product_variant v USING(variant_id) JOIN product p ON p.product_id = v.product_id WHERE oi.order_id=?`).all(oid);
   o.payment = db.prepare('SELECT * FROM payment WHERE order_id=?').get(oid);
   o.shipment = db.prepare('SELECT * FROM shipment WHERE order_id=?').get(oid) || null;
@@ -614,6 +634,15 @@ app.get('/api/admin/products', wrap((req) => {
   };
 }));
 
+const readVariantImage = (val) => {
+  const img = str(val, 2000);
+  if (!img) return null;
+  if (!/^(shape:[a-z]+|https?:\/\/\S+|data:image\/\S+)$/i.test(img)) {
+    bad('ลิงก์รูปภาพของสีต้องขึ้นต้นด้วย http:// หรือ https:// หรือ shape:');
+  }
+  return img;
+};
+
 const readProduct = (b) => {
   const name = str(b?.name, 120);
   let category = str(b?.category, 60);
@@ -621,7 +650,7 @@ const readProduct = (b) => {
     category = ALLOWED_CATEGORIES[0];
   }
   if (!name) bad('กรุณากรอกชื่อสินค้า');
-  const image = str(b?.image_url, 500);
+  const image = str(b?.image_url, 2000);
   if (image && !/^(shape:[a-z]+|https?:\/\/\S+|data:image\/\S+)$/i.test(image)) bad('ลิงก์รูปภาพต้องขึ้นต้นด้วย http:// หรือ https:// หรือ shape:');
   const defaultShape = category === 'เสื้อโปโล' ? 'shape:polo' : (category === 'เสื้อแขนยาว' ? 'shape:longsleeve' : (category === 'กางเกง' ? 'shape:pants' : 'shape:tee'));
   const defaultEmp = db.prepare('SELECT employee_id FROM employee ORDER BY employee_id LIMIT 1').get()?.employee_id || null;
@@ -646,7 +675,7 @@ app.post('/api/admin/products', wrap((req) => {
 
     // Support multi-variant batch creation
     if (Array.isArray(b.variants) && b.variants.length > 0) {
-      const insV = db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?)');
+      const insV = db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,image_url,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?,?)');
       for (const v of b.variants) {
         const size = str(v.size, 20);
         const color = str(v.color, 30);
@@ -654,8 +683,9 @@ app.post('/api/admin/products', wrap((req) => {
         const stock = Math.max(0, int(v.stock, 0));
         if (size && color && price > 0) {
           const hex = /^#[0-9a-f]{6}$/i.test(v.color_hex || '') ? v.color_hex : '#EADFC8';
+          const vImg = readVariantImage(v.image_url);
           const sku = `SKU-${pid}-${size}-${color}`.replace(/\s/g, '');
-          insV.run(pid, size, color, hex, price, stock, stock, sku);
+          insV.run(pid, size, color, hex, vImg, price, stock, stock, sku);
         }
       }
       syncStock(pid);
@@ -717,20 +747,21 @@ app.post('/api/admin/products/:id/variants', wrap((req) => {
   // Support batch addition of multiple variants
   if (Array.isArray(b.variants) && b.variants.length > 0) {
     return tx(() => {
-      const insV = db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?)');
+      const insV = db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,image_url,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?,?)');
       let added = 0;
       for (const v of b.variants) {
         const size = str(v.size, 20), color = str(v.color, 30);
         const price = Number(v.price), stock = Math.max(0, int(v.stock, 0));
         const hex = /^#[0-9a-f]{6}$/i.test(v.color_hex || '') ? v.color_hex : '#EADFC8';
+        const vImg = readVariantImage(v.image_url);
         if (size && color && price > 0) {
           const sku = `SKU-${pid}-${size}-${color}`.replace(/\s/g, '');
           try {
-            insV.run(pid, size, color, hex, price, stock, stock, sku);
+            insV.run(pid, size, color, hex, vImg, price, stock, stock, sku);
             added++;
           } catch {
-            db.prepare('UPDATE product_variant SET price=?, stock=stock+?, stock_quantity=stock+? WHERE product_id=? AND size=? AND color=?')
-              .run(price, stock, stock, pid, size, color);
+            db.prepare('UPDATE product_variant SET price=?, stock=stock+?, stock_quantity=stock+?, image_url=COALESCE(?, image_url) WHERE product_id=? AND size=? AND color=?')
+              .run(price, stock, stock, vImg, pid, size, color);
             added++;
           }
         }
@@ -746,8 +777,9 @@ app.post('/api/admin/products/:id/variants', wrap((req) => {
   if (!(price > 0)) bad('ราคาต้องมากกว่า 0');
   if (stock < 0) bad('จำนวนสต็อกต้องไม่ติดลบ');
   const hex = /^#[0-9a-f]{6}$/i.test(b.color_hex || '') ? b.color_hex : '#CCCCCC';
+  const vImg = readVariantImage(b.image_url);
   const sku = `SKU-${pid}-${size}-${color}`.replace(/\s/g, '');
-  try { db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?)').run(pid, size, color, hex, price, stock, stock, sku); }
+  try { db.prepare('INSERT INTO product_variant (product_id,size,color,color_hex,image_url,price,stock,stock_quantity,sku) VALUES (?,?,?,?,?,?,?,?,?)').run(pid, size, color, hex, vImg, price, stock, stock, sku); }
   catch { bad('มีไซซ์และสีนี้อยู่แล้ว', 409); }
   syncStock(pid);
   return { ok: true };
@@ -756,10 +788,21 @@ app.put('/api/admin/variants/:id', wrap((req) => {
   needAdmin(req);
   const id = int(req.params.id), price = Number(req.body?.price), stock = int(req.body?.stock);
   if (!(price > 0) || stock < 0) bad('ราคา/สต็อกไม่ถูกต้อง');
-  const v = db.prepare('SELECT product_id FROM product_variant WHERE variant_id=?').get(id);
+  const v = db.prepare('SELECT product_id, image_url FROM product_variant WHERE variant_id=?').get(id);
   if (!v) bad('ไม่พบรายการ', 404);
-  db.prepare('UPDATE product_variant SET price=?,stock=?,stock_quantity=? WHERE variant_id=?').run(price, stock, stock, id);
+  const vImg = req.body?.image_url !== undefined ? readVariantImage(req.body.image_url) : v.image_url;
+  db.prepare('UPDATE product_variant SET price=?,stock=?,stock_quantity=?,image_url=? WHERE variant_id=?').run(price, stock, stock, vImg, id);
   syncStock(v.product_id);
+}));
+app.put('/api/admin/products/:id/color-image', wrap((req) => {
+  needAdmin(req);
+  const pid = int(req.params.id);
+  const color = str(req.body?.color, 40);
+  if (!color) bad('กรุณาระบุชื่อสี');
+  const vImg = readVariantImage(req.body?.image_url);
+  const r = db.prepare('UPDATE product_variant SET image_url=? WHERE product_id=? AND color=?').run(vImg, pid, color);
+  if (!r.changes) bad('ไม่พบสีนี้ในสินค้าดังกล่าว', 404);
+  return { ok: true, updated: r.changes };
 }));
 app.delete('/api/admin/variants/:id', wrap((req) => {
   needAdmin(req);
