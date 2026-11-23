@@ -620,8 +620,17 @@ pages.product = async (params, id) => {
 
     <section class="reviews">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <h2 style="margin:0">รีวิวจากลูกค้า (${p.reviews ? p.reviews.length : 0})</h2>
-        <span class="muted" style="font-size:13.5px">${stars(p.rating, p.review_count)}</span>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <h2 style="margin:0">รีวิวจากลูกค้า (${p.reviews ? p.reviews.length : 0})</h2>
+          <span class="muted" style="font-size:13.5px">${stars(p.rating, p.review_count)}</span>
+        </div>
+        ${p.can_review ? `
+          <button type="button" class="btn ghost sm" id="review-toggle-btn-${p.product_id}"
+            style="${p.my_review ? '' : 'display:none'}"
+            onclick="A.toggleReviewForm(${p.product_id}, true)">
+            ${p.my_review ? '✏️ แก้ไขรีวิวของคุณ' : '✍️ เขียนรีวิวสินค้านี้'}
+          </button>
+        ` : ''}
       </div>
       ${reviewForm(p)}
       ${p.reviews && p.reviews.length ? p.reviews.map((r) => {
@@ -671,9 +680,12 @@ function reviewForm(p) {
   const r = p.my_review || { rating: 5, comment: '' };
   A._rate = r.rating || 5;
   return `
-    <form class="panel" id="review-form-${p.product_id}" style="margin:16px 0 16px" onsubmit="return A.review(event, ${p.product_id})">
-      <div class="review-form-title" style="margin-bottom:8px">
-        <b>${p.my_review ? '✏️ แก้ไขรีวิวของคุณ' : '✍️ เขียนรีวิวสินค้านี้'}</b>
+    <form class="panel" id="review-form-${p.product_id}" style="margin:16px 0 16px;${p.my_review ? 'display:none;' : ''}" onsubmit="return A.review(event, ${p.product_id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+        <div class="review-form-title">
+          <b>${p.my_review ? '✏️ แก้ไขรีวิวของคุณ' : '✍️ เขียนรีวิวสินค้านี้'}</b>
+        </div>
+        <button type="button" class="btn ghost sm" onclick="A.toggleReviewForm(${p.product_id}, false)" aria-label="ปิดกล่องรีวิว">✕ ปิด</button>
       </div>
       <div class="starpick" id="stars">
         ${[1, 2, 3, 4, 5].map((n) => `
@@ -686,6 +698,7 @@ function reviewForm(p) {
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn sm">${p.my_review ? 'บันทึกการแก้ไขรีวิว' : 'ส่งรีวิว'}</button>
         ${p.my_review ? `<button type="button" class="btn danger sm" onclick="A.deleteReview(${p.my_review.review_id}, ${p.product_id})">ลบรีวิวนี้</button>` : ''}
+        <button type="button" class="btn ghost sm" onclick="A.toggleReviewForm(${p.product_id}, false)">ปิด</button>
       </div>
     </form>
   `;
@@ -2529,10 +2542,23 @@ const A = window.A = {
     }
   },
 
+  toggleReviewForm(pid, show) {
+    const form = $('#review-form-' + pid);
+    const btn = $('#review-toggle-btn-' + pid);
+    const open = typeof show === 'boolean' ? show : (form?.style.display === 'none');
+    if (form) form.style.display = open ? 'block' : 'none';
+    if (btn) btn.style.display = open ? 'none' : '';
+    if (open && form) {
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const ta = form.querySelector('textarea[name="comment"]');
+      if (ta) ta.focus();
+    }
+  },
+
   startEditReview(pid, rating, comment) {
+    A.toggleReviewForm(pid, true);
     const form = $('#review-form-' + pid);
     if (form) {
-      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
       const textarea = form.querySelector('textarea[name="comment"]');
       if (textarea) {
         textarea.value = comment || '';
