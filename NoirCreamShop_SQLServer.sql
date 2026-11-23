@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: dcc26e10a1b521b5 | Updated: 2026-11-23T18:13:02.679Z
+-- Checksum: 1ec79a8cde4c0a5c | Updated: 2026-11-23T18:13:16.145Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -638,10 +638,10 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (325, 62, N'32', N'สีส้มอิฐอมน้ำตาล / สีสนิม', N'#b87d64', N'https://is8.revolveassets.com/images/p4/n/uv/AGOF-MJ44_V1.jpg', 6290, 20, 20, N'SKU-62-32-สีส้มอิฐอมน้ำตาล/สีสนิม');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (326, 62, N'34', N'สีส้มอิฐอมน้ำตาล / สีสนิม', N'#b87d64', N'https://is8.revolveassets.com/images/p4/n/uv/AGOF-MJ44_V1.jpg', 6290, 20, 20, N'SKU-62-34-สีส้มอิฐอมน้ำตาล/สีสนิม');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (327, 62, N'36', N'สีส้มอิฐอมน้ำตาล / สีสนิม', N'#b87d64', N'https://is8.revolveassets.com/images/p4/n/uv/AGOF-MJ44_V1.jpg', 6290, 20, 20, N'SKU-62-36-สีส้มอิฐอมน้ำตาล/สีสนิม');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (328, 63, N'28', N'ชมพูซาติน', N'#dfc4c9', NULL, 2700, 15, 15, N'SKU-63-28-ชมพูซาติน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (329, 63, N'30', N'ชมพูซาติน', N'#dfc4c9', NULL, 2700, 15, 15, N'SKU-63-30-ชมพูซาติน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (330, 63, N'32', N'ชมพูซาติน', N'#dfc4c9', NULL, 2700, 15, 15, N'SKU-63-32-ชมพูซาติน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (331, 63, N'34', N'ชมพูซาติน', N'#dfc4c9', NULL, 2700, 15, 15, N'SKU-63-34-ชมพูซาติน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (328, 63, N'28', N'ชมพูซาติน', N'#dfc4c9', N'https://www.jdsports.co.th/cdn/shop/files/jd_810593_c.jpg?v=1790642291&width=1007', 2700, 15, 15, N'SKU-63-28-ชมพูซาติน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (329, 63, N'30', N'ชมพูซาติน', N'#dfc4c9', N'https://www.jdsports.co.th/cdn/shop/files/jd_810593_c.jpg?v=1790642291&width=1007', 2700, 15, 15, N'SKU-63-30-ชมพูซาติน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (330, 63, N'32', N'ชมพูซาติน', N'#dfc4c9', N'https://www.jdsports.co.th/cdn/shop/files/jd_810593_c.jpg?v=1790642291&width=1007', 2700, 15, 15, N'SKU-63-32-ชมพูซาติน');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (331, 63, N'34', N'ชมพูซาติน', N'#dfc4c9', N'https://www.jdsports.co.th/cdn/shop/files/jd_810593_c.jpg?v=1790642291&width=1007', 2700, 15, 15, N'SKU-63-34-ชมพูซาติน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (332, 64, N'28', N'สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน', N'#7e919b', NULL, 10300, 33, 33, N'SKU-64-28-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (333, 64, N'30', N'สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน', N'#7e919b', NULL, 10300, 33, 33, N'SKU-64-30-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (334, 64, N'32', N'สีฟ้าอมเทาหม่น / สียีนส์ฟอกวิน', N'#7e919b', NULL, 10300, 33, 33, N'SKU-64-32-สีฟ้าอมเทาหม่น/สียีนส์ฟอกวิน');
