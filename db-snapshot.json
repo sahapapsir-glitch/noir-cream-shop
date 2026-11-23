@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T20:03:13.987Z",
-  "checksum": "d1d0515b139161dc",
+  "timestamp": "2026-11-23T20:03:55.485Z",
+  "checksum": "5d22b41687b3e18c",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -17,7 +17,7 @@
     "order_item": 11,
     "payment": 10,
     "shipment": 10,
-    "review": 2,
+    "review": 3,
     "wishlist": 2,
     "review_like": 1
   },
@@ -3485,6 +3485,17 @@
         "comment": "ดีมากกๆ",
         "review_date": "2026-11-23",
         "created_at": "2026-11-23 18:03:08"
+      },
+      {
+        "review_id": 7,
+        "customer_id": 1,
+        "product_id": 68,
+        "first_name": "สมชาย",
+        "last_name": "ทดสอบ",
+        "rating": 5,
+        "comment": "Very good มากๆ",
+        "review_date": "2026-11-23",
+        "created_at": "2026-11-23 20:03:55"
       }
     ],
     "wishlist": [
