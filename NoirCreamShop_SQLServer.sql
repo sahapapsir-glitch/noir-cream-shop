@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: ad8afb811f5071ba | Updated: 2026-11-23T16:20:10.838Z
+-- Checksum: d0ac5447fe97533e | Updated: 2026-11-23T16:20:30.619Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -553,10 +553,10 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (221, 37, N'L', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-L-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (222, 37, N'XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-XL-สีขาวงาช้าง/สีครีมอ่อน');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (223, 37, N'2XL', N'สีขาวงาช้าง / สีครีมอ่อน', N'#eae7df', N'https://is8.revolveassets.com/images/p4/n/z/MGOL-MK46_V1.jpg', 5600, 35, 35, N'SKU-37-2XL-สีขาวงาช้าง/สีครีมอ่อน');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (224, 38, N'S', N'ดำ', N'#000000', NULL, 19999, 20, 20, N'SKU-38-S-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (225, 38, N'M', N'ดำ', N'#000000', NULL, 19999, 20, 20, N'SKU-38-M-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', NULL, 19999, 20, 20, N'SKU-38-L-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (227, 38, N'XL', N'ดำ', N'#000000', NULL, 21000, 20, 20, N'SKU-38-XL-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (224, 38, N'S', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 19999, 20, 20, N'SKU-38-S-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (225, 38, N'M', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 19999, 20, 20, N'SKU-38-M-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (226, 38, N'L', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 19999, 20, 20, N'SKU-38-L-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (227, 38, N'XL', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/OFFF-MK152_V1.jpg', 21000, 20, 20, N'SKU-38-XL-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (228, 39, N'S', N'สีกรมท่า / สีขาว', N'#373e54', NULL, 4800, 25, 25, N'SKU-39-S-สีกรมท่า/สีขาว');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (229, 39, N'M', N'สีกรมท่า / สีขาว', N'#373e54', NULL, 4800, 25, 25, N'SKU-39-M-สีกรมท่า/สีขาว');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (230, 39, N'L', N'สีกรมท่า / สีขาว', N'#373e54', NULL, 4800, 25, 25, N'SKU-39-L-สีกรมท่า/สีขาว');
