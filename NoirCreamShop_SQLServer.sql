@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 190493a78c50c4be | Updated: 2026-11-23T18:03:15.706Z
+-- Checksum: 73c9107055d0e615 | Updated: 2026-11-23T18:03:20.152Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -731,7 +731,7 @@ INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (1, 33);
 INSERT INTO dbo.wishlist (customer_id, product_id) VALUES (1, 34);
 
 -- ตาราง dbo.review_like (1 รายการ)
-INSERT INTO dbo.review_like (customer_id, review_id, created_at) VALUES (1, 6, '2026-11-23 18:03:15');
+INSERT INTO dbo.review_like (customer_id, review_id, created_at) VALUES (1, 6, '2026-11-23 18:03:20');
 
 COMMIT TRANSACTION;
 SET NOCOUNT OFF;
