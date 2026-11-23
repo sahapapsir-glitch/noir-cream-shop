@@ -1058,9 +1058,12 @@ function addressForm(handler, v = {}, btnLabel = 'บันทึกที่อ
   </form>`;
 }
 
+let _customerOrdersCache = [];
+
 pages.orders = async (params) => {
   if (!state.user) return go('#/login');
   const { orders } = await api('GET', '/api/orders');
+  _customerOrdersCache = orders || [];
   const fresh = +params.get('new') || 0;
   app.innerHTML = `
     ${adminTestBanner()}
@@ -1087,6 +1090,7 @@ function shipInfo(o) {
 
 function orderCard(o) {
   const cod = o.payment.method === 'เก็บเงินปลายทาง';
+  const canEditAddr = ['pending', 'paid'].includes(o.status);
   return `
     <div class="panel order">
       <div class="order-head">
@@ -1094,13 +1098,17 @@ function orderCard(o) {
         <span class="status ${o.status}">${STATUS[o.status]}</span>
       </div>
       ${orderItems(o)}
-      <div class="muted" style="font-size:13.5px">จัดส่งถึง: ${esc(o.ship_name)} · ${esc(o.ship_phone)}<br>${esc(o.ship_address)}</div>
+      <div class="muted" style="font-size:13.5px">
+        จัดส่งถึง: ${esc(o.ship_name)} · ${esc(o.ship_phone)}<br>${esc(o.ship_address)}
+        ${o.status === 'shipped' ? '<div style="font-size:12px;margin-top:2px">🔒 สินค้ากำลังจัดส่ง หากต้องการแก้ไขปลายทางกรุณาติดต่อแอดมินร้าน</div>' : ''}
+      </div>
       <div class="muted" style="font-size:13.5px;margin-top:6px">ชำระเงิน (Payment #${o.payment.payment_id}): ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || esc(o.payment.status)}${o.payment.paid_at ? ' · ' + dt(o.payment.paid_at) : ''})</div>
       ${shipInfo(o)}
       <div class="order-foot">
         <div>ยอดรวม <b style="font-size:18px">${money(o.total_price)}</b>${o.discount ? ` <span class="muted">(ส่วนลด ${money(o.discount)})</span>` : ''}</div>
         <div class="actions">
           ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">ชำระเงิน (จำลอง)</button>` : ''}
+          ${canEditAddr ? `<button type="button" class="btn ghost sm" onclick="A.openEditOrderAddress(${o.order_id})">✏️ เปลี่ยนที่อยู่จัดส่ง</button>` : ''}
           ${o.status === 'pending' ? `<button class="btn danger sm" onclick="A.cancelOrder(${o.order_id})">ยกเลิก</button>` : ''}
           ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.received(${o.order_id})">ได้รับสินค้าแล้ว</button>` : ''}
           ${['paid', 'shipped', 'completed'].includes(o.status) ? `<a class="btn ghost sm" href="#/product/${o.items[0].product_id}">เขียนรีวิว</a>` : ''}
@@ -1858,6 +1866,7 @@ adminTabs.orders = async () => {
               ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">💳 จำลองชำระเงิน</button>` : ''}
               ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
               ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
+              ${['pending', 'paid', 'shipped'].includes(o.status) ? `<button type="button" class="btn ghost sm" onclick="A.openAdminEditOrderAddress(${o.order_id})">✏️ แก้ที่อยู่จัดส่ง</button>` : ''}
               ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
             </div>
           </div>
@@ -2870,6 +2879,86 @@ const A = window.A = {
     safe(async () => {
       const res = await api('PUT', `/api/admin/orders/${id}/shipment`, d);
       toast(`อัปเดตเลขพัสดุแล้ว (${res.carrier}: ${res.tracking_no})`);
+      refresh();
+    });
+    return false;
+  },
+
+  async openEditOrderAddress(id) {
+    const o = (_customerOrdersCache || []).find((x) => x.order_id === id);
+    if (!o) return;
+    let addresses = [];
+    try { addresses = (await api('GET', '/api/addresses')).addresses || []; } catch {}
+    this._openOrderAddressModal(o, addresses, false);
+  },
+
+  async openAdminEditOrderAddress(id) {
+    const o = (_adminCache.orders || []).find((x) => x.order_id === id);
+    if (!o) return;
+    let addresses = [];
+    try { addresses = (await api('GET', `/api/admin/orders/${id}/addresses`)).addresses || []; } catch {}
+    this._openOrderAddressModal(o, addresses, true);
+  },
+
+  _openOrderAddressModal(o, addresses = [], isAdmin = false) {
+    const mb = $('#modalBox');
+    if (!mb) return;
+    const rawAddrText = (a) => [a.house_no, a.village, a.road, a.subdistrict, a.district, a.province, a.postal_code].filter(Boolean).join(' ');
+    const savedHtml = addresses.length ? `
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px">📍 เลือกจากสมุดที่อยู่ที่บันทึกไว้ (คลิกเพื่อใส่ข้อมูลอัตโนมัติ):</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto">
+          ${addresses.map((a) => `
+            <button type="button" class="opt-card ord-addr-pick" style="text-align:left;width:100%;margin-bottom:0;padding:10px 12px" data-name="${esc(a.recipient || '')}" data-phone="${esc(a.phone || '')}" data-addr="${esc(rawAddrText(a))}" onclick="A.pickOrderSavedAddr(this)">
+              <div style="flex:1;font-size:13px">
+                <b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:4px;font-size:11px">ที่อยู่หลัก</span>' : ''}<br>
+                <span class="muted">${esc(fmtAddr(a))}</span>
+              </div>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    ` : '';
+    const shippedWarn = isAdmin && o.status === 'shipped'
+      ? `<div style="background:#fff8eb;border:1px solid #f5c26b;color:#7a4b00;padding:9px 12px;border-radius:8px;font-size:12.5px;margin-bottom:12px">⚠️ ออเดอร์นี้อยู่ระหว่างจัดส่ง (<code>shipped</code>) — ระบบจะอัปเดตทั้ง <b>order.ship_address</b> และ <b>shipment.shipping_address</b> กรุณาแจ้งแก้ไขปลายทางกับขนส่ง (${esc(o.shipment?.carrier || 'ขนส่ง')}) เพิ่มเติมด้วยครับ</div>`
+      : '';
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 6px">✏️ แก้ไขที่อยู่จัดส่ง (Order #${o.order_id})</h3>
+      <p class="muted" style="margin:0 0 14px;font-size:13px">แก้ไขเฉพาะคำสั่งซื้อ #${o.order_id} (สถานะ: ${esc(STATUS[o.status] || o.status)}) — ไม่กระทบประวัติคำสั่งซื้ออื่น</p>
+      ${shippedWarn}
+      ${savedHtml}
+      <form onsubmit="return A.saveOrderAddress(event, ${o.order_id}, ${isAdmin ? 'true' : 'false'})">
+        <div class="row2">
+          <div class="field"><label>ชื่อผู้รับ *</label><input id="ordEditName" name="ship_name" value="${esc(o.ship_name || '')}" maxlength="150" required></div>
+          <div class="field"><label>เบอร์โทรศัพท์ผู้รับ *</label><input id="ordEditPhone" name="ship_phone" value="${esc(o.ship_phone || '')}" maxlength="40" required placeholder="08x-xxx-xxxx"></div>
+        </div>
+        <div class="field"><label>ที่อยู่จัดส่งเต็ม *</label><textarea id="ordEditAddr" name="ship_address" rows="3" maxlength="600" required placeholder="บ้านเลขที่ หมู่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์">${esc(o.ship_address || '')}</textarea></div>
+        <div class="actions" style="justify-content:flex-end">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกที่อยู่ใหม่</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+  },
+
+  pickOrderSavedAddr(btn) {
+    $$('#modalBox .ord-addr-pick').forEach((el) => el.classList.remove('on'));
+    btn.classList.add('on');
+    const n = $('#ordEditName'), p = $('#ordEditPhone'), a = $('#ordEditAddr');
+    if (n) n.value = btn.dataset.name || '';
+    if (p) p.value = btn.dataset.phone || '';
+    if (a) a.value = btn.dataset.addr || '';
+  },
+
+  saveOrderAddress(e, id, isAdmin = false) {
+    const d = formData(e);
+    safe(async () => {
+      const url = isAdmin ? `/api/admin/orders/${id}/address` : `/api/orders/${id}/address`;
+      await api('PUT', url, d);
+      A.closeModal();
+      toast(`อัปเดตที่อยู่จัดส่งสำหรับคำสั่งซื้อ #${id} แล้ว`);
       refresh();
     });
     return false;
