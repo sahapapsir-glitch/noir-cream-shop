@@ -1576,13 +1576,19 @@ adminTabs.products = async () => {
           return `
           <details class="prod" ${A._openProds?.has(p.product_id) ? 'open' : ''} ontoggle="A._openProds=A._openProds||new Set();this.open?A._openProds.add(${p.product_id}):A._openProds.delete(${p.product_id})">
             <summary>
-              <span><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)}${prodPriceText(p) ? ` · ${prodPriceText(p)}` : ''} · สต็อกรวม <b style="${Number(p.stock) <= 3 ? 'color:var(--danger)' : ''}">${p.stock} ชิ้น</b>${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
-              <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
+              <span style="min-width:0"><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)}${prodPriceText(p) ? ` · ${prodPriceText(p)}` : ''} · สต็อกรวม <b style="${Number(p.stock) <= 3 ? 'color:var(--danger)' : ''}">${p.stock} ชิ้น</b>${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
+              <span style="display:inline-flex;align-items:center;gap:8px;flex-shrink:0">
+                <button type="button" class="btn ghost sm" style="padding:4px 10px" onclick="event.preventDefault();event.stopPropagation();A.openEditProduct(${p.product_id})" title="แก้ไขชื่อและข้อมูลสินค้า">✏️ แก้ชื่อ</button>
+                <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}" style="white-space:nowrap">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
+              </span>
             </summary>
             <div class="inner">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 0">
                 <h4 style="margin:0">รูปแบบ ไซส์ และสต็อก (Product_ID: #${p.product_id})</h4>
-                <button class="btn danger sm" onclick="A.deleteProduct(${p.product_id})">🗑️ ลบสินค้านี้</button>
+                <div class="actions">
+                  <button type="button" class="btn ghost sm" onclick="A.openEditProduct(${p.product_id})">✏️ แก้ไขชื่อ / ข้อมูลสินค้า</button>
+                  <button type="button" class="btn danger sm" onclick="A.deleteProduct(${p.product_id})">🗑️ ลบสินค้านี้</button>
+                </div>
               </div>
               ${p.variants && p.variants.length ? `
                 <div class="table-wrap">
@@ -2595,12 +2601,60 @@ const A = window.A = {
   /* Admin Actions */
   tab(k) { adminTab = k; refresh(); },
 
+  openEditProduct(id) {
+    const p = (_adminCache.products || []).find((x) => x.product_id === id);
+    const mb = $('#modalBox');
+    if (!p || !mb) return;
+    const cats = _adminCache.allowedCategories?.length ? _adminCache.allowedCategories : ['เสื้อยืด', 'เสื้อโปโล', 'เสื้อแขนยาว', 'กางเกง'];
+    const supOpts = '<option value="">— ไม่ระบุ —</option>' +
+      (_adminCache.suppliers || []).map((s) => `<option value="${s.supplier_id}" ${s.supplier_id === p.supplier_id ? 'selected' : ''}>#${s.supplier_id} ${esc(s.name)}</option>`).join('');
+    const empOpts = '<option value="">— ไม่ระบุ —</option>' +
+      (_adminCache.employees || []).map((e) => `<option value="${e.employee_id}" ${e.employee_id === p.employee_id ? 'selected' : ''}>#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}${e.position ? ` (${esc(e.position)})` : ''}</option>`).join('');
+    mb.innerHTML = `
+      <button type="button" class="modal-close" onclick="A.closeModal()" aria-label="ปิด">✕</button>
+      <h3 style="margin:0 0 6px">✏️ แก้ไขข้อมูลสินค้า #${p.product_id}</h3>
+      <p class="muted" style="margin:0 0 16px;font-size:13px">ปรับแก้ชื่อสินค้า หมวดหมู่ รายละเอียด รูปภาพหลัก หรือสถานะวางขาย</p>
+      <form onsubmit="return A.saveProduct(event, ${p.product_id})">
+        <div class="row2">
+          <div class="field"><label>ชื่อสินค้า *</label><input id="editProdNameInput" name="name" value="${esc(p.name)}" maxlength="250" required></div>
+          <div class="field">
+            <label>หมวดหมู่ *</label>
+            <select name="category">
+              ${cats.map((c) => `<option value="${c}" ${c === p.category ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>รายละเอียดสินค้า</label><textarea name="description" rows="3">${esc(p.description || '')}</textarea></div>
+        <div class="row2">
+          <div class="field"><label>รูปภาพหลัก (URL หรือ shape:)</label><input name="image_url" value="${esc(p.image_url || '')}"></div>
+          <div class="field"><label>สถานะ</label><select name="status"><option value="active">วางขาย</option><option value="inactive" ${p.status === 'inactive' ? 'selected' : ''}>ซ่อน</option></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>ซัพพลายเออร์ (จัดหาสินค้า)</label><select name="supplier_id">${supOpts}</select></div>
+          <div class="field"><label>พนักงานผู้ดูแลสินค้า (Employee)</label><select name="employee_id">${empOpts}</select></div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin:6px 0 16px"><input type="checkbox" name="is_featured" style="width:auto" ${p.is_featured ? 'checked' : ''}> แสดงเป็นสินค้าแนะนำที่หน้าแรก</label>
+        <div class="actions" style="justify-content:flex-end">
+          <button type="button" class="btn ghost sm" onclick="A.closeModal()">ยกเลิก</button>
+          <button class="btn sm">💾 บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    `;
+    $('#modal').classList.add('open');
+    const nameIn = $('#editProdNameInput');
+    if (nameIn) {
+      nameIn.focus();
+      nameIn.select();
+    }
+  },
+
   saveProduct(e, id) {
     const d = formData(e);
     d.is_featured = !!d.is_featured;
     safe(async () => {
       if (id) await api('PUT', '/api/admin/products/' + id, d);
       else await api('POST', '/api/admin/products', d);
+      A.closeModal();
       toast('บันทึกข้อมูลสินค้าแล้ว');
       refresh();
     });

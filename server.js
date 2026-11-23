@@ -644,7 +644,7 @@ const readVariantImage = (val) => {
 };
 
 const readProduct = (b) => {
-  const name = str(b?.name, 120);
+  const name = str(b?.name, 250);
   let category = str(b?.category, 60);
   if (!ALLOWED_CATEGORIES.includes(category)) {
     category = ALLOWED_CATEGORIES[0];
