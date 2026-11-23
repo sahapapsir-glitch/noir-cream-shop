@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T16:17:01.226Z",
-  "checksum": "30a132dcad224d32",
+  "timestamp": "2026-11-23T16:17:21.061Z",
+  "checksum": "f78e3ba6fc5eb3bb",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -1367,7 +1367,7 @@
         "size": "2XL",
         "color": "ดำ",
         "color_hex": "#000000",
-        "image_url": null,
+        "image_url": "https://is8.revolveassets.com/images/p4/n/z/PLAU-MK9M_V1.jpg",
         "price": 3299,
         "stock": 29,
         "stock_quantity": 29,
