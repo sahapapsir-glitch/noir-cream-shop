@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: fd249fa9626cd130 | Updated: 2026-11-23T16:16:10.038Z
+-- Checksum: 30a132dcad224d32 | Updated: 2026-11-23T16:16:45.531Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -519,10 +519,10 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (167, 24, N'L', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 30, 30, N'SKU-24-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (168, 24, N'XL', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 30, 30, N'SKU-24-XL-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (169, 24, N'2XL', N'ดำ', N'#000000', N'https://is8.revolveassets.com/images/p4/n/z/PLAU-MS38_V1.jpg', 2900, 27, 27, N'SKU-24-2XL-ดำ');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (182, 28, N'S', N'ขาว กรมท่า', N'#eaeaef', NULL, 790, 15, 15, N'SKU-28-S-ขาวกรมท่า');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (183, 28, N'M', N'ขาว กรมท่า', N'#eaeaef', NULL, 790, 13, 13, N'SKU-28-M-ขาวกรมท่า');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (184, 28, N'L', N'ขาว กรมท่า', N'#eaeaef', NULL, 790, 15, 15, N'SKU-28-L-ขาวกรมท่า');
-INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (185, 28, N'XL', N'ขาว กรมท่า', N'#eaeaef', NULL, 790, 15, 15, N'SKU-28-XL-ขาวกรมท่า');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (182, 28, N'S', N'ขาว กรมท่า', N'#eaeaef', N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 790, 15, 15, N'SKU-28-S-ขาวกรมท่า');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (183, 28, N'M', N'ขาว กรมท่า', N'#eaeaef', N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 790, 13, 13, N'SKU-28-M-ขาวกรมท่า');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (184, 28, N'L', N'ขาว กรมท่า', N'#eaeaef', N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 790, 15, 15, N'SKU-28-L-ขาวกรมท่า');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (185, 28, N'XL', N'ขาว กรมท่า', N'#eaeaef', N'https://img.sasom.co.th/rr4285wn-ronron-pattern-logo-basic-fit-t-shirt-white-navy-women-s-1.jpg?width=640&quality=75', 790, 15, 15, N'SKU-28-XL-ขาวกรมท่า');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (190, 30, N'S', N'ดำ', N'#000000', NULL, 3000, 30, 30, N'SKU-30-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (191, 30, N'M', N'ดำ', N'#000000', NULL, 3000, 30, 30, N'SKU-30-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, image_url, price, stock, stock_quantity, sku) VALUES (192, 30, N'L', N'ดำ', N'#000000', NULL, 3000, 30, 30, N'SKU-30-L-ดำ');
