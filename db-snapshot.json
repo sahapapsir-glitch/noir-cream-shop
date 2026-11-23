@@ -1,8 +1,8 @@
 {
   "instance": ".\\SQLEXPRESS01",
   "database": "NoirCreamShop",
-  "timestamp": "2026-11-23T15:23:47.324Z",
-  "checksum": "0b37e4fcf3e7b68a",
+  "timestamp": "2026-11-23T15:25:06.804Z",
+  "checksum": "1dd7369a30477944",
   "counts": {
     "admin": 5,
     "employee": 2,
@@ -11,7 +11,7 @@
     "customer": 23,
     "address": 22,
     "product": 34,
-    "product_variant": 146,
+    "product_variant": 150,
     "cart_item": 1,
     "order": 6,
     "order_item": 7,
@@ -1194,8 +1194,8 @@
         "category": "เสื้อยืด",
         "description": "เสื้อยืดผ้าฝ้ายจอร์ซี่น้ำหนักเบา",
         "status": "active",
-        "stock": 80,
-        "quantity": 80,
+        "stock": 140,
+        "quantity": 140,
         "price": 390,
         "supplier_id": 2,
         "employee_id": 1,
@@ -2810,6 +2810,50 @@
         "stock": 20,
         "stock_quantity": 20,
         "sku": "SKU-68-XL-ดำ"
+      },
+      {
+        "variant_id": 355,
+        "product_id": 68,
+        "size": "S",
+        "color": "ขาว",
+        "color_hex": "#ffffff",
+        "price": 390,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-68-S-ขาว"
+      },
+      {
+        "variant_id": 356,
+        "product_id": 68,
+        "size": "M",
+        "color": "ขาว",
+        "color_hex": "#ffffff",
+        "price": 390,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-68-M-ขาว"
+      },
+      {
+        "variant_id": 357,
+        "product_id": 68,
+        "size": "L",
+        "color": "ขาว",
+        "color_hex": "#ffffff",
+        "price": 390,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-68-L-ขาว"
+      },
+      {
+        "variant_id": 358,
+        "product_id": 68,
+        "size": "XL",
+        "color": "ขาว",
+        "color_hex": "#ffffff",
+        "price": 390,
+        "stock": 15,
+        "stock_quantity": 15,
+        "sku": "SKU-68-XL-ขาว"
       }
     ],
     "cart_item": [

@@ -1,7 +1,7 @@
 -- ============================================================================
 -- NOIR & CREAM CLOTHING SHOP — REALTIME MICROSOFT SQL SERVER DATABASE
 -- Instance: .\SQLEXPRESS01 | Database: [NoirCreamShop]
--- Checksum: 0b37e4fcf3e7b68a | Updated: 2026-11-23T15:23:47.324Z
+-- Checksum: 1dd7369a30477944 | Updated: 2026-11-23T15:25:06.804Z
 -- Compatible with: Microsoft SQL Server 2017+, 2022, 2025 & SSMS 20/21/22
 -- ============================================================================
 
@@ -504,10 +504,10 @@ INSERT INTO dbo.product (product_id, name, category, description, status, stock,
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (64, N'Lyon Jeans', N'กางเกง', N'Won Hundred', N'active', 165, 165, 10300, 3, 2, N'https://is8.revolveassets.com/images/p4/n/z/WONH-MJ13_V1.jpg', 0, '2026-11-17 17:25:08');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (65, N'Satin Polka Dots', N'กางเกง', N'เนื้อผ้าหลัก ผ้าซาติน', N'active', 80, 80, 2700, 2, 1, N'https://www.jdsports.co.th/cdn/shop/files/jd_810591_b.jpg?v=1793176773&width=1007', 0, '2026-11-17 17:26:20');
 INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (66, N'Los Angeles Lakers', N'เสื้อยืด', N'เสื้อยืดใส่ก่อนลงสนามบาสเก็ตบอลผู้ชาย Noir&Cream', N'active', 75, 75, 1700, 2, 2, N'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco,u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/d01dedfc-cfc7-455a-af38-b53a27dc9ef3/LAL+M+NK+SS+PREGAME+TEE.png', 1, '2026-11-18 06:03:19');
-INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (68, N'Regular Fit', N'เสื้อยืด', N'เสื้อยืดผ้าฝ้ายจอร์ซี่น้ำหนักเบา', N'active', 80, 80, 390, 2, 1, N'https://th.hm.com/cdn/shop/files/19108b8f7717f2afbeb05c645a5fe6640b961445_xxl-1.jpg?v=1794436407&width=1200', 0, '2026-11-23 15:23:47');
+INSERT INTO dbo.product (product_id, name, category, description, status, stock, quantity, price, supplier_id, employee_id, image_url, is_featured, created_at) VALUES (68, N'Regular Fit', N'เสื้อยืด', N'เสื้อยืดผ้าฝ้ายจอร์ซี่น้ำหนักเบา', N'active', 140, 140, 390, 2, 1, N'https://th.hm.com/cdn/shop/files/19108b8f7717f2afbeb05c645a5fe6640b961445_xxl-1.jpg?v=1794436407&width=1200', 0, '2026-11-23 15:23:47');
 SET IDENTITY_INSERT dbo.product OFF;
 
--- ตาราง dbo.product_variant (146 รายการ)
+-- ตาราง dbo.product_variant (150 รายการ)
 SET IDENTITY_INSERT dbo.product_variant ON;
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (165, 24, N'S', N'ดำ', N'#000000', 2900, 29, 29, N'SKU-24-S-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (166, 24, N'M', N'ดำ', N'#000000', 2900, 28, 28, N'SKU-24-M-ดำ');
@@ -655,6 +655,10 @@ INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex,
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (352, 68, N'M', N'ดำ', N'#000000', 390, 20, 20, N'SKU-68-M-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (353, 68, N'L', N'ดำ', N'#000000', 390, 20, 20, N'SKU-68-L-ดำ');
 INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (354, 68, N'XL', N'ดำ', N'#000000', 390, 20, 20, N'SKU-68-XL-ดำ');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (355, 68, N'S', N'ขาว', N'#ffffff', 390, 15, 15, N'SKU-68-S-ขาว');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (356, 68, N'M', N'ขาว', N'#ffffff', 390, 15, 15, N'SKU-68-M-ขาว');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (357, 68, N'L', N'ขาว', N'#ffffff', 390, 15, 15, N'SKU-68-L-ขาว');
+INSERT INTO dbo.product_variant (variant_id, product_id, size, color, color_hex, price, stock, stock_quantity, sku) VALUES (358, 68, N'XL', N'ขาว', N'#ffffff', 390, 15, 15, N'SKU-68-XL-ขาว');
 SET IDENTITY_INSERT dbo.product_variant OFF;
 
 -- ตาราง dbo.cart_item (1 รายการ)
