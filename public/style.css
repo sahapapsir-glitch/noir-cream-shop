@@ -2183,6 +2183,34 @@ details.prod .inner { padding: 4px 18px 18px; border-top: 1px solid var(--line);
 }
 .admin-form-grid .field { margin-bottom: 0; }
 
+.wish-btn.on {
+  border-color: #d94c5c;
+  color: #c02c3d;
+  background: #fff5f6;
+}
+.wish-btn.on:hover {
+  border-color: #c02c3d;
+  background: #ffe8eb;
+}
+
+.admin-sync-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  border: 1px solid #f2d096;
+  background: #FEF8EA;
+  color: var(--ink);
+}
+.admin-sync-alert.is-info {
+  border-color: var(--line);
+  background: var(--cream);
+}
+
 @media (max-width: 640px) {
   .checkout-steps { grid-template-columns: 1fr; gap: 6px; }
   .order-timeline { grid-template-columns: repeat(2, 1fr); gap: 8px; }

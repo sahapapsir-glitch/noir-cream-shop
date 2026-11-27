@@ -99,6 +99,7 @@ set "TUNNEL_TARGET=http://localhost:%APP_PORT%"
 
 :SERVER_ALREADY_RUNNING
 echo [OK] พบ Web Server ทำงานอยู่ที่พอร์ต %APP_PORT% อยู่แล้ว (%TUNNEL_TARGET%)
+echo      (หมายเหตุ: หากเพิ่ง git pull อัปเดตโค้ด กรุณาปิดหน้าต่าง Web Server เดิมแล้วรันใหม่)
 
 :START_TUNNEL
 echo.
@@ -107,6 +108,7 @@ echo.
 echo ======================================================================
 echo   ลิงก์ออนไลน์ (https://xxxx.trycloudflare.com) จะแสดงด้านล่างในไม่กี่วินาที
 echo   * เปิดหน้าต่างนี้ และหน้าต่าง Web Server ค้างไว้ตลอดการใช้งาน
+echo   * ข้อมูลซื้อ/รายการโปรด/แอดมินจะบันทึกลง shop.db ทันทีและไม่ย้อนกลับเมื่อเปิดใหม่
 echo   * กด Ctrl+C หรือปิดหน้าต่างนี้เมื่อต้องการหยุด Quick Tunnel
 echo ======================================================================
 echo.

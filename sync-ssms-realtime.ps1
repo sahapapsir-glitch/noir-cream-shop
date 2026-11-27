@@ -144,6 +144,17 @@ function Get-LocalSnapshotChecksum {
     }
 }
 
+function Get-LocalSnapshotTimeMs {
+    if (-not (Test-Path $localSnapshotFile)) { return 0 }
+    try {
+        $raw = [System.IO.File]::ReadAllText($localSnapshotFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        if ($raw.timestamp) {
+            return [DateTimeOffset]::Parse([string]$raw.timestamp).ToUnixTimeMilliseconds()
+        }
+    } catch {}
+    return 0
+}
+
 function Save-WebSnapshotFiles {
     param([object]$WebSnap, [string]$ScriptText)
     if (-not (Test-Path $baseDir)) { return }
@@ -234,8 +245,18 @@ function Push-DatabaseToGitHub {
             $pushOut = (& git push origin $githubBranch 2>&1 | Out-String)
             if ($LASTEXITCODE -ne 0) {
                 if ($pushOut -match 'fetch first|non-fast-forward|rejected') {
-                    & git pull --rebase --autostash origin $githubBranch 2>&1 | Out-Null
-                    $pushOut = (& git push origin $githubBranch 2>&1 | Out-String)
+                    & git fetch origin $githubBranch 2>&1 | Out-Null
+                    & git merge -X ours --no-edit "origin/$githubBranch" 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        & git merge --abort 2>&1 | Out-Null
+                    } else {
+                        & git add @filesToAdd 2>$null
+                        $postDiff = (& git status --porcelain @filesToAdd 2>$null)
+                        if ($postDiff) {
+                            & git -c user.name="Noir & Cream Bot" -c user.email="bot@noircreamshop.local" commit -m "Sync live snapshot ($cleanReason) [skip render]" 2>&1 | Out-Null
+                        }
+                        $pushOut = (& git push origin $githubBranch 2>&1 | Out-String)
+                    }
                 }
             }
             if ($LASTEXITCODE -eq 0) {
@@ -358,6 +379,16 @@ if ($activeWebUrl) {
     $instQuery = if ($activeInstance) { "?instance=$([uri]::EscapeDataString($activeInstance))" } else { "" }
     $initialWebSnap = (Invoke-WebGetJson -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -TimeoutSec $timeout).Data
     $initialScript = (Invoke-WebGetText -Uri "$activeWebUrl/api/sql/script" -TimeoutSec $timeout).Body
+    if (($activeWebUrl -match '^https://') -and (Test-Path (Join-Path $baseDir "shop.db")) -and (Test-Path $localSqlFile) -and $initialWebSnap -and $initialWebSnap.timestamp) {
+        $localTimeMs = Get-LocalSnapshotTimeMs
+        $remoteTimeMs = 0
+        try { $remoteTimeMs = [DateTimeOffset]::Parse([string]$initialWebSnap.timestamp).ToUnixTimeMilliseconds() } catch {}
+        if ($localTimeMs -gt $remoteTimeMs) {
+            Write-Host "ℹ️ ข้อมูลในเครื่องใหม่กว่าเซิร์ฟเวอร์ออนไลน์ — ใช้ไฟล์ในเครื่องเป็นหลักเพื่อกันข้อมูลย้อนกลับ" -ForegroundColor Yellow
+            $initialScript = [System.IO.File]::ReadAllText($localSqlFile, [System.Text.Encoding]::UTF8)
+            $initialWebSnap = $null
+        }
+    }
 } elseif (Test-Path $localSqlFile) {
     Write-Host "📂 ใช้ไฟล์ฐานข้อมูลในเครื่อง: $localSqlFile" -ForegroundColor Yellow
     $initialScript = [System.IO.File]::ReadAllText($localSqlFile, [System.Text.Encoding]::UTF8)
@@ -387,7 +418,10 @@ $lastWebChecksum = if ($initialWebSnap) { $initialWebSnap.checksum } else { $nul
 # หากข้อมูลบน Web ใหม่กว่าไฟล์ในเครื่อง/GitHub ให้บันทึกและ Push ทันทีตั้งแต่เริ่ม
 if ($initialWebSnap -and $initialScript) {
     $diskChecksum = Get-LocalSnapshotChecksum
-    if ($initialWebSnap.checksum -ne $diskChecksum) {
+    $localTimeMs = Get-LocalSnapshotTimeMs
+    $remoteTimeMs = 0
+    try { if ($initialWebSnap.timestamp) { $remoteTimeMs = [DateTimeOffset]::Parse([string]$initialWebSnap.timestamp).ToUnixTimeMilliseconds() } } catch {}
+    if (($initialWebSnap.checksum -ne $diskChecksum) -and ($remoteTimeMs -ge $localTimeMs)) {
         Save-WebSnapshotFiles -WebSnap $initialWebSnap -ScriptText $initialScript
         Push-DatabaseToGitHub -Reason "Startup Sync $($initialWebSnap.checksum)"
     }
@@ -467,7 +501,9 @@ while ($true) {
             # 2) ตรวจว่ามีการแก้ไขข้อมูลโดยตรงใน SSMS หรือไม่ (SSMS -> Web -> GitHub)
             if ($activeInstance) {
                 $currentSsms = Get-SsmsTablesState
-                if ($currentSsms -and ($currentSsms.Checksum -ne $lastSsmsChecksum)) {
+                if ($currentSsms -and -not $lastSsmsChecksum) {
+                    $lastSsmsChecksum = $currentSsms.Checksum
+                } elseif ($currentSsms -and ($currentSsms.Checksum -ne $lastSsmsChecksum)) {
                     $bodyJson = (@{
                         instance = $activeInstance
                         database = $DatabaseName

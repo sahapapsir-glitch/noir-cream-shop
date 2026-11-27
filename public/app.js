@@ -634,7 +634,7 @@ pages.product = async (params, id) => {
         <div class="buy-row">
           <button class="btn" id="pd-add" onclick="A.addToCart()">🛍️ เพิ่มลงตะกร้า</button>
           <button class="btn ghost" id="pd-buy" onclick="A.buyNow()">⚡ ซื้อเลย</button>
-          <button class="btn ghost" style="flex:0 0 auto;min-width:auto" onclick="A.wish(${p.product_id}, this)" title="เพิ่มในรายการโปรด">♡</button>
+          <button class="btn ghost wish-btn ${p.wished ? 'on' : ''}" id="pd-wish" style="flex:0 0 auto;min-width:auto" onclick="A.wish(${p.product_id}, this)" aria-pressed="${p.wished ? 'true' : 'false'}" title="${p.wished ? 'นำออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}">${p.wished ? '♥ ถูกใจแล้ว' : '♡ โปรด'}</button>
         </div>
 
         <div class="info-list">
@@ -1349,10 +1349,12 @@ pages.admin = async () => {
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <h2 style="margin:0">ระบบจัดการร้านค้า (Admin)</h2>
     </div>
+    <div id="adminSyncBanner"></div>
     <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${k === adminTab ? 'on' : ''}" onclick="A.tab('${k}')">${l}</button>`).join('')}</div>
     <div id="tab"></div>
   `;
 
+  A.checkAdminSyncBanner?.();
   await adminTabs[adminTab]();
 };
 
@@ -2760,6 +2762,11 @@ const A = window.A = {
       const r = await api('POST', '/api/wishlist/' + id);
       if (btn) {
         btn.classList.toggle('on', r.wished);
+        btn.setAttribute('aria-pressed', r.wished ? 'true' : 'false');
+        if (btn.classList.contains('wish-btn')) {
+          btn.textContent = r.wished ? '♥ ถูกใจแล้ว' : '♡ โปรด';
+          btn.title = r.wished ? 'นำออกจากรายการโปรด' : 'เพิ่มในรายการโปรด';
+        }
         if (r.wished) spawnParticles(btn, ['♥', '♡', '✦']);
       }
       toast(r.wished ? 'เพิ่มในรายการโปรดแล้ว' : 'นำออกจากรายการโปรดแล้ว');
@@ -3706,9 +3713,60 @@ const A = window.A = {
     toast('กำลังดาวน์โหลดไฟล์ NoirCreamShop_SQLServer.sql ข้อมูลล่าสุด');
   },
 
+  checkAdminSyncBanner(gh) {
+    const el = $('#adminSyncBanner');
+    if (!el) return;
+    if (!gh) {
+      this.refreshGitHubHeader();
+      return;
+    }
+    if (gh.isRender && (!gh.connected || gh.tokenSource === 'file')) {
+      el.innerHTML = `
+        <div class="admin-sync-alert">
+          <div>
+            <b>⚠️ ${gh.connected ? 'ใช้ GitHub Token ชั่วคราวบน Render' : 'เว็บ Render ยังไม่ได้ตั้งค่า GitHub Auto-Sync ถาวร'}</b>
+            <div class="muted" style="font-size:12.5px;margin-top:2px">หากปิดเว็บหรือ Render พักเครื่อง/อัปเดตโค้ด ข้อมูลที่ลูกค้าซื้อหรือแอดมินแก้จะย้อนกลับตาม GitHub ได้ — แนะนำตั้งค่า <code>GITHUB_TOKEN</code> ใน Render Environment (หรือรันผ่าน Start_Web_Online.bat บนเครื่อง)</div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn sm" onclick="A.setupGitHubToken()">🔑 ตั้งค่าถาวร</button>
+            ${gh.connected ? `<button type="button" class="btn ghost sm" onclick="A.syncGitHubNow()">☁️ ซิงค์ทันที</button>` : ''}
+          </div>
+        </div>
+      `;
+    } else if (gh.lastError) {
+      el.innerHTML = `
+        <div class="admin-sync-alert">
+          <div>
+            <b>⚠️ ซิงค์ขึ้น GitHub ล่าสุดไม่สำเร็จ</b> <span class="muted" style="font-size:12.5px">(ข้อมูลยังบันทึกอยู่ในเครื่องแล้ว)</span>
+            <div class="muted" style="font-size:12.5px;margin-top:2px">${esc(gh.lastError)}</div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn sm" onclick="A.syncGitHubNow()">☁️ ลองซิงค์อีกครั้ง</button>
+            <button type="button" class="btn ghost sm" onclick="A.setupGitHubToken()">⚙️ ดูสถานะ</button>
+          </div>
+        </div>
+      `;
+    } else if (gh.pendingLocal) {
+      el.innerHTML = `
+        <div class="admin-sync-alert is-info">
+          <div>
+            <b>📌 มีข้อมูลใหม่ในเครื่องที่รอซิงค์ขึ้น GitHub</b>
+            <div class="muted" style="font-size:12.5px;margin-top:2px">ระบบเก็บข้อมูลไว้ในเครื่องเรียบร้อยแล้ว — กดซิงค์เพื่ออัปเดตขึ้น GitHub ได้ทันที</div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn sm" onclick="A.syncGitHubNow()">☁️ ซิงค์ขึ้น GitHub ตอนนี้</button>
+          </div>
+        </div>
+      `;
+    } else {
+      el.innerHTML = '';
+    }
+  },
+
   async refreshGitHubHeader(ghData) {
     try {
       const gh = ghData || (await api('GET', '/api/github/status')).github;
+      this.checkAdminSyncBanner(gh);
       const txt = $('#githubHeaderText');
       const tokBtn = $('#githubTokenBtn');
       if (tokBtn && gh) {

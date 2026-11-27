@@ -1564,7 +1564,7 @@ app.post('/api/github/token', async (req, res) => {
 });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'ไม่พบ API นี้' }));
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`ร้านเปิดแล้วที่ http://localhost:${PORT} (พร้อมระบบเชื่อม SQL Server Realtime: .\\SQLEXPRESS01 และ GitHub Auto-Sync)`);
   sqlSync.restoreFromGitHub(false).then((r) => {
     if (r?.restored) {
@@ -1576,9 +1576,34 @@ app.listen(PORT, () => {
       }
       sqlSync.notifyChange('GitHub Startup Restore', 'github');
       console.log(`☁️ กู้คืนข้อมูลล่าสุดจาก GitHub สำเร็จ (Checksum: ${r.checksum})`);
+    } else if (r?.hasPendingLocal) {
+      console.log(`📌 พบข้อมูลในเครื่องที่ยังไม่ได้ซิงค์ขึ้น GitHub (${r.reason || 'local'}) — เก็บข้อมูลล่าสุดในเครื่องไว้เรียบร้อย`);
+      if (sqlSync.getGitHubStatus().connected) {
+        sqlSync.scheduleGitHubPush('Startup Pending Local Sync');
+      }
     }
   }).catch(() => {}).finally(() => {
     startupRestoreDone = true;
     resolveStartupRestoreReady?.();
   });
 });
+
+let shuttingDown = false;
+async function gracefulShutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  try {
+    sqlSync.notifyChange('shutdown', 'system');
+    await Promise.race([
+      sqlSync.flushPendingSync(),
+      new Promise((r) => setTimeout(r, 3500))
+    ]);
+  } catch {}
+  try { db.close(); } catch {}
+  try { server.close(() => process.exit(0)); } catch {}
+  setTimeout(() => process.exit(0), 500).unref();
+}
+
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  try { process.on(sig, () => { gracefulShutdown(); }); } catch {}
+}

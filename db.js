@@ -2,7 +2,7 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
 const db = new DatabaseSync(path.join(__dirname, 'shop.db'));
-db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
+db.exec('PRAGMA busy_timeout = 5000; PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode = DELETE; PRAGMA synchronous = FULL; PRAGMA foreign_keys = ON;');
 
 /*
   โครงสร้างตารางอ้างอิงตรงตาม ER Diagram (Chen ER หน้า 1–8 และ Crow's Foot ER หน้า 13–16)
