@@ -589,9 +589,13 @@ function generateSqlServerScript(db, snapshot = null) {
       lines.push(`SET IDENTITY_INSERT ${t.sqlName} ON;`);
     }
     const colList = t.columns.join(', ');
-    for (const r of rows) {
-      const vals = t.columns.map((c) => formatSqlValue(r[c], t.types[c])).join(', ');
-      lines.push(`INSERT INTO ${t.sqlName} (${colList}) VALUES (${vals});`);
+    for (let i = 0; i < rows.length; i += 50) {
+      const chunk = rows.slice(i, i + 50);
+      lines.push(`INSERT INTO ${t.sqlName} (${colList}) VALUES`);
+      chunk.forEach((r, idx) => {
+        const vals = t.columns.map((c) => formatSqlValue(r[c], t.types[c])).join(', ');
+        lines.push(`(${vals})${idx === chunk.length - 1 ? ';' : ','}`);
+      });
     }
     if (t.identity) {
       lines.push(`SET IDENTITY_INSERT ${t.sqlName} OFF;`);
@@ -737,7 +741,7 @@ async function restoreFromGitHubIfNewer(db, force = false) {
     if (shouldRestore) {
       applySnapshotToSqlite(db, remoteSnap.tables);
       try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
-      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(remoteSnap, null, 2), 'utf8');
+      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(remoteSnap), 'utf8');
       const script = generateSqlServerScript(db, remoteSnap);
       fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
       return {
@@ -936,6 +940,29 @@ function createRealtimeSqlManager(db) {
     syncCount: 0
   };
 
+  let cachedSnap = null;
+  let cachedMeta = null;
+  let cachedScript = null;
+  let cachedDataVer = null;
+
+  function ensureCache() {
+    let ver = null;
+    try { ver = db.prepare('PRAGMA data_version').get()?.data_version; } catch {}
+    if (!cachedSnap || (ver !== null && ver !== cachedDataVer)) {
+      cachedSnap = getSnapshot(db);
+      cachedScript = generateSqlServerScript(db, cachedSnap);
+      cachedMeta = {
+        instance: cachedSnap.instance,
+        database: cachedSnap.database,
+        checksum: cachedSnap.checksum,
+        timestamp: cachedSnap.timestamp,
+        counts: cachedSnap.counts
+      };
+      cachedDataVer = ver;
+    }
+    return cachedSnap;
+  }
+
   function refreshGitHubCapability() {
     const tokInfo = getGitHubTokenInfo();
     const hasTok = Boolean(tokInfo.token);
@@ -1059,9 +1086,19 @@ function createRealtimeSqlManager(db) {
       try {
         try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch {}
         const snap = getSnapshot(db);
-        fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap, null, 2), 'utf8');
+        fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap), 'utf8');
         const script = generateSqlServerScript(db, snap);
         fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
+        cachedSnap = snap;
+        cachedScript = script;
+        cachedMeta = {
+          instance: snap.instance,
+          database: snap.database,
+          checksum: snap.checksum,
+          timestamp: snap.timestamp,
+          counts: snap.counts
+        };
+        try { cachedDataVer = db.prepare('PRAGMA data_version').get()?.data_version; } catch {}
 
         const token = getGitHubToken();
         let result;
@@ -1139,11 +1176,22 @@ function createRealtimeSqlManager(db) {
       }
 
       const script = generateSqlServerScript(db, snap);
+      cachedSnap = snap;
+      cachedScript = script;
+      cachedMeta = {
+        instance: snap.instance,
+        database: snap.database,
+        checksum: snap.checksum,
+        timestamp: snap.timestamp,
+        counts: snap.counts
+      };
+      try { cachedDataVer = db.prepare('PRAGMA data_version').get()?.data_version; } catch {}
+
       fs.writeFileSync(SQL_FILE_PATH, script, 'utf8');
-      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap, null, 2), 'utf8');
+      fs.writeFileSync(SNAPSHOT_FILE_PATH, JSON.stringify(snap), 'utf8');
 
       if (changed || reason === 'init' || reason === 'force') {
-        const logEntry = addLog('sync', `[${source.toUpperCase()}] ซิงค์ข้อมูล Realtime (${reason})`, {
+        addLog('sync', `[${source.toUpperCase()}] ซิงค์ข้อมูล Realtime (${reason})`, {
           checksum: snap.checksum,
           counts: snap.counts
         });
@@ -1152,10 +1200,7 @@ function createRealtimeSqlManager(db) {
           source,
           checksum: snap.checksum,
           timestamp: snap.timestamp,
-          counts: snap.counts,
-          log: logEntry,
-          ssmsStatus,
-          githubStatus
+          counts: snap.counts
         });
         pushToLocalWindowsSqlServer(script);
 
@@ -1189,8 +1234,15 @@ function createRealtimeSqlManager(db) {
     SNAPSHOT_FILE_PATH,
     DEFAULT_INSTANCE,
     DATABASE_NAME,
-    getSnapshot: () => getSnapshot(db),
-    generateSqlServerScript: () => generateSqlServerScript(db),
+    getMeta: () => {
+      ensureCache();
+      return cachedMeta;
+    },
+    getSnapshot: () => ensureCache(),
+    generateSqlServerScript: () => {
+      ensureCache();
+      return cachedScript;
+    },
     applySnapshotToSqlite: (tables) => {
       applySnapshotToSqlite(db, tables);
       return notifyChange('ssms_push', 'ssms');
@@ -1209,15 +1261,16 @@ function createRealtimeSqlManager(db) {
       refreshGitHubCapability();
       return githubStatus;
     },
-    getStatus: () => {
+    getStatus: ({ includeLogs = true } = {}) => {
       refreshGitHubCapability();
-      return {
+      const out = {
         ...ssmsStatus,
         github: githubStatus,
         checksum: lastChecksum,
-        clients: sseClients.size,
-        logs: activityLog
+        clients: sseClients.size
       };
+      if (includeLogs) out.logs = activityLog;
+      return out;
     },
     addSseClient: (res) => {
       sseClients.add(res);

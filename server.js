@@ -3,8 +3,11 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const db = require('./db');
 const { createRealtimeSqlManager } = require('./mssql-sync');
+
+try { db.prepare('DELETE FROM session WHERE expires_at <= ?').run(Date.now()); } catch {}
 
 const sqlSync = createRealtimeSqlManager(db);
 
@@ -15,8 +18,117 @@ const FREE_SHIPPING_MIN = 1000;
 const SHIPPING_FEE = 50;
 const PAY_METHODS = ['โอนผ่านธนาคาร', 'PromptPay', 'บัตรเครดิต/เดบิต', 'เก็บเงินปลายทาง'];
 
+app.use((req, res, next) => {
+  if (req.method === 'HEAD' || req.path === '/api/sql/stream' || req.headers.range) {
+    return next();
+  }
+  if (!/\bgzip\b/i.test(String(req.headers['accept-encoding'] || ''))) {
+    return next();
+  }
+
+  const origWrite = res.write.bind(res);
+  const origEnd = res.end.bind(res);
+  const origWriteHead = res.writeHead.bind(res);
+  let gzip = null;
+  let decided = false;
+
+  const isCompressible = () => {
+    if (res.statusCode < 200 || res.statusCode === 204 || res.statusCode === 304) return false;
+    if (res.getHeader('Content-Encoding')) return false;
+    const ct = String(res.getHeader('Content-Type') || '');
+    return /^(text\/|application\/(json|javascript|xml)|image\/svg\+xml)/i.test(ct) || /\+(json|xml)\b/i.test(ct);
+  };
+
+  const startGzip = () => {
+    if (decided) return;
+    decided = true;
+    const cl = Number(res.getHeader('Content-Length'));
+    if (!isCompressible() || (Number.isFinite(cl) && cl < 512)) return;
+    res.removeHeader('Content-Length');
+    res.setHeader('Content-Encoding', 'gzip');
+    res.vary('Accept-Encoding');
+    gzip = zlib.createGzip({ level: 6 });
+    let waitSocket = false;
+    gzip.on('data', (chunk) => {
+      if (!origWrite(chunk)) {
+        waitSocket = true;
+        gzip.pause();
+      }
+    });
+    res.on('drain', () => {
+      if (waitSocket && gzip) {
+        waitSocket = false;
+        gzip.resume();
+      }
+    });
+    gzip.on('drain', () => {
+      if (!waitSocket) res.emit('drain');
+    });
+    gzip.on('end', () => origEnd());
+    gzip.on('error', () => {
+      try { origEnd(); } catch {}
+    });
+    res.on('close', () => {
+      if (gzip && !gzip.destroyed) gzip.destroy();
+    });
+  };
+
+  res.writeHead = (statusCode, statusMessage, headers) => {
+    if (typeof statusMessage === 'object' && statusMessage !== null) {
+      headers = statusMessage;
+      statusMessage = undefined;
+    }
+    if (headers) {
+      for (const [k, v] of Object.entries(headers)) res.setHeader(k, v);
+    }
+    res.statusCode = statusCode;
+    if (!decided) startGzip();
+    return statusMessage !== undefined ? origWriteHead(res.statusCode, statusMessage) : origWriteHead(res.statusCode);
+  };
+
+  res.write = (chunk, encoding, cb) => {
+    if (!decided) startGzip();
+    if (gzip) return gzip.write(chunk, encoding, cb);
+    return origWrite(chunk, encoding, cb);
+  };
+
+  res.end = (chunk, encoding, cb) => {
+    if (typeof chunk === 'function') { cb = chunk; chunk = undefined; }
+    if (typeof encoding === 'function') { cb = encoding; encoding = undefined; }
+    if (!decided) {
+      const cl = Number(res.getHeader('Content-Length'));
+      const len = chunk !== undefined && chunk !== null
+        ? (Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(String(chunk), typeof encoding === 'string' ? encoding : 'utf8'))
+        : 0;
+      if ((Number.isFinite(cl) && cl >= 512) || len >= 512) {
+        startGzip();
+      } else {
+        decided = true;
+      }
+    }
+    if (gzip) {
+      if (cb) res.once('finish', cb);
+      if (chunk !== undefined && chunk !== null) gzip.end(chunk, encoding);
+      else gzip.end();
+      return res;
+    }
+    return origEnd(chunk, encoding, cb);
+  };
+
+  next();
+});
+
 app.use(express.json({ limit: '5mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '10m',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(`${path.sep}index.html`) || filePath.endsWith('/index.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 const ALLOWED_CATEGORIES = ['เสื้อยืด', 'เสื้อโปโล', 'เสื้อแขนยาว', 'กางเกง'];
 
@@ -1219,6 +1331,23 @@ app.get('/api/sql/status', (req, res) => {
   });
 });
 
+app.get('/api/sql/checksum', (req, res) => {
+  if (req.query.instance) {
+    sqlSync.registerBridgeHeartbeat({
+      instance: str(req.query.instance, 120),
+      database: str(req.query.database, 80) || 'NoirCreamShop'
+    });
+  }
+  const meta = sqlSync.getMeta();
+  const etag = `"${meta.checksum}"`;
+  res.setHeader('ETag', etag);
+  res.setHeader('Cache-Control', 'no-cache');
+  if (req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
+  res.json(meta);
+});
+
 app.get('/api/sql/snapshot', (req, res) => {
   if (req.query.instance) {
     sqlSync.registerBridgeHeartbeat({
@@ -1226,15 +1355,31 @@ app.get('/api/sql/snapshot', (req, res) => {
       database: str(req.query.database, 80) || 'NoirCreamShop'
     });
   }
+  const meta = sqlSync.getMeta();
+  const etag = `"${meta.checksum}"`;
+  res.setHeader('ETag', etag);
+  res.setHeader('Cache-Control', 'no-cache');
+  if (req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
+  if (req.query.meta === '1') {
+    return res.json(meta);
+  }
   const snap = sqlSync.getSnapshot();
-  // ถอด password_hash ออกจาก response หากไม่ได้ใช้เพื่อซิงค์ภายใน
   res.json({
     ...snap,
-    status: sqlSync.getStatus()
+    status: sqlSync.getStatus({ includeLogs: false })
   });
 });
 
 app.get('/api/sql/script', (req, res) => {
+  const meta = sqlSync.getMeta();
+  const etag = `"${meta.checksum}"`;
+  res.setHeader('ETag', etag);
+  res.setHeader('Cache-Control', 'no-cache');
+  if (!req.query.download && req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
   const script = sqlSync.generateSqlServerScript();
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   if (req.query.download) {
@@ -1279,7 +1424,7 @@ app.post('/api/sql/push', async (req, res) => {
       ok: true,
       checksum: snap?.checksum,
       counts: snap?.counts,
-      status: sqlSync.getStatus()
+      status: sqlSync.getStatus({ includeLogs: false })
     });
   } catch (e) {
     console.error(e);
@@ -1345,19 +1490,19 @@ app.get('/api/sql/stream', (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders?.();
 
-  const snap = sqlSync.getSnapshot();
+  const meta = sqlSync.getMeta();
   const initPayload = {
-    checksum: snap.checksum,
-    timestamp: snap.timestamp,
-    counts: snap.counts,
-    ssmsStatus: sqlSync.getStatus()
+    checksum: meta.checksum,
+    timestamp: meta.timestamp,
+    counts: meta.counts,
+    ssmsStatus: sqlSync.getStatus({ includeLogs: false })
   };
   res.write(`event: init\ndata: ${JSON.stringify(initPayload)}\n\n`);
   sqlSync.addSseClient(res);
 
   const keepAlive = setInterval(() => {
     try { res.write(': ping\n\n'); } catch { clearInterval(keepAlive); }
-  }, 20000);
+  }, 30000);
   res.on('close', () => clearInterval(keepAlive));
 });
 

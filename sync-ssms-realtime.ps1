@@ -2,13 +2,14 @@ param(
     [string]$ServerInstance = ".\SQLEXPRESS01",
     [string]$DatabaseName = "NoirCreamShop",
     [string]$WebUrl = "http://localhost:3000",
-    [int]$IntervalSeconds = 2,
+    [int]$IntervalSeconds = 5,
     [switch]$Once,
     [switch]$GitHubOnly
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 
 $cwd = (Get-Location).Path
 $baseDir = if ($PSScriptRoot) {
@@ -150,7 +151,7 @@ function Save-WebSnapshotFiles {
         [System.IO.File]::WriteAllText($localSqlFile, $ScriptText, [System.Text.Encoding]::UTF8)
     }
     if ($WebSnap) {
-        $snapJson = ($WebSnap | Select-Object instance, database, timestamp, checksum, counts, tables, views | ConvertTo-Json -Depth 8)
+        $snapJson = ($WebSnap | Select-Object instance, database, timestamp, checksum, counts, tables, views | ConvertTo-Json -Depth 8 -Compress)
         [System.IO.File]::WriteAllText($localSnapshotFile, $snapJson, [System.Text.Encoding]::UTF8)
     }
 }
@@ -274,12 +275,69 @@ function Push-DatabaseToGitHub {
 $apiUrls = @($WebUrl, "http://localhost:3000", "https://noir-cream-shop.onrender.com") | Select-Object -Unique
 $activeWebUrl = $null
 
+function Invoke-WebGetText {
+    param(
+        [string]$Uri,
+        [int]$TimeoutSec = 10,
+        [string]$IfNoneMatch = ""
+    )
+    $req = [System.Net.HttpWebRequest]::Create($Uri)
+    $req.Method = "GET"
+    $req.Timeout = $TimeoutSec * 1000
+    $req.ReadWriteTimeout = $TimeoutSec * 1000
+    $req.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
+    $req.UserAgent = "NoirCreamShop-PSSync/2.0"
+    if ($IfNoneMatch) {
+        $req.Headers.Add("If-None-Match", "`"$IfNoneMatch`"")
+    }
+    try {
+        $resp = [System.Net.HttpWebResponse]$req.GetResponse()
+        try {
+            $sr = New-Object System.IO.StreamReader($resp.GetResponseStream(), [System.Text.Encoding]::UTF8)
+            $body = $sr.ReadToEnd()
+            $sr.Dispose()
+            return @{ Status = [int]$resp.StatusCode; Body = $body }
+        } finally {
+            $resp.Close()
+        }
+    } catch [System.Net.WebException] {
+        $httpResp = $_.Exception.Response
+        if ($httpResp) {
+            $code = [int]$httpResp.StatusCode
+            $httpResp.Close()
+            if ($code -eq 304) {
+                return @{ Status = 304; Body = "" }
+            }
+            if ($code -eq 404) {
+                return @{ Status = 404; Body = "" }
+            }
+        }
+        throw
+    }
+}
+
+function Invoke-WebGetJson {
+    param(
+        [string]$Uri,
+        [int]$TimeoutSec = 10,
+        [string]$IfNoneMatch = ""
+    )
+    $res = Invoke-WebGetText -Uri $Uri -TimeoutSec $TimeoutSec -IfNoneMatch $IfNoneMatch
+    if ($res.Status -eq 200 -and $res.Body) {
+        return @{ Status = 200; Data = ($res.Body | ConvertFrom-Json) }
+    }
+    return @{ Status = $res.Status; Data = $null }
+}
+
 function Find-ActiveWebServer {
     foreach ($u in $apiUrls) {
         try {
             $timeout = if ($u -match '^https://') { 25 } else { 3 }
-            $resp = Invoke-RestMethod -Uri "$u/api/sql/snapshot" -Method Get -TimeoutSec $timeout -ErrorAction Stop
-            if ($resp -and $resp.checksum) {
+            $res = Invoke-WebGetJson -Uri "$u/api/sql/checksum" -TimeoutSec $timeout
+            if ($res.Status -eq 404) {
+                $res = Invoke-WebGetJson -Uri "$u/api/sql/snapshot" -TimeoutSec $timeout
+            }
+            if ($res.Status -eq 200 -and $res.Data -and $res.Data.checksum) {
                 return $u
             }
         } catch {}
@@ -298,14 +356,14 @@ if ($activeWebUrl) {
     Write-Host "🌐 เชื่อมต่อ Web Server แบบ Realtime ที่: $activeWebUrl" -ForegroundColor Green
     $timeout = if ($activeWebUrl -match '^https://') { 20 } else { 8 }
     $instQuery = if ($activeInstance) { "?instance=$([uri]::EscapeDataString($activeInstance))" } else { "" }
-    $initialWebSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -Method Get -TimeoutSec $timeout
-    $initialScript = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec $timeout
+    $initialWebSnap = (Invoke-WebGetJson -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -TimeoutSec $timeout).Data
+    $initialScript = (Invoke-WebGetText -Uri "$activeWebUrl/api/sql/script" -TimeoutSec $timeout).Body
 } elseif (Test-Path $localSqlFile) {
     Write-Host "📂 ใช้ไฟล์ฐานข้อมูลในเครื่อง: $localSqlFile" -ForegroundColor Yellow
     $initialScript = [System.IO.File]::ReadAllText($localSqlFile, [System.Text.Encoding]::UTF8)
 } else {
     Write-Host "☁️ ดึงสคริปต์ฐานข้อมูลล่าสุดจาก GitHub..." -ForegroundColor Yellow
-    $initialScript = Invoke-RestMethod -Uri "$githubRawSqlUrl?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -Method Get -TimeoutSec 15
+    $initialScript = (Invoke-WebGetText -Uri "$githubRawSqlUrl?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -TimeoutSec 15).Body
 }
 
 if ($activeInstance -and $initialScript) {
@@ -360,10 +418,12 @@ while ($true) {
             Write-Host "[$now] ✅ พบ SQL Server แล้ว: $activeInstance — กำลังซิงค์ฐานข้อมูลเริ่มต้น..." -ForegroundColor Green
             if ($activeWebUrl) {
                 try {
-                    $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 10 -ErrorAction Stop
-                    Invoke-SqlScriptBatches -ScriptText $scriptText
-                    $ssmsState = Get-SsmsTablesState
-                    $lastSsmsChecksum = $ssmsState.Checksum
+                    $scriptText = (Invoke-WebGetText -Uri "$activeWebUrl/api/sql/script" -TimeoutSec 10).Body
+                    if ($scriptText) {
+                        Invoke-SqlScriptBatches -ScriptText $scriptText
+                        $ssmsState = Get-SsmsTablesState
+                        $lastSsmsChecksum = $ssmsState.Checksum
+                    }
                 } catch {}
             }
         }
@@ -381,11 +441,15 @@ while ($true) {
         try {
             $reqTimeout = if ($activeWebUrl -match '^https://') { 10 } else { 4 }
             $instQuery = if ($activeInstance) { "?instance=$([uri]::EscapeDataString($activeInstance))" } else { "" }
-            # 1) ตรวจว่าหน้าเว็บมีการเปลี่ยนแปลงข้อมูลหรือไม่ (Web -> SSMS -> GitHub)
-            $webSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -Method Get -TimeoutSec $reqTimeout -ErrorAction Stop
-            if ($webSnap.checksum -ne $lastWebChecksum) {
-                $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec $reqTimeout -ErrorAction Stop
-                if ($activeInstance) {
+            # 1) ตรวจ checksum แบบประหยัดแบนด์วิดท์ (304 = ไม่มีข้อมูลเปลี่ยนแปลง)
+            $chkRes = Invoke-WebGetJson -Uri "$activeWebUrl/api/sql/checksum$instQuery" -TimeoutSec $reqTimeout -IfNoneMatch $lastWebChecksum
+            if ($chkRes.Status -eq 404) {
+                $chkRes = Invoke-WebGetJson -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -TimeoutSec $reqTimeout -IfNoneMatch $lastWebChecksum
+            }
+            if ($chkRes.Status -eq 200 -and $chkRes.Data -and ($chkRes.Data.checksum -ne $lastWebChecksum)) {
+                $webSnap = if ($chkRes.Data.tables) { $chkRes.Data } else { (Invoke-WebGetJson -Uri "$activeWebUrl/api/sql/snapshot$instQuery" -TimeoutSec $reqTimeout).Data }
+                $scriptText = (Invoke-WebGetText -Uri "$activeWebUrl/api/sql/script" -TimeoutSec $reqTimeout).Body
+                if ($activeInstance -and $scriptText) {
                     Invoke-SqlScriptBatches -ScriptText $scriptText
                     $ssmsState = Get-SsmsTablesState
                     $lastSsmsChecksum = $ssmsState.Checksum
@@ -413,8 +477,8 @@ while ($true) {
                     $lastSsmsChecksum = $currentSsms.Checksum
                     $lastWebChecksum = $pushResp.checksum
                     Write-Host "[$now] 🔄 [SSMS -> Web] ซิงค์ข้อมูลที่แก้ไขใน SSMS ขึ้นหน้าเว็บสำเร็จ! (Checksum: $($pushResp.checksum))" -ForegroundColor Magenta
-                    $freshSnap = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/snapshot?instance=$([uri]::EscapeDataString($activeInstance))" -Method Get -TimeoutSec 10 -ErrorAction SilentlyContinue
-                    $scriptText = Invoke-RestMethod -Uri "$activeWebUrl/api/sql/script" -Method Get -TimeoutSec 10 -ErrorAction SilentlyContinue
+                    $freshSnap = (Invoke-WebGetJson -Uri "$activeWebUrl/api/sql/snapshot?instance=$([uri]::EscapeDataString($activeInstance))" -TimeoutSec 10).Data
+                    $scriptText = (Invoke-WebGetText -Uri "$activeWebUrl/api/sql/script" -TimeoutSec 10).Body
                     Save-WebSnapshotFiles -WebSnap $freshSnap -ScriptText $scriptText
                     if (Test-Path $localSqlFile) { $lastFileHash = (Get-FileHash $localSqlFile -Algorithm SHA256).Hash }
                     Push-DatabaseToGitHub -Reason "SSMS Update $($pushResp.checksum)"

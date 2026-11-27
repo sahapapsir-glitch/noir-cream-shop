@@ -2452,6 +2452,8 @@ const A = window.A = {
     try {
       const r = await api('POST', '/api/login', d);
       state.user = r.user;
+      if (r.user?.role === 'admin') initRealtimeSqlStream();
+      else closeRealtimeSqlStream();
       await loadCart();
       toast('ยินดีต้อนรับ ' + (r.user.first_name || r.user.name));
       go(r.user.role === 'admin' ? '#/admin' : '#/');
@@ -2482,6 +2484,7 @@ const A = window.A = {
   async logout() {
     await api('POST', '/api/logout');
     state.user = null;
+    closeRealtimeSqlStream();
     await loadCart();
     toast('ออกจากระบบเรียบร้อย');
     go('#/');
@@ -3643,8 +3646,15 @@ const A = window.A = {
 /* ---------- Realtime SQL Server SSE Stream ---------- */
 let sqlEventSource = null;
 
+function closeRealtimeSqlStream() {
+  if (sqlEventSource) {
+    try { sqlEventSource.close(); } catch {}
+    sqlEventSource = null;
+  }
+}
+
 function initRealtimeSqlStream() {
-  if (typeof EventSource === 'undefined' || sqlEventSource) return;
+  if (typeof EventSource === 'undefined' || sqlEventSource || state.user?.role !== 'admin') return;
   try {
     sqlEventSource = new EventSource('/api/sql/stream');
     sqlEventSource.addEventListener('github_status', (ev) => {
