@@ -33,6 +33,14 @@
       </nav>
       <div class="header-actions" id="actions"></div>
     </div>
+    <div id="quickSearchBar" class="quick-search-bar" aria-hidden="true">
+      <form class="wrap quick-search-form" onsubmit="return A.quickSearchSubmit(event)">
+        <span class="quick-search-icon" aria-hidden="true">🔍</span>
+        <input id="quickSearchInput" type="search" placeholder="ค้นหาสินค้า เช่น เสื้อยืด, โปโล, สีดำ, กางเกง..." aria-label="ค้นหาสินค้าด่วน">
+        <button type="submit" class="btn sm">ค้นหา</button>
+        <button type="button" class="btn ghost sm" onclick="A.toggleQuickSearch(false)" aria-label="ปิดค้นหา">✕</button>
+      </form>
+    </div>
   </header>
 
   <div id="mobileMenu" class="mobile-menu-drawer">
@@ -110,6 +118,7 @@
     <div class="modal-box" id="modalBox"></div>
   </div>
 
+  <button type="button" id="backToTop" class="back-to-top" aria-label="กลับขึ้นด้านบน" title="กลับขึ้นด้านบน" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="/app.js"></script>
 </body>

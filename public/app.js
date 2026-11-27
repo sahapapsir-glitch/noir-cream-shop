@@ -163,8 +163,8 @@ function card(p) {
   const price = p.min_price === p.max_price ? money(p.min_price) : `${money(p.min_price)} – ${money(p.max_price)}`;
   const colors = Array.isArray(p.colors) ? p.colors : [];
   const initImg = p.image_url;
-  return `<article class="card">
-    <button class="heart ${p.wished ? 'on' : ''}" aria-label="เพิ่มในรายการโปรด" onclick="A.wish(${p.product_id}, this)">${heartSvg}</button>
+  return `<article class="card ${out ? 'is-out' : ''}">
+    <button class="heart ${p.wished ? 'on' : ''}" aria-label="เพิ่มในรายการโปรด" aria-pressed="${p.wished ? 'true' : 'false'}" onclick="A.wish(${p.product_id}, this)">${heartSvg}</button>
     <a href="#/product/${p.product_id}">
       <div class="img">${p.is_featured ? '<span class="tag">แนะนำ</span>' : ''}${out ? '<span class="tag out">สินค้าหมด</span>' : ''}<span class="card-art" style="display:contents">${art(initImg)}</span></div>
       <h3>${esc(p.name)}</h3>
@@ -174,7 +174,8 @@ function card(p) {
     </a>
     ${colors.length > 1 || colors.some((c) => c.image_url) ? `
       <div class="card-swatches" aria-label="เลือกดูสี">
-        ${colors.map((c, idx) => `<button type="button" class="card-swatch ${idx === 0 ? 'on' : ''}" style="background:${esc(c.color_hex || '#EADFC8')}" title="${esc(c.color)}" aria-label="ดูสี ${esc(c.color)}" data-img="${esc(c.image_url || p.image_url || '')}" data-hex="${esc(c.color_hex || '#FAF7F2')}" onclick="A.previewCardColor(event, this)"></button>`).join('')}
+        ${colors.slice(0, 6).map((c, idx) => `<button type="button" class="card-swatch ${idx === 0 ? 'on' : ''}" style="background:${esc(c.color_hex || '#EADFC8')}" title="${esc(c.color)}" aria-label="ดูสี ${esc(c.color)}" data-img="${esc(c.image_url || p.image_url || '')}" data-hex="${esc(c.color_hex || '#FAF7F2')}" onclick="A.previewCardColor(event, this)"></button>`).join('')}
+        ${colors.length > 6 ? `<span class="card-swatch-more">+${colors.length - 6}</span>` : ''}
       </div>
     ` : ''}
   </article>`;
@@ -187,7 +188,7 @@ function renderChrome() {
     top.innerHTML = `<span>ส่งฟรีเมื่อซื้อครบ ${money(state.config.free_shipping_min)} · เปลี่ยนไซส์ได้ภายใน 7 วัน · โค้ด <b>WELCOME10</b> ลด 10%</span>`;
   }
   const u = state.user;
-  let h = `<a class="icon-btn" href="#/shop" aria-label="ค้นหาสินค้า"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></a>`;
+  let h = `<button type="button" class="icon-btn" onclick="A.toggleQuickSearch()" aria-label="ค้นหาสินค้า" title="ค้นหาสินค้า"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>`;
   if (u?.role === 'customer') {
     h += `<a class="icon-btn hide-mobile" href="#/wishlist" aria-label="รายการโปรด">♡ <span class="lbl">โปรด</span></a>
       <a class="icon-btn hide-mobile" href="#/orders">📦 <span class="lbl">คำสั่งซื้อ</span></a>
@@ -403,13 +404,14 @@ pages.shop = async (params) => {
   ]);
 
   const chip = (c, label) => `<a class="chip ${category === c ? 'on' : ''}" href="#/shop?${new URLSearchParams({ q, category: c, sort })}">${esc(label)}</a>`;
+  const hasFilter = Boolean(q || category || sort);
 
   app.innerHTML = `
-    <div class="crumbs"><a href="#/">หน้าแรก</a> / สินค้าทั้งหมด ${category ? `/ ${esc(category)}` : ''}</div>
+    <div class="crumbs"><a href="#/">หน้าแรก</a> / <a href="#/shop">สินค้าทั้งหมด</a> ${category ? `/ ${esc(category)}` : ''}</div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
         <h2 style="margin:0">${category ? esc(category) : 'สินค้าทั้งหมด'}</h2>
-        <span class="muted" style="font-size:13.5px">จำหน่ายเฉพาะ: เสื้อยืด · เสื้อโปโล · เสื้อแขนยาว · กางเกง</span>
+        <span class="muted" style="font-size:13.5px">คอลเลกชันมินิมอล · เสื้อยืด · เสื้อโปโล · เสื้อแขนยาว · กางเกง</span>
       </div>
       <button class="btn ghost sm" onclick="A.openSizeModal('${category || 'เสื้อยืด'}')">📏 ตารางเทียบไซส์</button>
     </div>
@@ -420,7 +422,7 @@ pages.shop = async (params) => {
         ${categories.map((c) => chip(c.category, `${c.category}${c.n > 0 ? ` (${c.n})` : ''}`)).join('')}
       </div>
       <form class="tools" onsubmit="return A.search(event)">
-        <input name="q" value="${esc(q)}" placeholder="ค้นหาสินค้า..." aria-label="ค้นหาสินค้า">
+        <input id="shopSearchInput" type="search" name="q" value="${esc(q)}" placeholder="ค้นหาสินค้า..." aria-label="ค้นหาสินค้า">
         <select name="sort" onchange="this.form.requestSubmit()" aria-label="เรียงลำดับ">
           ${[
             ['', 'เรียงตามปกติ'],
@@ -434,15 +436,20 @@ pages.shop = async (params) => {
       </form>
     </div>
 
+    <div class="shop-meta-bar">
+      <span>พบสินค้าทั้งหมด <b>${products.length}</b> รายการ${q ? ` สำหรับคำค้น "<b>${esc(q)}</b>"` : ''}</span>
+      ${hasFilter ? `<a class="btn ghost sm" href="#/shop">✕ ล้างตัวกรองทั้งหมด</a>` : ''}
+    </div>
+
     ${products.length ? `
       <div class="grid">${products.map(card).join('')}</div>
     ` : `
       <div class="empty">
         <div style="font-size:36px;margin-bottom:8px">🔍</div>
-        <h3>ไม่พบสินค้าในหมวดหมู่นี้</h3>
+        <h3>ไม่พบสินค้าที่ตรงกับเงื่อนไข</h3>
         <p class="muted">${q ? `ไม่พบสินค้าที่ตรงกับคำค้นหา "${esc(q)}"` : 'ร้านยังไม่ได้เพิ่มสินค้าในหมวดหมู่นี้ หรือสินค้ากำลังอยู่ระหว่างเตรียมสต็อก'}</p>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
-          <a class="btn sm ghost" href="#/shop">ดูสินค้าหมวดหมู่อื่น</a>
+          <a class="btn sm ghost" href="#/shop">ดูสินค้าทั้งหมด</a>
           ${state.user?.role === 'admin' ? `<a class="btn sm" href="#/admin">+ ไปเพิ่มสินค้าในระบบจัดการร้าน</a>` : ''}
         </div>
       </div>
@@ -502,7 +509,10 @@ pages.product = async (params, id) => {
         pdPrice.classList.add('pop');
       }
     }
-    $('#pd-colorname').textContent = sel.color;
+    const cNameEl = $('#pd-colorname');
+    if (cNameEl) {
+      cNameEl.innerHTML = `<span class="dot" style="background:${esc(hex)}"></span>${esc(sel.color)}`;
+    }
     $('#pd-swatches').innerHTML = colors.map(([c, h]) => `
       <button class="swatch ${c === sel.color ? 'on' : ''}" style="background:${esc(h)}" title="${esc(c)}" aria-label="สี ${esc(c)}" onclick="A.pick('color', ${JSON.stringify(c).replace(/"/g, '&quot;')})"></button>
     `).join('');
@@ -514,13 +524,12 @@ pages.product = async (params, id) => {
     }).join('');
 
     if (v) {
-      const vidTag = ` <span class="muted" style="font-size:12px">· Variant_ID: #${v.variant_id}</span>`;
       if (v.stock === 0) {
-        $('#pd-stock').innerHTML = '<span style="color:var(--danger)">สินค้าหมดชั่วคราว</span>' + vidTag;
+        $('#pd-stock').innerHTML = '<span style="color:var(--danger);font-weight:500">✕ สินค้าหมดชั่วคราว (ลองเลือกสีหรือไซส์อื่น)</span>';
       } else if (v.stock <= 3) {
-        $('#pd-stock').innerHTML = `<span style="color:var(--danger)">เหลือเพียง ${v.stock} ชิ้นสุดท้าย!</span>` + vidTag;
+        $('#pd-stock').innerHTML = `<span style="color:#8A5300;font-weight:500">⚠️ เหลือเพียง ${v.stock} ชิ้นสุดท้าย!</span>`;
       } else {
-        $('#pd-stock').innerHTML = `มีสินค้าพร้อมส่ง (${v.stock} ชิ้น)` + vidTag;
+        $('#pd-stock').innerHTML = `<span style="color:var(--ok)">✓ มีสินค้าพร้อมส่ง (${v.stock} ชิ้น)</span>`;
       }
     } else {
       $('#pd-stock').textContent = 'กรุณาเลือกไซส์และสี';
@@ -528,8 +537,12 @@ pages.product = async (params, id) => {
 
     const qEl = $('#pd-qty');
     if (qEl) qEl.textContent = sel.qty;
+    const subEl = $('#pd-subtotal');
+    if (subEl) subEl.textContent = v && sel.qty > 1 ? `รวม ${money(v.price * sel.qty)}` : '';
     const addBtn = $('#pd-add');
+    const buyBtn = $('#pd-buy');
     if (addBtn) addBtn.disabled = !v || v.stock === 0;
+    if (buyBtn) buyBtn.disabled = !v || v.stock === 0;
   };
 
   A.pick = (k, val) => {
@@ -559,13 +572,10 @@ pages.product = async (params, id) => {
     }
   };
 
-  A.addToCart = () => safe(async () => {
-    if (!state.user) { go('#/login'); return toast('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า', true); }
+  const pushToCart = async () => {
+    if (!state.user) { go('#/login'); toast('กรุณาเข้าสู่ระบบก่อนสั่งซื้อสินค้า', true); return false; }
     const v = find();
-    if (!v || v.stock === 0) return toast('กรุณาเลือกไซส์ที่มีสินค้าพร้อมส่ง', true);
-    const addBtn = $('#pd-add');
-    if (addBtn) spawnParticles(addBtn, ['✦', '🛍️', '•', '✧']);
-    flyToCart($('#pd-img'));
+    if (!v || v.stock === 0) { toast('กรุณาเลือกไซส์ที่มีสินค้าพร้อมส่ง', true); return false; }
     state.cart = await api('POST', '/api/cart', { variant_id: v.variant_id, quantity: sel.qty });
     renderChrome();
     const badge = $('#actions .badge');
@@ -574,7 +584,20 @@ pages.product = async (params, id) => {
       void badge.offsetWidth;
       badge.classList.add('bump');
     }
+    return true;
+  };
+
+  A.addToCart = () => safe(async () => {
+    if (!(await pushToCart())) return;
+    const addBtn = $('#pd-add');
+    if (addBtn) spawnParticles(addBtn, ['✦', '🛍️', '•', '✧']);
+    flyToCart($('#pd-img'));
     toast(`เพิ่ม "${p.name} (${sel.color}/${sel.size})" ลงในตะกร้าแล้ว`);
+  });
+
+  A.buyNow = () => safe(async () => {
+    if (!(await pushToCart())) return;
+    go('#/checkout');
   });
 
   app.innerHTML = `
@@ -582,13 +605,13 @@ pages.product = async (params, id) => {
     <div class="pd">
       <div class="pd-img" id="pd-img"></div>
       <div>
-        <div class="muted" style="text-transform:uppercase;letter-spacing:.08em;font-size:12.5px">${esc(p.category)} · <span style="text-transform:none">Product_id: #${p.product_id}</span></div>
-        <h1 style="font-size:clamp(28px,3.4vw,40px);margin:4px 0 8px">${esc(p.name)}</h1>
-        ${stars(p.rating, p.review_count)}
-        <div class="pd-price" id="pd-price"></div>
+        <a href="#/shop?category=${encodeURIComponent(p.category)}" class="admin-cat-pill" style="text-decoration:none">${esc(p.category)}</a>
+        <h1 style="font-size:clamp(28px,3.4vw,40px);margin:8px 0 8px">${esc(p.name)}</h1>
+        <a href="#reviews-section" onclick="event.preventDefault();document.getElementById('reviews-section')?.scrollIntoView({behavior:'smooth'})">${stars(p.rating, p.review_count)}</a>
+        <div><div class="pd-price" id="pd-price"></div></div>
         <p style="color:var(--ink-2);line-height:1.7">${esc(p.description || 'เสื้อผ้าโทนครีม ขาว ดำ ทรงเรียบ สวมใส่สบาย ออกแบบให้แมตช์ง่ายได้ทุกวัน')}</p>
 
-        <div class="label"><span>สี: <b id="pd-colorname" style="font-weight:500"></b></span></div>
+        <div class="label"><span>สี: <span id="pd-colorname" class="pd-color-pill"></span></span></div>
         <div class="swatches" id="pd-swatches"></div>
 
         <div class="label">
@@ -596,18 +619,22 @@ pages.product = async (params, id) => {
           <button class="link" style="font-size:13px" onclick="A.openSizeModal('${esc(p.category)}')">📏 ตารางเทียบไซส์</button>
         </div>
         <div class="sizes" id="pd-sizes"></div>
-        <div id="pd-stock" style="font-size:13px;margin-top:6px;color:var(--ink-3)"></div>
+        <div id="pd-stock" style="font-size:13px;margin-top:8px;color:var(--ink-3)"></div>
 
         <div class="label"><span>จำนวน</span></div>
-        <div class="qty">
-          <button onclick="A.qty(-1)" aria-label="ลด">−</button>
-          <span id="pd-qty">1</span>
-          <button onclick="A.qty(1)" aria-label="เพิ่ม">+</button>
+        <div style="display:flex;align-items:center;flex-wrap:wrap">
+          <div class="qty">
+            <button onclick="A.qty(-1)" aria-label="ลด">−</button>
+            <span id="pd-qty">1</span>
+            <button onclick="A.qty(1)" aria-label="เพิ่ม">+</button>
+          </div>
+          <span id="pd-subtotal" class="pd-subtotal-note"></span>
         </div>
 
         <div class="buy-row">
-          <button class="btn" id="pd-add" onclick="A.addToCart()">เพิ่มลงตะกร้า</button>
-          <button class="btn ghost" onclick="A.wish(${p.product_id}, this)">♡ รายการโปรด</button>
+          <button class="btn" id="pd-add" onclick="A.addToCart()">🛍️ เพิ่มลงตะกร้า</button>
+          <button class="btn ghost" id="pd-buy" onclick="A.buyNow()">⚡ ซื้อเลย</button>
+          <button class="btn ghost" style="flex:0 0 auto;min-width:auto" onclick="A.wish(${p.product_id}, this)" title="เพิ่มในรายการโปรด">♡</button>
         </div>
 
         <div class="info-list">
@@ -618,7 +645,7 @@ pages.product = async (params, id) => {
       </div>
     </div>
 
-    <section class="reviews">
+    <section class="reviews" id="reviews-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <h2 style="margin:0">รีวิวจากลูกค้า (${p.reviews ? p.reviews.length : 0})</h2>
@@ -642,11 +669,10 @@ pages.product = async (params, id) => {
           <div class="review-top">
             <div class="review-author">
               <b>${esc(r.customer_name || r.name || 'ลูกค้า')}</b>
-              <span class="muted" style="font-size:12px;margin-left:4px">(Customer #${r.customer_id})</span>
               ${isMyReview ? '<span class="review-tag">รีวิวของคุณ</span>' : ''}
-              <div style="margin-left:8px">${'★'.repeat(r.rating)}<span class="muted">${'★'.repeat(5 - r.rating)}</span></div>
+              <div style="margin-left:4px">${'★'.repeat(r.rating)}<span class="muted">${'★'.repeat(5 - r.rating)}</span></div>
             </div>
-            <div class="meta">Review #${r.review_id} · ${dt(r.created_at)}</div>
+            <div class="meta">${dt(r.created_at)}</div>
           </div>
           <div class="review-text">${esc(r.comment) || '<span class="muted">(ไม่มีข้อความรีวิว)</span>'}</div>
           <div class="review-foot">
@@ -841,6 +867,16 @@ pages.help = async () => {
 };
 
 /* ---------- Auth & Cart & Checkout Pages ---------- */
+const pwField = (id, name, label, attrs = '') => `
+  <div class="field">
+    ${label ? `<label for="${id}">${label}</label>` : ''}
+    <div class="pw-wrap">
+      <input id="${id}" name="${name}" type="password" ${attrs}>
+      <button type="button" class="pw-toggle" onclick="A.togglePw(this)" aria-label="แสดง/ซ่อนรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+    </div>
+  </div>
+`;
+
 pages.login = async () => {
   app.innerHTML = `<div class="auth">
     <div class="auth-head">
@@ -851,7 +887,7 @@ pages.login = async () => {
     <div class="err" id="err"></div>
     <form onsubmit="return A.login(event)">
       <div class="field"><label for="email">อีเมล</label><input id="email" name="email" type="text" autocomplete="username" required placeholder="name@example.com"></div>
-      <div class="field"><label for="pw">รหัสผ่าน</label><input id="pw" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+      ${pwField('pw', 'password', 'รหัสผ่าน', 'autocomplete="current-password" required placeholder="••••••••"')}
       <button class="btn block" style="margin-top:20px">เข้าสู่ระบบ</button>
     </form>
     <div class="auth-foot">ยังไม่มีบัญชี? <a class="link" href="#/register">สมัครสมาชิก</a></div>
@@ -874,8 +910,8 @@ pages.register = async () => {
       <div class="field"><label for="em">อีเมล</label><input id="em" name="email" type="email" autocomplete="email" required placeholder="name@example.com"></div>
       <div class="field"><label for="ph">เบอร์โทรศัพท์</label><input id="ph" name="phone" type="tel" autocomplete="tel" placeholder="08x-xxx-xxxx"></div>
       <div class="row2">
-        <div class="field"><label for="p1">รหัสผ่าน (อย่างน้อย 8 ตัว)</label><input id="p1" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
-        <div class="field"><label for="p2">ยืนยันรหัสผ่าน</label><input id="p2" name="confirm" type="password" minlength="8" autocomplete="new-password" required></div>
+        ${pwField('p1', 'password', 'รหัสผ่าน (อย่างน้อย 8 ตัว)', 'minlength="8" autocomplete="new-password" required')}
+        ${pwField('p2', 'confirm', 'ยืนยันรหัสผ่าน', 'minlength="8" autocomplete="new-password" required')}
       </div>
       <button class="btn block" style="margin-top:20px">สร้างบัญชี</button>
     </form>
@@ -890,7 +926,7 @@ const adminTestBanner = () => {
   return `
     <div class="panel" style="background:#fcfaf7;border:1px dashed var(--ink-3);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
       <div style="font-size:13.5px">
-        🧪 <b>โหมดทดลองซื้อสำหรับแอดมิน (Admin Test Mode)</b> · ระบบจำลองการสั่งซื้อผ่านบัญชีลูกค้าทดสอบ <b>#${cid} (${esc(cname)})</b> เพื่อทดสอบตะกร้า ชำระเงิน และตัดสต็อกจริง
+        🧪 <b>โหมดทดลองซื้อสำหรับแอดมิน</b> · จำลองการสั่งซื้อผ่านบัญชีทดสอบ <b>#${cid} (${esc(cname)})</b>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a class="btn ghost sm" href="#/shop">🛍️ เลือกสินค้าเพิ่ม</a>
@@ -899,6 +935,23 @@ const adminTestBanner = () => {
     </div>
   `;
 };
+
+const checkoutSteps = (activeStep) => `
+  <div class="checkout-steps" aria-label="ขั้นตอนการสั่งซื้อ">
+    <div class="checkout-step ${activeStep > 1 ? 'done' : (activeStep === 1 ? 'on' : '')}">
+      <span class="step-num">${activeStep > 1 ? '✓' : '1'}</span>
+      <span>ตรวจสอบตะกร้าสินค้า</span>
+    </div>
+    <div class="checkout-step ${activeStep > 2 ? 'done' : (activeStep === 2 ? 'on' : '')}">
+      <span class="step-num">${activeStep > 2 ? '✓' : '2'}</span>
+      <span>ที่อยู่จัดส่ง &amp; ชำระเงิน</span>
+    </div>
+    <div class="checkout-step ${activeStep === 3 ? 'on' : ''}">
+      <span class="step-num">3</span>
+      <span>ยืนยันคำสั่งซื้อ</span>
+    </div>
+  </div>
+`;
 
 pages.cart = async () => {
   if (!state.user) return go('#/login');
@@ -920,15 +973,19 @@ pages.cart = async () => {
   const pct = Math.min(100, (c.subtotal / state.config.free_shipping_min) * 100);
   app.innerHTML = `
     ${adminTestBanner()}
-    <h2>ตะกร้าสินค้า (${c.count} ชิ้น)</h2>
+    ${checkoutSteps(1)}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <h2 style="margin:0">ตะกร้าสินค้า (${c.count} ชิ้น)</h2>
+      <a class="link" href="#/shop" style="font-size:13.5px">← เลือกสินค้าเพิ่ม</a>
+    </div>
     <div class="two-col">
       <div class="panel">
         ${c.items.map((i) => `
           <div class="line">
             <a class="thumb" href="#/product/${i.product_id}">${art(i.image_url, i.color_hex)}</a>
             <div>
-              <div class="name">${esc(i.name)}</div>
-              <div class="opt">สี: ${esc(i.color)} · ไซส์: ${esc(i.size)} <span class="muted" style="font-size:12px">· Cart #${i.cart_id} (PID #${i.product_id} / VID #${i.variant_id})</span></div>
+              <a class="name" href="#/product/${i.product_id}">${esc(i.name)}</a>
+              <div class="opt" style="margin-top:2px"><span class="dot" style="background:${esc(i.color_hex || '#EADFC8')}"></span>สี${esc(i.color)} · ไซส์ ${esc(i.size)} · ${money(i.price)} / ชิ้น</div>
               <div class="qty" style="margin-top:8px">
                 <button onclick="A.setQty(${i.cart_id}, ${i.quantity - 1})" aria-label="ลด">−</button>
                 <span>${i.quantity}</span>
@@ -937,7 +994,7 @@ pages.cart = async () => {
             </div>
             <div style="text-align:right">
               <div style="font-weight:500">${money(i.price * i.quantity)}</div>
-              <button class="link muted" style="font-size:13px;margin-top:6px" onclick="A.removeItem(${i.cart_id})">ลบ</button>
+              <button class="link muted" style="font-size:13px;margin-top:6px" onclick="A.removeItem(${i.cart_id})">ลบออก</button>
             </div>
           </div>
         `).join('')}
@@ -947,13 +1004,13 @@ pages.cart = async () => {
         ${ship ? `
           <div class="muted" style="font-size:13px">ซื้อเพิ่มอีก <b>${money(state.config.free_shipping_min - c.subtotal)}</b> เพื่อส่งฟรี!</div>
         ` : `
-          <div style="font-size:13px;color:var(--ok)">🎉 คุณได้รับสิทธิ์ส่งฟรีทั่วประเทศ</div>
+          <div style="font-size:13px;color:var(--ok);font-weight:500">🎉 คุณได้รับสิทธิ์ส่งฟรีทั่วประเทศ</div>
         `}
         <div class="progress"><i style="width:${pct}%"></i></div>
         <div class="sum-row"><span>ราคาสินค้า</span><span>${money(c.subtotal)}</span></div>
         <div class="sum-row"><span>ค่าจัดส่ง</span><span>${ship ? money(ship) : 'ฟรี'}</span></div>
         <div class="sum-row total"><span>ยอดรวม</span><span>${money(c.subtotal + ship)}</span></div>
-        <a class="btn block" style="margin-top:16px" href="#/checkout">ดำเนินการชำระเงิน</a>
+        <a class="btn block" style="margin-top:16px" href="#/checkout">ดำเนินการชำระเงิน →</a>
       </aside>
     </div>
   `;
@@ -977,7 +1034,7 @@ pages.checkout = async () => {
   const sum = () => {
     $('#sum').innerHTML = `
       <div class="sum-row"><span>ราคาสินค้า</span><span>${money(c.subtotal)}</span></div>
-      ${co.discount ? `<div class="sum-row"><span>ส่วนลด (${esc(co.coupon)})</span><span>−${money(co.discount)}</span></div>` : ''}
+      ${co.discount ? `<div class="sum-row" style="color:var(--ok)"><span>ส่วนลด (${esc(co.coupon)})</span><span>−${money(co.discount)}</span></div>` : ''}
       <div class="sum-row"><span>ค่าจัดส่ง</span><span>${ship ? money(ship) : 'ฟรี'}</span></div>
       <div class="sum-row total"><span>ยอดชำระ</span><span>${money(c.subtotal - co.discount + ship)}</span></div>
     `;
@@ -996,8 +1053,15 @@ pages.checkout = async () => {
     const code = $('#coupon').value.trim();
     if (!code) { co.coupon = ''; co.discount = 0; return sum(); }
     const r = await api('POST', '/api/coupon/check', { code });
-    co.coupon = r.code; co.discount = r.discount; sum(); toast('ใช้โค้ดส่วนลดแล้ว');
+    co.coupon = r.code; co.discount = r.discount; sum(); toast(`ใช้โค้ดส่วนลด ${r.code} แล้ว (−${money(r.discount)})`);
   });
+  A.useCouponHint = (code) => {
+    const el = $('#coupon');
+    if (el) {
+      el.value = code;
+      A.applyCoupon();
+    }
+  };
   A.placeOrder = () => safe(async () => {
     if (!co.address) return toast('กรุณาเพิ่มและเลือกที่อยู่จัดส่ง', true);
     const r = await api('POST', '/api/orders', { address_id: co.address, method: co.method, coupon_code: co.coupon });
@@ -1006,15 +1070,19 @@ pages.checkout = async () => {
 
   app.innerHTML = `
     ${adminTestBanner()}
-    <h2>ชำระเงิน</h2>
+    ${checkoutSteps(2)}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <h2 style="margin:0">ที่อยู่จัดส่งและชำระเงิน</h2>
+      <a class="link" href="#/cart" style="font-size:13.5px">← กลับไปแก้ไขตะกร้า</a>
+    </div>
     <div class="two-col">
       <div>
         <div class="panel">
-          <h3>ที่อยู่จัดส่ง</h3>
+          <h3>1. เลือกที่อยู่จัดส่ง</h3>
           ${addresses.map((a) => `
             <label class="opt-card ${a.address_id === co.address ? 'on' : ''}" data-addr="${a.address_id}">
               <input type="radio" name="addr" ${a.address_id === co.address ? 'checked' : ''} onchange="A.pickAddr(${a.address_id})">
-              <div style="flex:1"><b>${esc(a.recipient)}</b> · ${esc(a.phone)}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+              <div style="flex:1"><b>${esc(a.recipient)}</b> · ${esc(a.phone)}${a.is_default ? ' <span class="admin-cat-pill" style="margin-left:4px">หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
               <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="event.preventDefault();event.stopPropagation();A.openEditAddress(${a.address_id})">✏️ แก้ไข</button>
             </label>
           `).join('')}
@@ -1023,7 +1091,7 @@ pages.checkout = async () => {
         </div>
 
         <div class="panel">
-          <h3>วิธีชำระเงิน</h3>
+          <h3>2. เลือกวิธีชำระเงิน</h3>
           ${state.config.pay_methods.map((m) => `
             <label class="opt-card ${m === co.method ? 'on' : ''}" data-pay="${esc(m)}">
               <input type="radio" name="pay" ${m === co.method ? 'checked' : ''} onchange="A.pickPay(this.parentElement.dataset.pay)">
@@ -1035,19 +1103,23 @@ pages.checkout = async () => {
       </div>
 
       <aside class="panel summary">
-        <h3>สรุปคำสั่งซื้อ</h3>
+        <h3>สรุปคำสั่งซื้อ (${c.count} ชิ้น)</h3>
         ${c.items.map((i) => `
-          <div class="sum-row" style="font-size:14px">
+          <div class="sum-row" style="font-size:13.5px">
             <span>${esc(i.name)} <span class="muted">(${esc(i.color)}/${esc(i.size)}) ×${i.quantity}</span></span>
             <span>${money(i.price * i.quantity)}</span>
           </div>
         `).join('')}
         <div class="coupon">
-          <input id="coupon" placeholder="โค้ดส่วนลด เช่น WELCOME10" aria-label="โค้ดส่วนลด">
-          <button class="btn ghost sm" onclick="A.applyCoupon()">ใช้โค้ด</button>
+          <input id="coupon" placeholder="กรอกโค้ดส่วนลด" aria-label="โค้ดส่วนลด">
+          <button type="button" class="btn ghost sm" onclick="A.applyCoupon()">ใช้โค้ด</button>
+        </div>
+        <div class="coupon-hints" aria-label="โค้ดแนะนำ">
+          <button type="button" class="coupon-hint-btn" onclick="A.useCouponHint('WELCOME10')">🏷️ WELCOME10 ลด 10%</button>
+          <button type="button" class="coupon-hint-btn" onclick="A.useCouponHint('SAVE100')">🏷️ SAVE100 ลด ฿100</button>
         </div>
         <div id="sum"></div>
-        <button class="btn block" style="margin-top:16px" onclick="A.placeOrder()">ยืนยันสั่งซื้อ</button>
+        <button class="btn block" style="margin-top:16px" onclick="A.placeOrder()">✓ ยืนยันคำสั่งซื้อ</button>
       </aside>
     </div>
   `;
@@ -1080,8 +1152,11 @@ pages.orders = async (params) => {
   const fresh = +params.get('new') || 0;
   app.innerHTML = `
     ${adminTestBanner()}
-    <h2>${state.user.role === 'admin' ? 'คำสั่งซื้อ (โหมดทดลองซื้อ)' : 'คำสั่งซื้อของฉัน'}</h2>
-    ${fresh ? `<div class="panel" style="background:var(--ink);color:var(--cream);margin-bottom:18px">🎉 ขอบคุณที่สั่งซื้อ! คำสั่งซื้อ #${fresh} ได้รับการบันทึกเรียบร้อยแล้ว</div>` : ''}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <h2 style="margin:0">${state.user.role === 'admin' ? 'คำสั่งซื้อ (โหมดทดลองซื้อ)' : 'คำสั่งซื้อของฉัน'}</h2>
+      <a class="btn ghost sm" href="#/shop">🛍️ เลือกซื้อสินค้าต่อ</a>
+    </div>
+    ${fresh ? `${checkoutSteps(3)}<div class="panel" style="background:var(--ink);color:var(--cream);margin-bottom:18px">🎉 ขอบคุณที่สั่งซื้อ! คำสั่งซื้อ <b>#${fresh}</b> ได้รับการบันทึกเรียบร้อยแล้ว</div>` : ''}
     ${orders.length ? orders.map(orderCard).join('') : '<div class="empty"><h3>ยังไม่มีคำสั่งซื้อ</h3><a class="btn" style="margin-top:12px" href="#/shop">เริ่มเลือกชมสินค้า</a></div>'}
   `;
 };
@@ -1090,15 +1165,45 @@ function orderItems(o) {
   return o.items.map((i) => `
     <div class="line">
       <a class="thumb" href="#/product/${i.product_id}">${art(i.image_url, i.color_hex)}</a>
-      <div><div class="name">${esc(i.name)}</div><div class="opt">${esc(i.color)} · ${esc(i.size)} × ${i.quantity} <span class="muted" style="font-size:12px">· Item #${i.order_item_id} (PID #${i.product_id}${i.variant_id ? ` / VID #${i.variant_id}` : ''})</span></div></div>
-      <div>${money(i.unit_price * i.quantity)}</div>
+      <div>
+        <a class="name" href="#/product/${i.product_id}">${esc(i.name)}</a>
+        <div class="opt">สี${esc(i.color)} · ไซส์ ${esc(i.size)} × ${i.quantity} ชิ้น</div>
+      </div>
+      <div style="font-weight:500">${money(i.unit_price * i.quantity)}</div>
     </div>
   `).join('');
 }
 
 function shipInfo(o) {
   if (!o.shipment) return '';
-  return `<div class="ship-box">🚚 Shipment #${o.shipment.shipment_id} · ${esc(o.shipment.carrier)} · หมายเลขพัสดุ (PK) <b>${esc(o.shipment.tracking_no)}</b> · ${SHIP_STATUS[o.shipment.status] || esc(o.shipment.status)} · วันที่ส่ง ${dt(o.shipment.shipped_at)} <span class="muted" style="font-size:12px">(Payment #${o.shipment.payment_id})</span></div>`;
+  const track = o.shipment.tracking_no || '';
+  return `<div class="ship-box">
+    <span>🚚 <b>${esc(o.shipment.carrier)}</b> · เลขพัสดุ <b><code>${esc(track)}</code></b> · ${SHIP_STATUS[o.shipment.status] || esc(o.shipment.status)} · ส่งเมื่อ ${dt(o.shipment.shipped_at)}</span>
+    ${track ? `<button type="button" class="btn ghost sm" style="padding:4px 10px;font-size:12px" onclick="A.copyText(${JSON.stringify(track).replace(/"/g, '&quot;')}, 'คัดลอกเลขพัสดุแล้ว')">📋 คัดลอกเลขพัสดุ</button>` : ''}
+  </div>`;
+}
+
+function orderTimeline(o) {
+  if (o.status === 'cancelled') return '';
+  const cod = o.payment?.method === 'เก็บเงินปลายทาง';
+  const stepDone = o.status === 'completed' ? 4 : (o.status === 'shipped' ? 3 : (o.status === 'paid' ? 2 : 1));
+  const steps = [
+    ['สั่งซื้อแล้ว', stepDone >= 1],
+    [cod ? 'รอชำระปลายทาง' : 'ชำระเงินแล้ว', stepDone >= 2 || (cod && stepDone >= 1)],
+    ['กำลังจัดส่ง', stepDone >= 3],
+    ['ได้รับสินค้า', stepDone >= 4]
+  ];
+  return `
+    <div class="order-timeline" aria-label="สถานะคำสั่งซื้อ">
+      ${steps.map(([label, done], idx) => {
+        const isActive = !done && idx === stepDone;
+        return `<div class="order-tl-step ${done ? 'done' : (isActive ? 'active' : '')}">
+          <span class="order-tl-dot">${done ? '✓' : idx + 1}</span>
+          <span>${esc(label)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 function orderCard(o) {
@@ -1107,24 +1212,25 @@ function orderCard(o) {
   return `
     <div class="panel order">
       <div class="order-head">
-        <div><b>คำสั่งซื้อ #${o.order_id}</b> <span class="muted">· ลูกค้า #${o.customer_id} · ${dt(o.order_date)}</span></div>
+        <div><b>คำสั่งซื้อ #${o.order_id}</b> <span class="muted">· ${dt(o.order_date)}</span></div>
         <span class="status ${o.status}">${STATUS[o.status]}</span>
       </div>
+      ${orderTimeline(o)}
       ${orderItems(o)}
-      <div class="muted" style="font-size:13.5px">
-        จัดส่งถึง: ${esc(o.ship_name)} · ${esc(o.ship_phone)}<br>${esc(o.ship_address)}
+      <div class="muted" style="font-size:13.5px;margin-top:10px">
+        <b>จัดส่งถึง:</b> ${esc(o.ship_name)} (${esc(o.ship_phone)}) · ${esc(o.ship_address)}
         ${o.status === 'shipped' ? '<div style="font-size:12px;margin-top:2px">🔒 สินค้ากำลังจัดส่ง หากต้องการแก้ไขปลายทางกรุณาติดต่อแอดมินร้าน</div>' : ''}
       </div>
-      <div class="muted" style="font-size:13.5px;margin-top:6px">ชำระเงิน (Payment #${o.payment.payment_id}): ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || esc(o.payment.status)}${o.payment.paid_at ? ' · ' + dt(o.payment.paid_at) : ''})</div>
+      <div class="muted" style="font-size:13.5px;margin-top:4px"><b>ชำระเงิน:</b> ${esc(o.payment.method)} (${PAY_STATUS[o.payment.status] || esc(o.payment.status)}${o.payment.paid_at ? ' · ' + dt(o.payment.paid_at) : ''})</div>
       ${shipInfo(o)}
       <div class="order-foot">
         <div>ยอดรวม <b style="font-size:18px">${money(o.total_price)}</b>${o.discount ? ` <span class="muted">(ส่วนลด ${money(o.discount)})</span>` : ''}</div>
         <div class="actions">
-          ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">ชำระเงิน (จำลอง)</button>` : ''}
+          ${o.status === 'pending' && !cod ? `<button class="btn sm" onclick="A.payOrder(${o.order_id})">💳 ชำระเงิน (จำลอง)</button>` : ''}
           ${canEditAddr ? `<button type="button" class="btn ghost sm" onclick="A.openEditOrderAddress(${o.order_id})">✏️ เปลี่ยนที่อยู่จัดส่ง</button>` : ''}
           ${o.status === 'pending' ? `<button class="btn danger sm" onclick="A.cancelOrder(${o.order_id})">ยกเลิก</button>` : ''}
-          ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.received(${o.order_id})">ได้รับสินค้าแล้ว</button>` : ''}
-          ${['paid', 'shipped', 'completed'].includes(o.status) ? `<a class="btn ghost sm" href="#/product/${o.items[0].product_id}">เขียนรีวิว</a>` : ''}
+          ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.received(${o.order_id})">✓ ยืนยันได้รับสินค้าแล้ว</button>` : ''}
+          ${['paid', 'shipped', 'completed'].includes(o.status) && o.items?.[0] ? `<a class="btn ghost sm" href="#/product/${o.items[0].product_id}">✍️ เขียนรีวิว</a>` : ''}
           ${state.user?.role === 'admin' ? `<button type="button" class="btn ghost sm" onclick="adminTab='orders';location.hash='#/admin'">⚙️ จัดการใน Admin</button>` : ''}
         </div>
       </div>
@@ -1135,7 +1241,7 @@ function orderCard(o) {
 pages.wishlist = async () => {
   if (!state.user) return go('#/login');
   const { products } = await api('GET', '/api/wishlist');
-  app.innerHTML = `${adminTestBanner()}<h2>รายการโปรด</h2>${products.length ? `<div class="grid">${products.map(card).join('')}</div>` : '<div class="empty"><h3>ยังไม่มีสินค้าที่ถูกใจ</h3><a class="btn" href="#/shop">ไปเลือกสินค้า</a></div>'}`;
+  app.innerHTML = `${adminTestBanner()}<h2>รายการโปรด (${products.length})</h2>${products.length ? `<div class="grid">${products.map(card).join('')}</div>` : '<div class="empty"><h3>ยังไม่มีสินค้าที่ถูกใจ</h3><a class="btn" href="#/shop">ไปเลือกสินค้า</a></div>'}`;
 };
 
 pages.account = async () => {
@@ -1145,10 +1251,9 @@ pages.account = async () => {
   _addrCache = addresses;
   if (u.role === 'admin') {
     app.innerHTML = `
-      <h2>บัญชีผู้ดูแลระบบ <span class="muted" style="font-size:16px;font-weight:400">(Admin_ID: #${u.id})</span></h2>
+      <h2>บัญชีผู้ดูแลระบบ <span class="muted" style="font-size:16px;font-weight:400">(#${u.id})</span></h2>
       <div class="panel">
         <p style="margin-top:0">
-          <span class="muted">รหัสแอดมิน (admin_id): <b>#${u.id}</b></span><br>
           <b>${esc(u.name)}</b><br>
           ${esc(u.email)}<br>
           ${esc(u.phone || '')}
@@ -1163,7 +1268,7 @@ pages.account = async () => {
         <h3>ที่อยู่จัดส่ง (สำหรับโหมดทดลองซื้อ · ลูกค้าทดสอบ #${u.shop_customer_id || 1})</h3>
         ${addresses.map((a) => `
           <div class="opt-card" style="cursor:default">
-            <div style="flex:1"><span class="muted" style="font-size:12px">#${a.address_id} · </span><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+            <div style="flex:1"><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
             <div class="actions">
               ${a.is_default ? '' : `<button type="button" class="btn ghost sm" onclick="A.defAddr(${a.address_id})">ตั้งเป็นหลัก</button>`}
               <button type="button" class="btn ghost sm" onclick="A.openEditAddress(${a.address_id})">✏️ แก้ไข</button>
@@ -1177,7 +1282,7 @@ pages.account = async () => {
     return;
   }
   app.innerHTML = `
-    <h2>บัญชีของฉัน <span class="muted" style="font-size:16px;font-weight:400">(Customer_ID: #${u.id})</span></h2>
+    <h2>บัญชีของฉัน</h2>
     <div class="panel">
       <h3>ข้อมูลส่วนตัว</h3>
       <form onsubmit="return A.saveProfile(event)">
@@ -1193,10 +1298,10 @@ pages.account = async () => {
       </form>
     </div>
     <div class="panel">
-      <h3>ที่อยู่จัดส่ง</h3>
+      <h3>ที่อยู่จัดส่ง (${addresses.length})</h3>
       ${addresses.map((a) => `
         <div class="opt-card" style="cursor:default">
-          <div style="flex:1"><span class="muted" style="font-size:12px">#${a.address_id} · </span><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
+          <div style="flex:1"><b>${esc(a.recipient)}</b> · ${esc(a.phone)} ${a.is_default ? '<span class="status completed" style="margin-left:6px">ที่อยู่หลัก</span>' : ''}<br><span class="muted">${esc(fmtAddr(a))}</span></div>
           <div class="actions">
             ${a.is_default ? '' : `<button type="button" class="btn ghost sm" onclick="A.defAddr(${a.address_id})">ตั้งเป็นหลัก</button>`}
             <button type="button" class="btn ghost sm" onclick="A.openEditAddress(${a.address_id})">✏️ แก้ไข</button>
@@ -1210,8 +1315,8 @@ pages.account = async () => {
       <h3>เปลี่ยนรหัสผ่าน</h3>
       <form onsubmit="return A.changePw(event)">
         <div class="row2">
-          <div class="field"><label>รหัสผ่านเดิม</label><input name="old_password" type="password" autocomplete="current-password" required></div>
-          <div class="field"><label>รหัสผ่านใหม่ (8 ตัวขึ้นไป)</label><input name="new_password" type="password" minlength="8" autocomplete="new-password" required></div>
+          ${pwField('old_pw', 'old_password', 'รหัสผ่านเดิม', 'autocomplete="current-password" required')}
+          ${pwField('new_pw', 'new_password', 'รหัสผ่านใหม่ (8 ตัวขึ้นไป)', 'minlength="8" autocomplete="new-password" required')}
         </div>
         <button class="btn sm">เปลี่ยนรหัสผ่าน</button>
       </form>
@@ -1492,18 +1597,28 @@ adminTabs.dash = async () => {
 
   $('#tab').innerHTML = `
     <div class="stats">
-      <div class="stat"><small>รายได้ (ชำระแล้ว)</small><b data-count="${s.revenue}" data-money="1">${money(s.revenue)}</b></div>
-      <div class="stat"><small>คำสั่งซื้อทั้งหมด</small><b data-count="${s.orders}">${s.orders}</b></div>
-      <div class="stat"><small>รอดำเนินการ</small><b data-count="${s.pending}">${s.pending}</b></div>
-      <div class="stat"><small>สมาชิกทั้งหมด</small><b data-count="${s.customers}">${s.customers}</b></div>
-      <div class="stat"><small>สินค้าที่วางขาย</small><b data-count="${s.products}">${s.products}</b></div>
+      <div class="stat clickable" onclick="A.tab('orders')" title="ดูคำสั่งซื้อทั้งหมด"><small>รายได้ (ชำระแล้ว)</small><b data-count="${s.revenue}" data-money="1">${money(s.revenue)}</b></div>
+      <div class="stat clickable" onclick="A.tab('orders')" title="จัดการคำสั่งซื้อ"><small>คำสั่งซื้อทั้งหมด</small><b data-count="${s.orders}">${s.orders}</b></div>
+      <div class="stat clickable ${s.pending > 0 ? 'is-alert' : ''}" onclick="A.adminFilterOrders('pending')" title="ดูรายการรอดำเนินการ"><small>รอดำเนินการ</small><b data-count="${s.pending}">${s.pending}</b></div>
+      <div class="stat clickable" onclick="A.tab('customers')" title="ดูรายชื่อสมาชิก"><small>สมาชิกทั้งหมด</small><b data-count="${s.customers}">${s.customers}</b></div>
+      <div class="stat clickable" onclick="A.tab('products')" title="จัดการสินค้าและสต็อก"><small>สินค้าที่วางขาย</small><b data-count="${s.products}">${s.products}</b></div>
     </div>
+
+    <div class="admin-quick-bar">
+      <span style="font-size:13.5px;color:var(--ink-2)">⚡ <b>ทางลัดจัดการร้าน</b> — เลือกงานที่ใช้บ่อยได้ทันที</span>
+      <div class="actions">
+        <button type="button" class="btn sm" onclick="A.openAddProduct()">+ เพิ่มสินค้าใหม่</button>
+        <button type="button" class="btn ghost sm" onclick="A.adminFilterOrders('')">📑 จัดการออเดอร์ (${s.orders})</button>
+        <button type="button" class="btn ghost sm" onclick="A.tab('customers')">👥 ดูสมาชิก (${s.customers})</button>
+      </div>
+    </div>
+
     <div class="panel dt-box" id="dt-box-lowStock">
       <h3>สินค้าใกล้หมด (≤ 3 ชิ้น) <span class="muted" style="font-size:13.5px;font-weight:400">(${_adminCache.lowStock.length} รายการ)</span></h3>
       ${_adminCache.lowStock.length ? `
         ${dtToolbar('lowStock', { placeholder: 'ค้นหาชื่อสินค้า / สี / ไซซ์...' })}
         <div id="dt-body-lowStock">${dtRenderBody('lowStock')}</div>
-      ` : '<p class="muted">ไม่มีสินค้าใกล้หมด</p>'}
+      ` : '<p class="muted" style="margin:0">✓ สต็อกสินค้าทุกรายการอยู่ในเกณฑ์ปกติ</p>'}
     </div>
     <div class="panel dt-box" id="dt-box-coupons">
       <h3>🎟️ จัดการคูปองส่วนลด <span class="muted" style="font-size:13.5px;font-weight:400">(${coupons.length} รายการ)</span></h3>
@@ -1512,20 +1627,17 @@ adminTabs.dash = async () => {
         filter1: { label: 'สถานะคูปอง', options: [['', 'ทุกสถานะ'], ['active', 'เปิดใช้งาน'], ['inactive', 'ปิดใช้งาน']] }
       }) : ''}
       <div id="dt-body-coupons">${dtRenderBody('coupons')}</div>
-      <form class="inline-form" onsubmit="return A.addCoupon(event)" style="margin-top:14px">
-        <input name="code" placeholder="รหัสคูปอง เช่น SALE20" style="text-transform:uppercase" required>
-        <select name="type">
-          <option value="percent">ลดเป็น %</option>
-          <option value="fixed">ลดเป็นบาท (฿)</option>
-        </select>
-        <input name="value" type="number" min="1" step="1" placeholder="มูลค่าส่วนลด" required>
-        <input name="min_total" type="number" min="0" step="1" placeholder="ยอดขั้นต่ำ (฿)" value="0">
-        <select name="active">
-          <option value="1">เปิดใช้งาน</option>
-          <option value="0">ปิดใช้งาน</option>
-        </select>
-        <button class="btn sm">+ เพิ่มคูปอง</button>
-      </form>
+      <details class="admin-add-details" ${coupons.length ? '' : 'open'}>
+        <summary>+ เพิ่มคูปองส่วนลดใหม่</summary>
+        <form class="admin-form-grid" onsubmit="return A.addCoupon(event)">
+          <div class="field"><label>รหัสคูปอง *</label><input name="code" placeholder="เช่น SALE20" style="text-transform:uppercase" required></div>
+          <div class="field"><label>ประเภท</label><select name="type"><option value="percent">ลดเป็น %</option><option value="fixed">ลดเป็นบาท (฿)</option></select></div>
+          <div class="field"><label>มูลค่าส่วนลด *</label><input name="value" type="number" min="1" step="1" placeholder="เช่น 10" required></div>
+          <div class="field"><label>ยอดขั้นต่ำ (฿)</label><input name="min_total" type="number" min="0" step="1" value="0"></div>
+          <div class="field"><label>สถานะ</label><select name="active"><option value="1">เปิดใช้งาน</option><option value="0">ปิดใช้งาน</option></select></div>
+          <button class="btn sm">+ บันทึกคูปอง</button>
+        </form>
+      </details>
     </div>
   `;
   animateCounters();
@@ -1594,10 +1706,25 @@ adminTabs.products = async () => {
             m.set(v.color, cur);
             return m;
           }, new Map()).values()];
+          const stk = Number(p.stock || 0);
+          const stockClass = stk === 0 ? 'out' : (stk <= 5 ? 'low' : 'ok');
+          const stockLabel = stk === 0 ? 'สินค้าหมด' : `สต็อก ${stk} ชิ้น`;
           return `
           <details class="prod" ${A._openProds?.has(p.product_id) ? 'open' : ''} ontoggle="A._openProds=A._openProds||new Set();this.open?A._openProds.add(${p.product_id}):A._openProds.delete(${p.product_id})">
             <summary>
-              <span style="min-width:0"><b>#${p.product_id} ${esc(p.name)}</b> <span class="muted">· ${esc(p.category)}${prodPriceText(p) ? ` · ${prodPriceText(p)}` : ''} · สต็อกรวม <b style="${Number(p.stock) <= 3 ? 'color:var(--danger)' : ''}">${p.stock} ชิ้น</b>${p.supplier_name ? ` · ซัพพลายเออร์: #${p.supplier_id} ${esc(p.supplier_name)}` : ''}${p.employee_name ? ` · ผู้ดูแล: #${p.employee_id} ${esc(p.employee_name)}` : ''}</span></span>
+              <div class="admin-prod-row">
+                <span class="admin-prod-thumb">${art(p.image_url, colorGroups[0]?.hex || '#FAF7F2')}</span>
+                <div style="min-width:0">
+                  <div><b>#${p.product_id} ${esc(p.name)}</b></div>
+                  <div class="admin-prod-meta">
+                    <span class="admin-cat-pill">${esc(p.category)}</span>
+                    ${prodPriceText(p) ? `<span><b>${prodPriceText(p)}</b></span>` : ''}
+                    <span class="admin-stock-pill ${stockClass}">${stockLabel}</span>
+                    ${colorGroups.length ? `<span style="display:inline-flex;align-items:center;gap:3px">${colorGroups.slice(0, 5).map((cg) => `<span class="dot" style="margin:0;background:${esc(cg.hex || '#EADFC8')}" title="${esc(cg.color)}"></span>`).join('')}${colorGroups.length > 5 ? `<span>+${colorGroups.length - 5}</span>` : ''}</span>` : ''}
+                    ${p.supplier_name ? `<span>· ${esc(p.supplier_name)}</span>` : ''}
+                  </div>
+                </div>
+              </div>
               <span style="display:inline-flex;align-items:center;gap:8px;flex-shrink:0">
                 <button type="button" class="btn ghost sm" style="padding:4px 10px" onclick="event.preventDefault();event.stopPropagation();A.openEditProduct(${p.product_id})" title="แก้ไขชื่อและข้อมูลสินค้า">✏️ แก้ชื่อ</button>
                 <span class="status ${p.status === 'active' ? 'paid' : 'cancelled'}" style="white-space:nowrap">${p.status === 'active' ? 'วางขาย' : 'ซ่อน'}</span>
@@ -1725,16 +1852,16 @@ adminTabs.products = async () => {
             </div>
           </details>
         `;
-        }).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบสินค้าที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีสินค้าในสต็อก'}</h3><p class="muted">${meta.total ? 'ลองเปลี่ยนคำค้นหาหรือกดปุ่มล้างตัวกรอง' : 'คุณสามารถใช้ฟอร์ม "+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก" ด้านบนเพื่อเริ่มลงสินค้าได้เลย'}</p></div>`}
+        }).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบสินค้าที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีสินค้าในสต็อก'}</h3><p class="muted">${meta.total ? 'ลองเปลี่ยนคำค้นหาหรือกดปุ่มล้างตัวกรอง' : 'กดปุ่ม "+ เพิ่มสินค้าใหม่" ด้านบนเพื่อเริ่มลงสินค้าได้เลย'}</p></div>`}
         ${meta.total ? dtPager('products', meta) : ''}
       `;
     }
   };
 
   $('#tab').innerHTML = `
-    <details class="prod" style="margin-bottom:20px" open>
-      <summary style="font-size:16px;background:var(--cream);font-weight:500">
-        <span><b>+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก</b> (จำหน่ายเฉพาะ 4 หมวดหมู่)</span>
+    <details class="prod" id="addProdDetails" style="margin-bottom:18px" ${products.length === 0 ? 'open' : ''}>
+      <summary style="font-size:15.5px;background:var(--cream);font-weight:500">
+        <span><b>+ เพิ่มสินค้าใหม่พร้อมไซส์และสต็อก</b> <span class="muted" style="font-size:13px;font-weight:400">(คลิกเพื่อเปิด/ซ่อนฟอร์ม)</span></span>
       </summary>
       <div class="inner" style="padding-top:16px">
         <form onsubmit="return A.saveProductWithVariants(event)">
@@ -1790,7 +1917,10 @@ adminTabs.products = async () => {
     <div class="panel dt-box" id="dt-box-products">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
         <h3 style="margin:0">📦 รายการสินค้าในร้าน (${products.length} รายการ)</h3>
-        <button type="button" class="btn ghost sm" onclick="A.tab('products')">🔄 รีเฟรชสินค้า</button>
+        <div class="actions">
+          <button type="button" class="btn sm" onclick="A.openAddProduct()">+ เพิ่มสินค้าใหม่</button>
+          <button type="button" class="btn ghost sm" onclick="A.tab('products')">🔄 รีเฟรช</button>
+        </div>
       </div>
       ${products.length ? dtToolbar('products', {
         placeholder: 'ค้นหา #ID / ชื่อสินค้า / ซัพพลายเออร์ / สี / ไซซ์...',
@@ -1809,6 +1939,10 @@ adminTabs.orders = async () => {
 
   const payMethods = [...new Set(_adminCache.orders.map((o) => o.payment?.method).filter(Boolean))];
   const statusRank = { pending: 1, paid: 2, shipped: 3, completed: 4, cancelled: 5 };
+  const statusCounts = _adminCache.orders.reduce((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1;
+    return acc;
+  }, {});
 
   _dtConfigs.orders = {
     items: () => _adminCache.orders,
@@ -1829,7 +1963,21 @@ adminTabs.orders = async () => {
       total: (o) => Number(o.total_price || 0),
       status: (o) => statusRank[o.status] || 99
     },
-    render: (slice, meta) => `
+    render: (slice, meta) => {
+      const pillStatuses = [
+        ['', `ทั้งหมด (${_adminCache.orders.length})`],
+        ['pending', `รอดำเนินการ (${statusCounts.pending || 0})`],
+        ['paid', `ชำระแล้ว (${statusCounts.paid || 0})`],
+        ['shipped', `กำลังจัดส่ง (${statusCounts.shipped || 0})`],
+        ['completed', `สำเร็จ (${statusCounts.completed || 0})`],
+        ['cancelled', `ยกเลิก (${statusCounts.cancelled || 0})`]
+      ];
+      return `
+      <div class="admin-status-pills">
+        ${pillStatuses.map(([val, lbl]) => `
+          <button type="button" class="chip ${meta.st.filter === val ? 'on' : ''}" onclick="A.adminFilterOrders('${val}')">${lbl}</button>
+        `).join('')}
+      </div>
       <div class="dt-sort-bar">
         <span class="muted" style="font-size:12.5px">เรียงตาม:</span>
         ${dtSortPill('orders', 'id', '#Order')}
@@ -1851,7 +1999,7 @@ adminTabs.orders = async () => {
             ${o.items.map((i) => `
               <div style="display:flex;justify-content:space-between;padding:4px 0">
                 <span><span class="muted" style="font-size:12px">[Item #${i.order_item_id} · PID #${i.product_id}${i.variant_id ? ` · VID #${i.variant_id}` : ''}]</span> ${esc(i.name)} <span class="muted">(${esc(i.color)}/${esc(i.size)}) ×${i.quantity}</span></span>
-                <span>${money(i.unit_price * i.quantity)}</span>
+                <span><b>${money(i.unit_price * i.quantity)}</b></span>
               </div>
             `).join('')}
             <div class="muted" style="font-size:13.5px;margin-top:8px">
@@ -1864,7 +2012,7 @@ adminTabs.orders = async () => {
                 <input name="carrier" id="ship-carrier-${o.order_id}" list="carrier-presets" value="Flash Express" placeholder="ขนส่ง เช่น Flash Express, Kerry" required>
                 <input name="tracking_no" id="ship-track-${o.order_id}" value="${esc(defaultTrack)}" placeholder="เลขพัสดุ (ระบบสุ่มให้ หรือพิมพ์แก้เองได้)">
                 <button type="button" class="btn ghost sm" style="flex:0 0 auto" onclick="A.fillTracking(${o.order_id})">🎲 สุ่มใหม่</button>
-                <button class="btn sm" style="flex:0 0 auto">บันทึกการจัดส่ง</button>
+                <button class="btn sm" style="flex:0 0 auto">🚚 บันทึกการจัดส่ง</button>
               </form>
             ` : ''}
             ${o.status === 'shipped' && o.shipment ? `
@@ -1876,7 +2024,7 @@ adminTabs.orders = async () => {
               </form>
             ` : ''}
             <div class="actions" style="margin-top:10px">
-              ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">ยืนยันส่งถึงแล้ว</button>` : ''}
+              ${o.status === 'shipped' ? `<button class="btn sm" onclick="A.adminComplete(${o.order_id})">✓ ยืนยันส่งถึงแล้ว</button>` : ''}
               ${o.status === 'shipped' && o.shipment ? `<button class="btn ghost sm" onclick="A.toggleEditShip(${o.order_id})">✏️ แก้เลขพัสดุ</button>` : ''}
               ${['pending', 'paid', 'shipped'].includes(o.status) ? `<button type="button" class="btn ghost sm" onclick="A.openAdminEditOrderAddress(${o.order_id})">✏️ แก้ที่อยู่จัดส่ง</button>` : ''}
               ${['pending', 'paid'].includes(o.status) ? `<button class="btn danger sm" onclick="A.adminCancel(${o.order_id})">ยกเลิกออเดอร์</button>` : ''}
@@ -1885,7 +2033,8 @@ adminTabs.orders = async () => {
         `;
       }).join('') : `<div class="dt-empty"><h3>${meta.total ? 'ไม่พบคำสั่งซื้อที่ตรงกับการค้นหาหรือตัวกรอง' : 'ยังไม่มีคำสั่งซื้อ'}</h3></div>`}
       ${meta.total ? dtPager('orders', meta) : ''}
-    `
+    `;
+    }
   };
 
   $('#tab').innerHTML = `
@@ -2131,41 +2280,50 @@ adminTabs.suppliers = async () => {
       <h3>ผู้ดูแลระบบ (Admin) <span class="muted" style="font-size:13.5px;font-weight:400">(${admins.length} บัญชี)</span></h3>
       ${dtToolbar('admins', { placeholder: 'ค้นหาชื่อ / อีเมล / เบอร์แอดมิน...' })}
       <div id="dt-body-admins">${dtRenderBody('admins')}</div>
-      <form class="inline-form" onsubmit="return A.addAdmin(event)" style="margin-top:14px">
-        <input name="name" placeholder="ชื่อผู้ดูแลระบบ" required>
-        <input name="email" type="email" placeholder="อีเมล" required>
-        <input name="phone" placeholder="เบอร์โทร">
-        <input name="password" type="password" minlength="8" placeholder="รหัสผ่าน (8+ ตัว)" required>
-        <button class="btn sm">+ เพิ่มแอดมิน</button>
-      </form>
+      <details class="admin-add-details">
+        <summary>+ เพิ่มผู้ดูแลระบบ (Admin)</summary>
+        <form class="admin-form-grid" onsubmit="return A.addAdmin(event)">
+          <div class="field"><label>ชื่อผู้ดูแลระบบ *</label><input name="name" placeholder="เช่น Admin 2" required></div>
+          <div class="field"><label>อีเมล *</label><input name="email" type="email" placeholder="admin@noircream.com" required></div>
+          <div class="field"><label>เบอร์โทร</label><input name="phone" placeholder="08x-xxx-xxxx"></div>
+          <div class="field"><label>รหัสผ่าน (8+ ตัว) *</label><div class="pw-wrap"><input name="password" type="password" minlength="8" placeholder="อย่างน้อย 8 ตัวอักษร" required><button type="button" class="pw-toggle" onclick="A.togglePw(this)" aria-label="แสดงหรือซ่อนรหัสผ่าน">👁️</button></div></div>
+          <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="btn sm">+ บันทึกแอดมิน</button></div>
+        </form>
+      </details>
     </div>
     <div class="panel dt-box" id="dt-box-suppliers">
       <h3>ซัพพลายเออร์ <span class="muted" style="font-size:13.5px;font-weight:400">(${suppliers.length} รายการ)</span></h3>
       ${suppliers.length ? dtToolbar('suppliers', { placeholder: 'ค้นหาชื่อซัพพลายเออร์ / ผู้ติดต่อ / พนักงานดูแล...' }) : ''}
       <div id="dt-body-suppliers">${dtRenderBody('suppliers')}</div>
-      <form class="inline-form" onsubmit="return A.addSupplier(event)" style="margin-top:14px">
-        <input name="name" placeholder="ชื่อซัพพลายเออร์" required>
-        <input name="contact_name" placeholder="ผู้ติดต่อ">
-        <input name="phone" placeholder="เบอร์โทร">
-        <input name="email" placeholder="อีเมล">
-        <input name="address" placeholder="ที่อยู่">
-        <select name="employee_id"><option value="">พนักงานดูแล</option>${employees.map((e) => `<option value="${e.employee_id}">#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}</option>`).join('')}</select>
-        <button class="btn sm">+ เพิ่ม</button>
-      </form>
+      <details class="admin-add-details">
+        <summary>+ เพิ่มซัพพลายเออร์</summary>
+        <form class="admin-form-grid" onsubmit="return A.addSupplier(event)">
+          <div class="field"><label>ชื่อซัพพลายเออร์ *</label><input name="name" placeholder="ชื่อบริษัท / ร้านค้า" required></div>
+          <div class="field"><label>ผู้ติดต่อ</label><input name="contact_name" placeholder="ชื่อผู้ติดต่อ"></div>
+          <div class="field"><label>เบอร์โทร</label><input name="phone" placeholder="02-xxx-xxxx"></div>
+          <div class="field"><label>อีเมล</label><input name="email" type="email" placeholder="contact@supplier.com"></div>
+          <div class="field"><label>พนักงานดูแล</label><select name="employee_id"><option value="">เลือกพนักงานดูแล</option>${employees.map((e) => `<option value="${e.employee_id}">#${e.employee_id} ${esc(e.first_name)} ${esc(e.last_name)}</option>`).join('')}</select></div>
+          <div class="field" style="grid-column:1/-1"><label>ที่อยู่</label><input name="address" placeholder="ที่อยู่ซัพพลายเออร์"></div>
+          <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="btn sm">+ บันทึกซัพพลายเออร์</button></div>
+        </form>
+      </details>
     </div>
     <div class="panel dt-box" id="dt-box-employees">
       <h3>พนักงาน <span class="muted" style="font-size:13.5px;font-weight:400">(${employees.length} คน)</span></h3>
       ${employees.length ? dtToolbar('employees', { placeholder: 'ค้นหาชื่อ / ตำแหน่ง / อีเมล / เบอร์...' }) : ''}
       <div id="dt-body-employees">${dtRenderBody('employees')}</div>
-      <form class="inline-form" onsubmit="return A.addEmployee(event)" style="margin-top:14px">
-        <input name="first_name" placeholder="ชื่อ" required>
-        <input name="last_name" placeholder="นามสกุล" required>
-        <input name="position" placeholder="ตำแหน่ง">
-        <input name="email" placeholder="อีเมล">
-        <input name="phone" placeholder="เบอร์โทร">
-        <input name="address" placeholder="ที่อยู่">
-        <button class="btn sm">+ เพิ่ม</button>
-      </form>
+      <details class="admin-add-details">
+        <summary>+ เพิ่มพนักงาน</summary>
+        <form class="admin-form-grid" onsubmit="return A.addEmployee(event)">
+          <div class="field"><label>ชื่อ *</label><input name="first_name" placeholder="ชื่อจริง" required></div>
+          <div class="field"><label>นามสกุล *</label><input name="last_name" placeholder="นามสกุล" required></div>
+          <div class="field"><label>ตำแหน่ง</label><input name="position" placeholder="เช่น Merchandiser"></div>
+          <div class="field"><label>อีเมล</label><input name="email" type="email" placeholder="staff@noircream.com"></div>
+          <div class="field"><label>เบอร์โทร</label><input name="phone" placeholder="08x-xxx-xxxx"></div>
+          <div class="field"><label>ที่อยู่</label><input name="address" placeholder="ที่อยู่พนักงาน"></div>
+          <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="btn sm">+ บันทึกพนักงาน</button></div>
+        </form>
+      </details>
     </div>
   `;
 };
@@ -2366,6 +2524,109 @@ const showErr = (m) => { const el = $('#err'); if (el) { el.textContent = m; el.
 const refresh = () => route();
 
 const A = window.A = {
+  toggleQuickSearch(force) {
+    const bar = $('#quickSearchBar');
+    const inp = $('#quickSearchInput');
+    if (!bar) return;
+    const open = typeof force === 'boolean' ? force : !bar.classList.contains('open');
+    bar.classList.toggle('open', open);
+    bar.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open && inp) {
+      const qs = location.hash.split('?')[1];
+      const q = new URLSearchParams(qs || '').get('q');
+      if (q && !inp.value) inp.value = q;
+      setTimeout(() => {
+        inp.focus();
+        inp.select();
+      }, 30);
+    }
+  },
+  quickSearchSubmit(e) {
+    e.preventDefault();
+    const q = ($('#quickSearchInput')?.value || '').trim();
+    this.toggleQuickSearch(false);
+    go(q ? '#/shop?' + new URLSearchParams({ q }).toString() : '#/shop');
+    return false;
+  },
+  togglePw(btn) {
+    const inp = btn?.closest('.pw-wrap')?.querySelector('input');
+    if (!inp) return;
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁️';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  },
+  async copyText(text, msg = 'คัดลอกแล้ว') {
+    const val = String(text ?? '');
+    if (!val) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(val);
+        toast(msg);
+        return;
+      }
+    } catch {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = val;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-9999px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      toast(msg);
+    } catch {
+      toast('ไม่สามารถคัดลอกอัตโนมัติได้', 'err');
+    }
+  },
+  async openAddProduct() {
+    const onAdmin = location.hash === '#/admin' || location.hash.startsWith('#/admin?');
+    if (!onAdmin) {
+      adminTab = 'products';
+      go('#/admin');
+    } else if (adminTab !== 'products' || !$('#addProdDetails')) {
+      adminTab = 'products';
+      await route();
+    }
+    let tries = 0;
+    const tryOpen = () => {
+      const el = $('#addProdDetails');
+      if (el) {
+        el.open = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.querySelector('input[name="name"]')?.focus();
+      } else if (++tries < 30) {
+        setTimeout(tryOpen, 50);
+      }
+    };
+    tryOpen();
+  },
+  async adminFilterOrders(statusVal = '') {
+    if (!_dtState.orders) _dtState.orders = { q: '', filter: '', filter2: '', sortKey: '', sortDir: 'asc', page: 1, pageSize: 10 };
+    _dtState.orders.filter = statusVal || '';
+    _dtState.orders.page = 1;
+    const onAdmin = location.hash === '#/admin' || location.hash.startsWith('#/admin?');
+    if (onAdmin && adminTab === 'orders' && $('#dt-body-orders')) {
+      const f1 = $('#dt-f1-orders');
+      if (f1) f1.value = _dtState.orders.filter;
+      this.dtRender('orders');
+      document.querySelectorAll('.admin-status-pills button').forEach((b) => {
+        const oc = b.getAttribute('onclick') || '';
+        const active = statusVal ? oc.includes(`'${statusVal}'`) : (oc.includes("('')") || oc.includes('()'));
+        b.classList.toggle('on', active);
+      });
+      $('#dt-box-orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    adminTab = 'orders';
+    if (!onAdmin) {
+      go('#/admin');
+    } else {
+      await route();
+      $('#dt-box-orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  },
   toggleMobileMenu() {
     const d = $('#mobileMenu'), b = $('#menuBackdrop');
     if (d && b) {
@@ -3817,7 +4078,7 @@ document.addEventListener('pointermove', (e) => {
   box.style.setProperty('--mouse-y', `${e.clientY - r.top}px`);
 }, { passive: true });
 
-// Scroll progress bar & sticky header elevation
+// Scroll progress bar, sticky header elevation & back-to-top button
 window.addEventListener('scroll', () => {
   const doc = document.documentElement;
   const scrollTop = doc.scrollTop || document.body.scrollTop;
@@ -3828,7 +4089,18 @@ window.addEventListener('scroll', () => {
   }
   const hdr = $('.site-header');
   if (hdr) hdr.classList.toggle('scrolled', scrollTop > 12);
+  const btt = $('#backToTop');
+  if (btt) btt.classList.toggle('show', scrollTop > 360);
 }, { passive: true });
+
+// Close active overlays / drawers on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if ($('#modal')?.classList.contains('open')) A.closeModal?.();
+  if ($('#ghTokenModal')) $('#ghTokenModal').remove();
+  if ($('#mobileMenu')?.classList.contains('open')) A.toggleMobileMenu?.();
+  if ($('#quickSearchBar')?.classList.contains('open')) A.toggleQuickSearch?.(false);
+});
 
 /* ---------- Router ---------- */
 async function route() {
@@ -3838,6 +4110,7 @@ async function route() {
   const parts = path.split('/').filter(Boolean);
   const name = parts[0] || 'home';
   const page = pages[name];
+  A.toggleQuickSearch?.(false);
   window.scrollTo(0, 0);
 
   if (!page) {
